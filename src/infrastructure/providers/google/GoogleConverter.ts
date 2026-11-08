@@ -1,3 +1,4 @@
+import { env } from '../../runtime/environment.js';
 import { markSeparateReasoningUsage } from '../../../core/model-execution/ModelTask.js';
 /**
  * Google Gemini converter - Converts between our Responses API format and Google Gemini API
@@ -58,7 +59,7 @@ export class GoogleConverter {
   async convertRequest(options: TextGenerateOptions): Promise<any> {
     options = { ...options, ...extractInstructions(options.input, options.instructions) };
     // Debug input messages
-    if (process.env.DEBUG_GOOGLE && Array.isArray(options.input)) {
+    if (env('DEBUG_GOOGLE') && Array.isArray(options.input)) {
       console.error('[DEBUG] Input messages:', JSON.stringify(options.input.map((msg: any) => ({
         type: msg.type,
         role: msg.role,
@@ -70,7 +71,7 @@ export class GoogleConverter {
     const tools = this.convertTools(options.tools);
 
     // Debug: Check final contents
-    if (process.env.DEBUG_GOOGLE) {
+    if (env('DEBUG_GOOGLE')) {
       console.error('[DEBUG] Final contents array length:', contents.length);
     }
 
@@ -212,7 +213,7 @@ export class GoogleConverter {
         const parts = await this.convertContentToParts(item.content);
 
         // Debug logging
-        if (process.env.DEBUG_GOOGLE) {
+        if (env('DEBUG_GOOGLE')) {
           console.error(`[DEBUG] Converting message - role: ${item.role} → ${role}, parts: ${parts.length}`,
             parts.map((p: any) => Object.keys(p)));
         }
@@ -291,7 +292,7 @@ export class GoogleConverter {
             || this.thoughtSignatures.get(c.id)
             || 'context_engineering_is_the_way_to_go';
 
-          if (process.env.DEBUG_GOOGLE) {
+          if (env('DEBUG_GOOGLE')) {
             console.error(`[DEBUG] Looking up signature for tool ID: ${c.id}`);
             console.error(`[DEBUG] Source:`, (c as ToolUseContent).thoughtSignature ? 'Content' : this.thoughtSignatures.has(c.id) ? 'Map' : 'bypass');
           }
@@ -475,7 +476,7 @@ export class GoogleConverter {
     const webFetchCalls = urlMetadata.length > 0 ? 1 : 0;
 
     // Debug output
-    if (process.env.DEBUG_GOOGLE) {
+    if (env('DEBUG_GOOGLE')) {
       console.error('[DEBUG] Content array:', JSON.stringify(content, null, 2));
       console.error('[DEBUG] Raw parts:', JSON.stringify(geminiContent?.parts, null, 2));
     }
@@ -658,11 +659,11 @@ export class GoogleConverter {
           sig = part.thoughtSignature as string;
           this.thoughtSignatures.set(toolId, sig);
 
-          if (process.env.DEBUG_GOOGLE) {
+          if (env('DEBUG_GOOGLE')) {
             console.error(`[DEBUG] Captured thought signature for tool ID: ${toolId}`);
             console.error(`[DEBUG] Signature length:`, sig.length);
           }
-        } else if (process.env.DEBUG_GOOGLE) {
+        } else if (env('DEBUG_GOOGLE')) {
           console.error(`[DEBUG] NO thought signature in part for ${functionName}`);
           console.error(`[DEBUG] Part keys:`, Object.keys(part));
         }

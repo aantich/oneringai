@@ -1,4 +1,4 @@
-import Ajv from 'ajv';
+import { createSchemaCompiler } from '../../../infrastructure/runtime/schemaCompiler.js';
 import type { Connector } from '../../../core/Connector.js';
 import type { ToolFunction } from '../../../domain/entities/Tool.js';
 import type { ToolContext } from '../../../domain/interfaces/IToolContext.js';
@@ -12,7 +12,7 @@ import { githubPage } from '../../github/collectionPages.js';
 import { badPage, coverage, fetchPage, type PageArgs } from './common.js';
 import type { ConnectorPage } from './types.js';
 
-const ajv = new Ajv({ strict: false, allErrors: false });
+const ajv = createSchemaCompiler('collection');
 interface Invocation { reportFailure(error?: Error): void }
 export interface CollectionContract {
   suffix: 'page' | 'strict'; parameters: NonNullable<ToolFunction['definition']['function']['parameters']>; description: string;

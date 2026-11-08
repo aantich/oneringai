@@ -7,6 +7,12 @@ memory, and multimodal AI. Use its own agent loop with multiple model providers,
 or bind one agent definition to a supported OpenAI or Anthropic harness.
 Named connectors keep credentials and account access in your application.
 
+**Browser Agents (since 2.0.0-beta.2):** Agents use the **same API in browsers and
+Node.js**, including the shared agentic loop, context plugins, tools and model
+budgets. Import from `oneringai`; the browser condition selects compatible code
+and declarations. See [browser setup, custom plugins and host limits](docs/BROWSER_AGENTS.md)
+and the [shared offline example](examples/browser-node/shared.ts).
+
 [![MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-22.13%2B%20%7C%2024%2B-black.svg)](https://nodejs.org/)
 
@@ -17,11 +23,11 @@ AMOS is the complete terminal application: configure connectors, run agents,
 switch harnesses, inspect activity, and recover saved sessions. Its
 [application guide](apps/amos/README.md) also covers native OneRingAI mode.
 
-**Published v2 beta:** **[`oneringai@2.0.0-beta.1`](https://www.npmjs.com/package/oneringai)**,
+**v2 beta:** **[`oneringai@2.0.0-beta.2`](https://www.npmjs.com/package/oneringai/v/2.0.0-beta.2)**,
 without a scope. Both `latest` and `next` currently select this beta. Use the
 matching package version and retain the preview boundaries below. Existing v1
 users must migrate explicitly from `@everworker/oneringai`.
-See the **[v2 changelog](CHANGELOG.md#200-beta1--2026-11-02)**,
+See the **[v2 changelog](CHANGELOG.md#200-beta2--2026-11-08)**,
 [migration](docs/PACKAGE_MIGRATION.md), and [release readiness](docs/RELEASE_READINESS_V2.md).
 
 ## What changes in v2
@@ -58,7 +64,7 @@ TypeScript declarations. Install the current v2 beta:
 npm install oneringai
 ```
 
-You can also select `npm install oneringai@next` or pin `oneringai@2.0.0-beta.1`.
+You can also select `npm install oneringai@next` or pin `oneringai@2.0.0-beta.2`.
 The [source checkout/local package workflow](docs/PACKAGE_MIGRATION.md#try-v2-before-publication)
 remains available for development.
 Load your own environment configuration before creating connectors; the library

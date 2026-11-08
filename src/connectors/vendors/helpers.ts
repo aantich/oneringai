@@ -1,3 +1,4 @@
+import { encodeBase64, encodeUTF8 } from '../../infrastructure/runtime/primitives.js';
 /**
  * Vendor Templates - Helper Functions
  *
@@ -293,7 +294,7 @@ export function buildAuthConfig(
     //   applicationKey (Twilio API Key SID) > username (Jira/Zendesk/Bitbucket) > accountId (Twilio) > 'api' (Mailgun)
     if (headerPrefix === 'Basic') {
       const basicUser = extra.applicationKey ?? extra.username ?? extra.accountId ?? 'api';
-      apiKey = Buffer.from(`${basicUser}:${apiKey}`).toString('base64');
+      apiKey = encodeBase64(encodeUTF8(`${basicUser}:${apiKey}`));
     }
 
     const queryParamName = (defaults as { queryParamName?: string }).queryParamName;

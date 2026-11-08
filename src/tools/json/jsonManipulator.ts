@@ -1,3 +1,4 @@
+/** @browserCompatible Complete implementation; existing configured storage is required where applicable. */
 /**
  * JSON Manipulation Tool
  *

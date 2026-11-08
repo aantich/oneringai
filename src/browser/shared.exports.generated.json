@@ -1,0 +1,267 @@
+[
+  {
+    "name": "assessModelParameters",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "calculateCost",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "CapabilityProvenance",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "detectServiceFromURL",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "EndpointCapabilitySupport",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "getActiveModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "getAllServiceIds",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "getDeprecatedModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "getModelInfo",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "getModelsByVendor",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "getRealtimeModelCapabilities",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "getServiceDefinition",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "getServiceInfo",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "getServicesByCategory",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "getTranscriptionCapabilities",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "getVendorPresentation",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/vendorPresentation.ts"
+  },
+  {
+    "name": "ILLMDescription",
+    "typeOnly": true,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "isKnownService",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "isVendor",
+    "typeOnly": false,
+    "source": "src/core/Vendor.ts"
+  },
+  {
+    "name": "LLM_MODELS",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "LongContextTokenPricing",
+    "typeOnly": true,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "MODEL_REGISTRY",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "MODEL_REGISTRY_SCHEMA_VERSION",
+    "typeOnly": false,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "ModelAvailability",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "ModelEndpoint",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "ModelLifecycleStatus",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "ModelParameterAssessment",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ModelParameterDecision",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ModelParameterEndpoint",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ModelParameterPolicy",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ModelParameterQuery",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ProcessingMode",
+    "typeOnly": true,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "RealtimeModelCapabilities",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "RealtimeModelCapabilityQuery",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "RealtimeReasoningEffort",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "RealtimeTransport",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "resolveModelName",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "SERVICE_DEFINITIONS",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "SERVICE_INFO",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "SERVICE_URL_PATTERNS",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "ServiceCategory",
+    "typeOnly": true,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "ServiceDefinition",
+    "typeOnly": true,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "ServiceInfo",
+    "typeOnly": true,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "Services",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "ServiceType",
+    "typeOnly": true,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "TokenPricing",
+    "typeOnly": true,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "TranscriptionCapabilities",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "TranscriptionCapabilityQuery",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "Vendor",
+    "typeOnly": false,
+    "source": "src/core/Vendor.ts"
+  },
+  {
+    "name": "VENDOR_PRESENTATIONS",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/vendorPresentation.ts"
+  },
+  {
+    "name": "VendorPresentation",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/vendorPresentation.ts"
+  },
+  {
+    "name": "VENDORS",
+    "typeOnly": false,
+    "source": "src/core/Vendor.ts"
+  },
+  {
+    "name": "VendorType",
+    "typeOnly": true,
+    "source": "src/core/Vendor.ts"
+  }
+]

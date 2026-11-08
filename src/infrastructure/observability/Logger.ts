@@ -1,3 +1,4 @@
+import { env } from '../runtime/environment.js';
 /**
  * Structured logging infrastructure
  *
@@ -10,8 +11,8 @@
  * - LOG_PRETTY: true|false (default: true in development)
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import { openLogFile, assertFileLogging } from '../runtime/logFile.js';
+import { onProcessShutdown } from '../runtime/environment.js';
 
 /**
  * Log level
@@ -104,7 +105,7 @@ function safeStringify(obj: unknown, indent?: number): string {
     }
 
     // Handle Buffer
-    if (Buffer.isBuffer(objValue)) {
+    if (typeof Buffer !== 'undefined' && Buffer.isBuffer(objValue)) {
       return `[Buffer(${objValue.length})]`;
     }
 
@@ -159,15 +160,15 @@ export class FrameworkLogger {
   private config: LoggerConfig;
   private context: Record<string, any>;
   private levelValue: number;
-  private fileStream?: fs.WriteStream;
+  private fileStream?: ReturnType<typeof openLogFile>;
 
   constructor(config: LoggerConfig = {}) {
     this.config = {
-      level: (config.level || process.env.LOG_LEVEL || 'info') as LogLevel,
-      pretty: config.pretty ?? (process.env.LOG_PRETTY === 'true' || process.env.NODE_ENV === 'development'),
+      level: (config.level || env('LOG_LEVEL') || 'info') as LogLevel,
+      pretty: config.pretty ?? (env('LOG_PRETTY') === 'true' || env('NODE_ENV') === 'development'),
       destination: config.destination || 'console',
       context: config.context || {},
-      filePath: config.filePath || process.env.LOG_FILE,
+      filePath: config.filePath || env('LOG_FILE'),
     };
 
     this.context = this.config.context || {};
@@ -175,6 +176,7 @@ export class FrameworkLogger {
 
     // Initialize file stream if file path is provided
     if (this.config.filePath) {
+      assertFileLogging();
       this.initFileStream(this.config.filePath);
     }
   }
@@ -184,17 +186,7 @@ export class FrameworkLogger {
    */
   private initFileStream(filePath: string): void {
     try {
-      // Ensure directory exists
-      const dir = path.dirname(filePath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-
-      // Create write stream with append mode
-      this.fileStream = fs.createWriteStream(filePath, {
-        flags: 'a', // append mode
-        encoding: 'utf8',
-      });
+      this.fileStream = openLogFile(filePath);
 
       // Handle stream errors
       this.fileStream.on('error', (err) => {
@@ -430,24 +422,12 @@ export class FrameworkLogger {
  * Global logger singleton
  */
 export const logger = new FrameworkLogger({
-  level: (process.env.LOG_LEVEL as LogLevel) || 'info',
-  pretty: process.env.LOG_PRETTY === 'true' || process.env.NODE_ENV === 'development',
-  filePath: process.env.LOG_FILE,
+  level: (env('LOG_LEVEL') as LogLevel) || 'info',
+  pretty: env('LOG_PRETTY') === 'true' || env('NODE_ENV') === 'development',
+  filePath: env('LOG_FILE'),
 });
 
 /**
  * Cleanup logger on process exit
  */
-process.on('exit', () => {
-  logger.close();
-});
-
-process.on('SIGINT', () => {
-  logger.close();
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  logger.close();
-  process.exit(0);
-});
+onProcessShutdown(() => logger.close());

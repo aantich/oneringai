@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomKey, sealGCM, openGCM, encodeUTF8, decodeUTF8, encodeBase64, decodeBase64 } from '../../infrastructure/runtime/primitives.js';
 import { InvalidConfigError } from '../../domain/errors/AIErrors.js';
 import type { Coverage } from '../../tools/connector/pages/types.js';
 
@@ -18,16 +18,17 @@ export function canonical(value: unknown): string {
 const invalid = (): never => { throw new InvalidConfigError('Invalid or expired collection continuation; retain the observed page and restart deliberately'); };
 /** One ephemeral key; no tail cache, timestamp, storage or application authority. */
 export function createCursorCodec(): CursorCodec {
-  const key = randomBytes(32);
+  const key = randomKey(32);
   const digest = (scope: unknown): string => createHash('sha256').update(canonical(scope)).digest('hex');
   return {
     encode(scope, position, coverage) {
-      const scopeHash = digest(scope), plaintext = Buffer.from(canonical({ version: 1, scopeHash, position, coverage }));
+      const scopeHash = digest(scope), plaintext = encodeUTF8(canonical({ version: 1, scopeHash, position, coverage }));
       if (plaintext.length > CURSOR_MAX_BYTES) return invalid();
-      const iv = randomBytes(12), cipher = createCipheriv('aes-256-gcm', key, iv);
-      cipher.setAAD(Buffer.from('oneringai-collections-v1'));
-      const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
-      const continuation = 'c1.' + Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString('base64url');
+      const iv = randomKey(12);
+      const { ciphertext, tag } = sealGCM(key, iv, encodeUTF8('oneringai-collections-v1'), plaintext);
+      const envelope = new Uint8Array(iv.length + tag.length + ciphertext.length);
+      envelope.set(iv); envelope.set(tag, iv.length); envelope.set(ciphertext, iv.length + tag.length);
+      const continuation = 'c1.' + encodeBase64(envelope, true);
       if (continuation.length > CURSOR_MAX_BYTES) return invalid();
       const positionId = createHmac('sha256', key).update(canonical({ scopeHash, position })).digest('base64url');
       return { continuation, positionId };
@@ -35,11 +36,10 @@ export function createCursorCodec(): CursorCodec {
     decode(token, scope) {
       try {
         if (typeof token !== 'string' || token.length > CURSOR_MAX_BYTES || !/^c1\.[A-Za-z0-9_-]+$/.test(token)) return invalid();
-        const data = Buffer.from(token.slice(3), 'base64url');
-        if (data.length < 29 || data.toString('base64url') !== token.slice(3)) return invalid();
-        const decipher = createDecipheriv('aes-256-gcm', key, data.subarray(0, 12));
-        decipher.setAAD(Buffer.from('oneringai-collections-v1')); decipher.setAuthTag(data.subarray(12, 28));
-        const value = JSON.parse(Buffer.concat([decipher.update(data.subarray(28)), decipher.final()]).toString('utf8')) as Record<string, unknown>;
+        const data = decodeBase64(token.slice(3));
+        if (data.length < 29 || encodeBase64(data, true) !== token.slice(3)) return invalid();
+        const plain = openGCM(key, data.subarray(0, 12), encodeUTF8('oneringai-collections-v1'), data.subarray(28), data.subarray(12, 28));
+        const value = JSON.parse(decodeUTF8(plain)) as Record<string, unknown>;
         if (value.version !== 1 || value.scopeHash !== digest(scope) || !['complete', 'incomplete', 'unknown'].includes(String(value.coverage)) || !Object.hasOwn(value, 'position')) return invalid();
         return { position: value.position, coverage: value.coverage as Coverage };
       } catch { return invalid(); }

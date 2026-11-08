@@ -1,3 +1,4 @@
+import { env } from '../../infrastructure/runtime/environment.js';
 /**
  * Stream helper utilities for consuming and processing streaming events
  */
@@ -295,7 +296,7 @@ export class StreamHelpers {
 
       case StreamEventType.RESPONSE_COMPLETE:
         // Debug: Log usage when received
-        if (process.env.DEBUG_STREAMING) {
+        if (env('DEBUG_STREAMING')) {
           console.error('[DEBUG] RESPONSE_COMPLETE event:', event.usage);
         }
         state.updateUsage(event.usage);

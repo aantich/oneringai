@@ -1,5 +1,19 @@
 # OneRingAI v2 release readiness
 
+Beta.2 — 2026-11-08: `oneringai@2.0.0-beta.2` includes the shared browser/Node
+Agent API, browser schema compatibility corrections, AMOS EOF recovery and
+embedded dependency hardening. The [beta.2 record](evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json)
+separates candidate validation from verified publication. The user explicitly
+authorized fixing, committing on main, pushing and publishing beta.2.
+
+Unreleased beta follow-up — 2026-11-08: release validation now checks embedded
+dependency provenance and advisories as well as the installed consumer graph.
+Patched MCP HTTP redirect behavior is tested through the tarball's public ESM/CJS
+adapter. See [dependency security](DEPENDENCY_SECURITY.md#unreleased-beta-corrections--2026-11-08)
+and [browser delivery](designs/AGENT_BROWSER_NODE_DELIVERY.md) for the fixes and
+current validation record. Version/tag selection and publication remain separate
+from these source corrections; the following beta.1 publication record is historical.
+
 Review date: **2026-11-02**. Prepared package: **`oneringai@2.0.0-beta.1`**.
 
 **Subsequent publication — 2026-11-02:** the beta is now

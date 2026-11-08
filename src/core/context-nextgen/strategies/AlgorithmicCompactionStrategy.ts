@@ -10,7 +10,7 @@
  */
 
 import { removableMessageGroups, toolProtocolKeys } from '../tool-pairs.js';
-import { isDeepStrictEqual } from 'node:util';
+import { isDeepStrictEqual } from '../../../infrastructure/runtime/primitives.js';
 import type { InputItem } from '../../../domain/entities/Message.js';
 import type {
   ICompactionStrategy,

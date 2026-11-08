@@ -1,3 +1,4 @@
+import { env } from '../runtime/environment.js';
 /**
  * Metrics collection infrastructure
  *
@@ -190,7 +191,7 @@ export type MetricsCollectorType = 'noop' | 'console' | 'inmemory';
  * Create metrics collector from type
  */
 export function createMetricsCollector(type?: MetricsCollectorType, prefix?: string): MetricsCollector {
-  const collectorType = type || (process.env.METRICS_COLLECTOR as MetricsCollectorType) || 'noop';
+  const collectorType = type || (env('METRICS_COLLECTOR') as MetricsCollectorType) || 'noop';
 
   switch (collectorType) {
     case 'console':
@@ -207,7 +208,7 @@ export function createMetricsCollector(type?: MetricsCollectorType, prefix?: str
  */
 export const metrics: MetricsCollector = createMetricsCollector(
   undefined,
-  process.env.METRICS_PREFIX || 'oneringai'
+  env('METRICS_PREFIX') || 'oneringai'
 );
 
 /**

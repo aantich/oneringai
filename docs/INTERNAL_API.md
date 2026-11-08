@@ -15,19 +15,19 @@ This document provides a complete reference for ALL APIs in `oneringai`, includi
 - [Image Generation](#image-generation) (45 items)
 - [Video Generation](#video-generation) (34 items)
 - [Agent Runtime](#agent-runtime) (237 items)
-- [Task Agents](#task-agents) (190 items)
+- [Task Agents](#task-agents) (194 items)
 - [Context Management](#context-management) (25 items)
 - [Session Management](#session-management) (139 items)
-- [Tools & Function Calling](#tools--function-calling) (376 items)
+- [Tools & Function Calling](#tools--function-calling) (388 items)
 - [Streaming](#streaming) (51 items)
 - [Model Registry](#model-registry) (58 items)
-- [OAuth & External APIs](#oauth--external-apis) (131 items)
+- [OAuth & External APIs](#oauth--external-apis) (132 items)
 - [Resilience & Observability](#resilience--observability) (40 items)
 - [Errors](#errors) (64 items)
 - [Utilities](#utilities) (30 items)
 - [Interfaces](#interfaces) (90 items)
 - [Base Classes](#base-classes) (7 items)
-- [Other](#other) (2020 items)
+- [Other](#other) (2068 items)
 
 ## Core
 
@@ -1249,7 +1249,7 @@ static clear(): void
 
 ### Connector `class`
 
-📍 [`src/core/Connector.ts:62`](../src/core/Connector.ts#L62)
+📍 [`src/core/Connector.ts:63`](../src/core/Connector.ts#L63)
 
 Connector class - represents a single authenticated connection
 
@@ -2082,7 +2082,7 @@ Aggregate metrics across all tracked agents
 
 ### ConnectorFetchOptions `interface`
 
-📍 [`src/core/Connector.ts:46`](../src/core/Connector.ts#L46)
+📍 [`src/core/Connector.ts:47`](../src/core/Connector.ts#L47)
 
 Fetch options with additional connector-specific settings
 
@@ -2516,7 +2516,7 @@ type Vendor = (typeof Vendor)[keyof typeof Vendor]
 
 ### capturedProviderEndpoint `function`
 
-📍 [`src/core/createProvider.ts:65`](../src/core/createProvider.ts#L65)
+📍 [`src/core/createProvider.ts:66`](../src/core/createProvider.ts#L66)
 
 ```typescript
 export function capturedProviderEndpoint(provider: ITextProvider): string | undefined
@@ -2536,7 +2536,7 @@ function cloneRuntimeConfigValue&lt;T&gt;(value: T, seen = new WeakMap&lt;object
 
 ### configuredNativeEndpoint `function`
 
-📍 [`src/core/createProvider.ts:66`](../src/core/createProvider.ts#L66)
+📍 [`src/core/createProvider.ts:67`](../src/core/createProvider.ts#L67)
 
 ```typescript
 function configuredNativeEndpoint(connector: Connector): string
@@ -2546,7 +2546,7 @@ function configuredNativeEndpoint(connector: Connector): string
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:89`](../src/core/createProvider.ts#L89)
+📍 [`src/core/createProvider.ts:90`](../src/core/createProvider.ts#L90)
 
 Create a text provider from a connector
 
@@ -2558,7 +2558,7 @@ export function createProvider(connector: Connector): ITextProvider
 
 ### createProviderAsync `function`
 
-📍 [`src/core/createProvider.ts:234`](../src/core/createProvider.ts#L234)
+📍 [`src/core/createProvider.ts:235`](../src/core/createProvider.ts#L235)
 
 Create a text provider from a Connector with async token support
 Use this for OAuth connectors
@@ -2574,7 +2574,7 @@ export async function createProviderAsync(
 
 ### createProviderInstance `function`
 
-📍 [`src/core/createProvider.ts:98`](../src/core/createProvider.ts#L98)
+📍 [`src/core/createProvider.ts:99`](../src/core/createProvider.ts#L99)
 
 ```typescript
 function createProviderInstance(connector: Connector): ITextProvider
@@ -2584,7 +2584,7 @@ function createProviderInstance(connector: Connector): ITextProvider
 
 ### extractProviderConfig `function`
 
-📍 [`src/core/createProvider.ts:190`](../src/core/createProvider.ts#L190)
+📍 [`src/core/createProvider.ts:191`](../src/core/createProvider.ts#L191)
 
 Extract ProviderConfig from a Connector
 
@@ -2606,7 +2606,7 @@ function formatRolloverSource(input: ContextRolloverSummaryInput): string
 
 ### getVendorDefaultBaseURL `function`
 
-📍 [`src/core/createProvider.ts:57`](../src/core/createProvider.ts#L57)
+📍 [`src/core/createProvider.ts:58`](../src/core/createProvider.ts#L58)
 
 Get the default API base URL for a vendor.
 For OpenAI/Anthropic reads from the installed SDK at runtime.
@@ -2653,7 +2653,7 @@ function nativePrincipal(context: AgentContextNextGen): string
 
 ### nativeProviderEndpoint `function`
 
-📍 [`src/core/createProvider.ts:79`](../src/core/createProvider.ts#L79)
+📍 [`src/core/createProvider.ts:80`](../src/core/createProvider.ts#L80)
 
 ```typescript
 export function nativeProviderEndpoint(provider: ITextProvider, connector: Connector): string
@@ -3189,7 +3189,7 @@ Complete TTS model description
 
 ### STTStreamEvent `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:225`](../src/domain/interfaces/IAudioProvider.ts#L225)
+📍 [`src/domain/interfaces/IAudioProvider.ts:226`](../src/domain/interfaces/IAudioProvider.ts#L226)
 
 Normalized event emitted by a live transcription session.
 
@@ -3214,7 +3214,7 @@ Normalized event emitted by a live transcription session.
 
 ### STTStreamOptions `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:213`](../src/domain/interfaces/IAudioProvider.ts#L213)
+📍 [`src/domain/interfaces/IAudioProvider.ts:214`](../src/domain/interfaces/IAudioProvider.ts#L214)
 
 Audio source and normalized controls for a live transcription session.
 
@@ -3338,7 +3338,7 @@ TTS model pricing
 
 ### TTSOptions `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:16`](../src/domain/interfaces/IAudioProvider.ts#L16)
+📍 [`src/domain/interfaces/IAudioProvider.ts:17`](../src/domain/interfaces/IAudioProvider.ts#L17)
 
 Options for text-to-speech synthesis
 
@@ -3364,7 +3364,7 @@ are forwarded to the SDK as `{ id }` automatically. |
 
 ### TTSResponse `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:45`](../src/domain/interfaces/IAudioProvider.ts#L45)
+📍 [`src/domain/interfaces/IAudioProvider.ts:46`](../src/domain/interfaces/IAudioProvider.ts#L46)
 
 Response from text-to-speech synthesis
 
@@ -3385,7 +3385,7 @@ Response from text-to-speech synthesis
 
 ### TTSStreamChunk `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:80`](../src/domain/interfaces/IAudioProvider.ts#L80)
+📍 [`src/domain/interfaces/IAudioProvider.ts:81`](../src/domain/interfaces/IAudioProvider.ts#L81)
 
 A single chunk of streamed TTS audio
 
@@ -3403,7 +3403,7 @@ A single chunk of streamed TTS audio
 
 ### STTStreamInput `type`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:210`](../src/domain/interfaces/IAudioProvider.ts#L210)
+📍 [`src/domain/interfaces/IAudioProvider.ts:211`](../src/domain/interfaces/IAudioProvider.ts#L211)
 
 Input frame for live STT. `finalize` ends the current utterance without closing the session.
 
@@ -4391,7 +4391,7 @@ STT model pricing
 
 ### STTOptions `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:115`](../src/domain/interfaces/IAudioProvider.ts#L115)
+📍 [`src/domain/interfaces/IAudioProvider.ts:116`](../src/domain/interfaces/IAudioProvider.ts#L116)
 
 Options for speech-to-text transcription
 
@@ -4418,7 +4418,7 @@ Options for speech-to-text transcription
 
 ### STTResponse `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:177`](../src/domain/interfaces/IAudioProvider.ts#L177)
+📍 [`src/domain/interfaces/IAudioProvider.ts:178`](../src/domain/interfaces/IAudioProvider.ts#L178)
 
 Response from speech-to-text transcription
 
@@ -4461,7 +4461,7 @@ type STTOutputFormat = 'json' | 'text' | 'srt' | 'vtt' | 'verbose_json'
 
 ### STTOutputFormat `type`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:110`](../src/domain/interfaces/IAudioProvider.ts#L110)
+📍 [`src/domain/interfaces/IAudioProvider.ts:111`](../src/domain/interfaces/IAudioProvider.ts#L111)
 
 STT output format types
 
@@ -5407,7 +5407,7 @@ async listModels(): Promise&lt;string[]&gt;
 
 ### FetchImageOptions `interface`
 
-📍 [`src/utils/imageUtils.ts:11`](../src/utils/imageUtils.ts#L11)
+📍 [`src/utils/imageUtils.ts:12`](../src/utils/imageUtils.ts#L12)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -5506,7 +5506,7 @@ Complete image model description
 
 ### IImageProvider `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:53`](../src/domain/interfaces/IImageProvider.ts#L53)
+📍 [`src/domain/interfaces/IImageProvider.ts:54`](../src/domain/interfaces/IImageProvider.ts#L54)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -5566,7 +5566,7 @@ listModels?(): Promise&lt;string[]&gt;;
 
 ### ImageData `interface`
 
-📍 [`src/utils/imageUtils.ts:5`](../src/utils/imageUtils.ts#L5)
+📍 [`src/utils/imageUtils.ts:6`](../src/utils/imageUtils.ts#L6)
 
 Image utilities for processing images
 
@@ -5585,7 +5585,7 @@ Image utilities for processing images
 
 ### ImageEditOptions `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:20`](../src/domain/interfaces/IImageProvider.ts#L20)
+📍 [`src/domain/interfaces/IImageProvider.ts:21`](../src/domain/interfaces/IImageProvider.ts#L21)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -5626,7 +5626,7 @@ Image utilities for processing images
 
 ### ImageGenerateOptions `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:7`](../src/domain/interfaces/IImageProvider.ts#L7)
+📍 [`src/domain/interfaces/IImageProvider.ts:8`](../src/domain/interfaces/IImageProvider.ts#L8)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -5738,7 +5738,7 @@ Image model pricing
 
 ### ImageResponse `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:40`](../src/domain/interfaces/IImageProvider.ts#L40)
+📍 [`src/domain/interfaces/IImageProvider.ts:41`](../src/domain/interfaces/IImageProvider.ts#L41)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -5762,7 +5762,7 @@ Image model pricing
 
 ### ImageVariationOptions `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:32`](../src/domain/interfaces/IImageProvider.ts#L32)
+📍 [`src/domain/interfaces/IImageProvider.ts:33`](../src/domain/interfaces/IImageProvider.ts#L33)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -5982,7 +5982,7 @@ export function createMessageWithImages(
 
 ### detectImageFormat `function`
 
-📍 [`src/utils/imageUtils.ts:143`](../src/utils/imageUtils.ts#L143)
+📍 [`src/utils/imageUtils.ts:146`](../src/utils/imageUtils.ts#L146)
 
 Detect image format from base64 data
 
@@ -5994,19 +5994,19 @@ export function detectImageFormat(base64Data: string): string
 
 ### detectImageFormatFromBuffer `function`
 
-📍 [`src/utils/imageUtils.ts:129`](../src/utils/imageUtils.ts#L129)
+📍 [`src/utils/imageUtils.ts:132`](../src/utils/imageUtils.ts#L132)
 
 Detect image format from buffer magic numbers
 
 ```typescript
-function detectImageFormatFromBuffer(buffer: Buffer): string
+function detectImageFormatFromBuffer(buffer: Uint8Array): string
 ```
 
 ---
 
 ### fetchImageAsBase64 `function`
 
-📍 [`src/utils/imageUtils.ts:25`](../src/utils/imageUtils.ts#L25)
+📍 [`src/utils/imageUtils.ts:26`](../src/utils/imageUtils.ts#L26)
 
 Fetch an image from URL and convert to base64
 Used by providers that require base64 (like Google)
@@ -7670,7 +7670,7 @@ getConnector(): Connector
 
 ### CharacterRef `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:84`](../src/domain/interfaces/IVideoProvider.ts#L84)
+📍 [`src/domain/interfaces/IVideoProvider.ts:85`](../src/domain/interfaces/IVideoProvider.ts#L85)
 
 A reusable character reference (Sora character API).
 
@@ -7688,7 +7688,7 @@ A reusable character reference (Sora character API).
 
 ### CreateCharacterOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:74`](../src/domain/interfaces/IVideoProvider.ts#L74)
+📍 [`src/domain/interfaces/IVideoProvider.ts:75`](../src/domain/interfaces/IVideoProvider.ts#L75)
 
 Options for creating a reusable character from a reference video
 (Sora character API).
@@ -7833,7 +7833,7 @@ Video model description
 
 ### IVideoProvider `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:151`](../src/domain/interfaces/IVideoProvider.ts#L151)
+📍 [`src/domain/interfaces/IVideoProvider.ts:152`](../src/domain/interfaces/IVideoProvider.ts#L152)
 
 Video provider interface
 
@@ -7878,7 +7878,7 @@ downloadVideo?(jobId: string): Promise&lt;Buffer&gt;;
 **Parameters:**
 - `jobId`: `string`
 
-**Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt;&gt;`
+**Returns:** `Promise&lt;MediaBytes&gt;`
 
 #### `extendVideo()?`
 
@@ -8001,7 +8001,7 @@ Simplified options for quick generation
 
 ### VideoEditOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:61`](../src/domain/interfaces/IVideoProvider.ts#L61)
+📍 [`src/domain/interfaces/IVideoProvider.ts:62`](../src/domain/interfaces/IVideoProvider.ts#L62)
 
 Options for editing an existing video.
 Edit = apply a prompt-described change to a completed video.
@@ -8021,7 +8021,7 @@ Edit = apply a prompt-described change to a completed video.
 
 ### VideoExtendOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:32`](../src/domain/interfaces/IVideoProvider.ts#L32)
+📍 [`src/domain/interfaces/IVideoProvider.ts:33`](../src/domain/interfaces/IVideoProvider.ts#L33)
 
 Options for extending an existing video
 
@@ -8042,7 +8042,7 @@ Options for extending an existing video
 
 ### VideoGenerateOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:10`](../src/domain/interfaces/IVideoProvider.ts#L10)
+📍 [`src/domain/interfaces/IVideoProvider.ts:11`](../src/domain/interfaces/IVideoProvider.ts#L11)
 
 Options for generating a video
 
@@ -8083,7 +8083,7 @@ Options for creating a VideoGeneration instance
 
 ### VideoJob `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:99`](../src/domain/interfaces/IVideoProvider.ts#L99)
+📍 [`src/domain/interfaces/IVideoProvider.ts:100`](../src/domain/interfaces/IVideoProvider.ts#L100)
 
 Video generation job
 
@@ -8161,7 +8161,7 @@ Video model pricing
 
 ### VideoRemixOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:50`](../src/domain/interfaces/IVideoProvider.ts#L50)
+📍 [`src/domain/interfaces/IVideoProvider.ts:51`](../src/domain/interfaces/IVideoProvider.ts#L51)
 
 Options for remixing an existing video.
 Remix = re-generate the same clip with a new prompt steering the result.
@@ -8181,7 +8181,7 @@ The video reference is the completed-video ID returned by `generateVideo`.
 
 ### VideoResponse `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:117`](../src/domain/interfaces/IVideoProvider.ts#L117)
+📍 [`src/domain/interfaces/IVideoProvider.ts:118`](../src/domain/interfaces/IVideoProvider.ts#L118)
 
 Video generation response
 
@@ -8277,7 +8277,7 @@ type VideoModelRegistry = Record&lt;string, IVideoModelDescription&gt;
 
 ### VideoStatus `type`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:94`](../src/domain/interfaces/IVideoProvider.ts#L94)
+📍 [`src/domain/interfaces/IVideoProvider.ts:95`](../src/domain/interfaces/IVideoProvider.ts#L95)
 
 Video generation status (for async operations)
 
@@ -15363,64 +15363,43 @@ async patch(agentId: string, updates: Partial&lt;AgentState&gt;): Promise&lt;voi
 
 ### InMemoryEvidenceStorage `class`
 
-📍 [`src/infrastructure/storage/EvidenceStorage.ts:202`](../src/infrastructure/storage/EvidenceStorage.ts#L202)
+📍 [`src/infrastructure/storage/InMemoryEvidenceStorage.browser.ts:5`](../src/infrastructure/storage/InMemoryEvidenceStorage.browser.ts#L5)
 
-Bounded process-local store. Share the instance explicitly when resuming in-process.
+Bounded realm-local evidence; share the instance explicitly when resuming.
 
 <details>
-<summary><strong>Methods</strong></summary>
+<summary><strong>Constructor</strong></summary>
 
-#### `inventory()`
-
-```typescript
-protected async inventory(): Promise&lt;Array&lt;{ id: string; bytes: number }&gt;&gt;
-```
-
-**Returns:** `Promise&lt;{ id: string; bytes: number; }[]&gt;`
-
-#### `writeBlob()`
+#### `constructor`
 
 ```typescript
-protected async writeBlob(id: string, bytes: Buffer): Promise&lt;void&gt;
+constructor(options: EvidenceStorageOptions)
 ```
 
 **Parameters:**
-- `id`: `string`
-- `bytes`: `Buffer&lt;ArrayBufferLike&gt;`
-
-**Returns:** `Promise&lt;void&gt;`
-
-#### `readBlob()`
-
-```typescript
-protected async readBlob(id: string): Promise&lt;Buffer | null&gt;
-```
-
-**Parameters:**
-- `id`: `string`
-
-**Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt; | null&gt;`
-
-#### `removeBlob()`
-
-```typescript
-protected async removeBlob(id: string): Promise&lt;boolean&gt;
-```
-
-**Parameters:**
-- `id`: `string`
-
-**Returns:** `Promise&lt;boolean&gt;`
+- `options`: `EvidenceStorageOptions`
 
 </details>
 
-<details>
-<summary><strong>Properties</strong></summary>
+---
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `durability` | `durability: "process"` | - |
-| `queueKey` | `queueKey: `${string}-${string}-${string}-${string}-${string}`` | - |
+### InMemoryEvidenceStorage `class`
+
+📍 [`src/infrastructure/storage/InMemoryEvidenceStorage.ts:4`](../src/infrastructure/storage/InMemoryEvidenceStorage.ts#L4)
+
+Bounded realm-local evidence; share the instance explicitly when resuming.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(options: EvidenceStorageOptions)
+```
+
+**Parameters:**
+- `options`: `EvidenceStorageOptions`
 
 </details>
 
@@ -15528,7 +15507,7 @@ async restoreState(state: SerializedHistoryState): Promise&lt;void&gt;
 
 ### InMemoryMetrics `class`
 
-📍 [`src/infrastructure/observability/Metrics.ts:83`](../src/infrastructure/observability/Metrics.ts#L83)
+📍 [`src/infrastructure/observability/Metrics.ts:84`](../src/infrastructure/observability/Metrics.ts#L84)
 
 In-memory metrics aggregator (testing/development)
 
@@ -15836,7 +15815,7 @@ async getTotalSize(): Promise&lt;number&gt;
 
 ### InvalidTaskTransitionError `class`
 
-📍 [`src/memory/MemorySystem.ts:222`](../src/memory/MemorySystem.ts#L222)
+📍 [`src/memory/MemorySystem.ts:223`](../src/memory/MemorySystem.ts#L223)
 
 Thrown when `transitionTaskState` is called with `validate: 'strict'` and
 the (from, to) pair is not allowed by the caller-supplied transition matrix.
@@ -16026,6 +16005,71 @@ estimateSavings(component: IContextComponent): number
 |----------|------|-------------|
 | `name` | `name: "memory-eviction"` | - |
 | `priority` | `priority: 8` | - |
+
+</details>
+
+---
+
+### MemoryEvidenceStorage `class`
+
+📍 [`src/infrastructure/storage/MemoryEvidenceStorage.ts:4`](../src/infrastructure/storage/MemoryEvidenceStorage.ts#L4)
+
+Bounded process-local store. Share the instance explicitly when resuming in-process.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `inventory()`
+
+```typescript
+protected async inventory(): Promise&lt;Array&lt;{ id: string; bytes: number }&gt;&gt;
+```
+
+**Returns:** `Promise&lt;{ id: string; bytes: number; }[]&gt;`
+
+#### `writeBlob()`
+
+```typescript
+protected async writeBlob(id: string, bytes: Bytes): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `bytes`: `Bytes`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `readBlob()`
+
+```typescript
+protected async readBlob(id: string): Promise&lt;Bytes | null&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Promise&lt;Bytes | null&gt;`
+
+#### `removeBlob()`
+
+```typescript
+protected async removeBlob(id: string): Promise&lt;boolean&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Promise&lt;boolean&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `durability` | `durability: "process"` | - |
+| `queueKey` | `queueKey: `${string}-${string}-${string}-${string}-${string}`` | - |
 
 </details>
 
@@ -16306,7 +16350,7 @@ async listKeys(): Promise&lt;string[]&gt;
 
 ### MemorySystem `class`
 
-📍 [`src/memory/MemorySystem.ts:304`](../src/memory/MemorySystem.ts#L304)
+📍 [`src/memory/MemorySystem.ts:305`](../src/memory/MemorySystem.ts#L305)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -18304,7 +18348,7 @@ restoreState(_state: unknown): void
 
 ### ModelBudgetExceededError `class`
 
-📍 [`src/core/model-execution/ModelTask.ts:9`](../src/core/model-execution/ModelTask.ts#L9)
+📍 [`src/core/model-execution/ModelTask.ts:11`](../src/core/model-execution/ModelTask.ts#L11)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -18324,7 +18368,7 @@ constructor(public readonly limit: string)
 
 ### ModelTask `class`
 
-📍 [`src/core/model-execution/ModelTask.ts:123`](../src/core/model-execution/ModelTask.ts#L123)
+📍 [`src/core/model-execution/ModelTask.ts:129`](../src/core/model-execution/ModelTask.ts#L129)
 
 In-process shared admission, reservations and usage. Never stores prompts or credentials.
 
@@ -19100,7 +19144,7 @@ finalizePlanning(): void
 
 ### ScopedMemoryView `class`
 
-📍 [`src/memory/MemorySystem.ts:5907`](../src/memory/MemorySystem.ts#L5907)
+📍 [`src/memory/MemorySystem.ts:5908`](../src/memory/MemorySystem.ts#L5908)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -20555,7 +20599,7 @@ Generated plan with metadata
 
 ### HierarchyMetadata `interface`
 
-📍 [`src/domain/entities/Memory.ts:159`](../src/domain/entities/Memory.ts#L159)
+📍 [`src/domain/entities/Memory.ts:160`](../src/domain/entities/Memory.ts#L160)
 
 Hierarchy metadata for tracking data relationships
 
@@ -21177,46 +21221,6 @@ shutdown?(): Promise&lt;void&gt;;
 
 ---
 
-### InvocationState `interface`
-
-📍 [`src/core/model-execution/ModelTask.ts:17`](../src/core/model-execution/ModelTask.ts#L17)
-
-<details>
-<summary><strong>Methods</strong></summary>
-
-#### `beginTransport()`
-
-```typescript
-beginTransport(): ModelAttemptRecord;
-```
-
-**Returns:** `ModelAttemptRecord`
-
-#### `endTransport()`
-
-```typescript
-endTransport(attempt: ModelAttemptRecord, status?: number): void;
-```
-
-**Parameters:**
-- `attempt`: `ModelAttemptRecord`
-- `status`: `number | undefined` *(optional)*
-
-**Returns:** `void`
-
-</details>
-
-<details>
-<summary><strong>Properties</strong></summary>
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `signal` | `signal: AbortSignal;` | - |
-
-</details>
-
----
-
 ### IPlanStorage `interface`
 
 📍 [`src/domain/interfaces/IPlanStorage.ts:8`](../src/domain/interfaces/IPlanStorage.ts#L8)
@@ -21377,7 +21381,7 @@ findFacts(filter: FactFilter, opts?: { limit?: number }): Promise&lt;IFact[]&gt;
 
 ### MemoryEntry `interface`
 
-📍 [`src/domain/entities/Memory.ts:380`](../src/domain/entities/Memory.ts#L380)
+📍 [`src/domain/entities/Memory.ts:381`](../src/domain/entities/Memory.ts#L381)
 
 Single memory entry stored in working memory
 
@@ -21403,7 +21407,7 @@ Single memory entry stored in working memory
 
 ### MemoryEntryInput `interface`
 
-📍 [`src/domain/entities/Memory.ts:444`](../src/domain/entities/Memory.ts#L444)
+📍 [`src/domain/entities/Memory.ts:445`](../src/domain/entities/Memory.ts#L445)
 
 Input for creating a memory entry
 
@@ -21425,7 +21429,7 @@ Input for creating a memory entry
 
 ### MemoryIndex `interface`
 
-📍 [`src/domain/entities/Memory.ts:408`](../src/domain/entities/Memory.ts#L408)
+📍 [`src/domain/entities/Memory.ts:409`](../src/domain/entities/Memory.ts#L409)
 
 Full memory index with metadata
 
@@ -21449,7 +21453,7 @@ Full memory index with metadata
 
 ### MemoryIndexEntry `interface`
 
-📍 [`src/domain/entities/Memory.ts:396`](../src/domain/entities/Memory.ts#L396)
+📍 [`src/domain/entities/Memory.ts:397`](../src/domain/entities/Memory.ts#L397)
 
 Index entry (lightweight, always in context)
 
@@ -22123,7 +22127,7 @@ PlanningAgent configuration
 
 ### PriorityContext `interface`
 
-📍 [`src/domain/entities/Memory.ts:207`](../src/domain/entities/Memory.ts#L207)
+📍 [`src/domain/entities/Memory.ts:208`](../src/domain/entities/Memory.ts#L208)
 
 Context passed to priority calculator - varies by agent type
 
@@ -22240,7 +22244,7 @@ responsible for visibility-validating the additions. |
 
 ### RoutineGetTaskStepsArgs `interface`
 
-📍 [`src/tools/routines/routineGetTaskSteps.ts:12`](../src/tools/routines/routineGetTaskSteps.ts#L12)
+📍 [`src/tools/routines/routineGetTaskSteps.ts:13`](../src/tools/routines/routineGetTaskSteps.ts#L13)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -22321,7 +22325,7 @@ responsible for visibility-validating the additions. |
 
 ### RoutineUpdateTaskArgs `interface`
 
-📍 [`src/tools/routines/routineUpdateTask.ts:23`](../src/tools/routines/routineUpdateTask.ts#L23)
+📍 [`src/tools/routines/routineUpdateTask.ts:24`](../src/tools/routines/routineUpdateTask.ts#L24)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -22418,7 +22422,7 @@ Serialized memory entry
 
 ### StaleEntryInfo `interface`
 
-📍 [`src/domain/entities/Memory.ts:328`](../src/domain/entities/Memory.ts#L328)
+📍 [`src/domain/entities/Memory.ts:329`](../src/domain/entities/Memory.ts#L329)
 
 Information about a stale entry for LLM notification
 
@@ -22657,7 +22661,7 @@ by the user". `reason` is REQUIRED whenever `newState` is set.
 
 ### TaskScopedEntryInput `interface`
 
-📍 [`src/domain/entities/Memory.ts:459`](../src/domain/entities/Memory.ts#L459)
+📍 [`src/domain/entities/Memory.ts:460`](../src/domain/entities/Memory.ts#L460)
 
 Shorthand for task-scoped entry
 
@@ -22710,7 +22714,7 @@ Reference to a source value for control flow operations.
 
 ### TaskStateHistoryEntry `interface`
 
-📍 [`src/memory/MemorySystem.ts:264`](../src/memory/MemorySystem.ts#L264)
+📍 [`src/memory/MemorySystem.ts:265`](../src/memory/MemorySystem.ts#L265)
 
 Single entry appended to `task.metadata.stateHistory` on every transition.
 No cap — retention is the caller's problem (audit systems, GDPR, archival).
@@ -22894,7 +22898,7 @@ Until: repeat a sub-routine until a condition is met
 
 ### TaskUpdates `interface`
 
-📍 [`src/tools/routines/routineUpdateTask.ts:12`](../src/tools/routines/routineUpdateTask.ts#L12)
+📍 [`src/tools/routines/routineUpdateTask.ts:13`](../src/tools/routines/routineUpdateTask.ts#L13)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -22993,7 +22997,7 @@ Result of task validation (returned by LLM reflection)
 
 ### TransitionTaskStateOptions `interface`
 
-📍 [`src/memory/MemorySystem.ts:272`](../src/memory/MemorySystem.ts#L272)
+📍 [`src/memory/MemorySystem.ts:273`](../src/memory/MemorySystem.ts#L273)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -23017,7 +23021,7 @@ Keys include `'__initial'` for transitions into a first-time state. |
 
 ### TransitionTaskStateResult `interface`
 
-📍 [`src/memory/MemorySystem.ts:294`](../src/memory/MemorySystem.ts#L294)
+📍 [`src/memory/MemorySystem.ts:295`](../src/memory/MemorySystem.ts#L295)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -23130,7 +23134,7 @@ list(): Promise&lt;
 
 ### WorkingMemoryConfig `interface`
 
-📍 [`src/domain/entities/Memory.ts:424`](../src/domain/entities/Memory.ts#L424)
+📍 [`src/domain/entities/Memory.ts:425`](../src/domain/entities/Memory.ts#L425)
 
 Configuration for working memory
 
@@ -23230,7 +23234,7 @@ type EvictionStrategy = 'lru' | 'size'
 
 ### MemoryPriority `type`
 
-📍 [`src/domain/entities/Memory.ts:110`](../src/domain/entities/Memory.ts#L110)
+📍 [`src/domain/entities/Memory.ts:111`](../src/domain/entities/Memory.ts#L111)
 
 Priority determines eviction order (lower priority evicted first)
 
@@ -23247,7 +23251,7 @@ type MemoryPriority = 'critical' | 'high' | 'normal' | 'low'
 
 ### MemoryScope `type`
 
-📍 [`src/domain/entities/Memory.ts:33`](../src/domain/entities/Memory.ts#L33)
+📍 [`src/domain/entities/Memory.ts:34`](../src/domain/entities/Memory.ts#L34)
 
 Union type - memory system accepts both
 
@@ -23274,7 +23278,7 @@ type MemorySystemWithConnectorsConfig = Omit&lt;
 
 ### MemoryTier `type`
 
-📍 [`src/domain/entities/Memory.ts:136`](../src/domain/entities/Memory.ts#L136)
+📍 [`src/domain/entities/Memory.ts:137`](../src/domain/entities/Memory.ts#L137)
 
 Memory tier for hierarchical data management
 
@@ -23310,7 +23314,7 @@ type PlanStatus = | 'pending'
 
 ### PriorityCalculator `type`
 
-📍 [`src/domain/entities/Memory.ts:237`](../src/domain/entities/Memory.ts#L237)
+📍 [`src/domain/entities/Memory.ts:238`](../src/domain/entities/Memory.ts#L238)
 
 Priority calculator function type.
 Given an entry and optional context, returns the effective priority.
@@ -23326,7 +23330,7 @@ type PriorityCalculator = (
 
 ### SimpleScope `type`
 
-📍 [`src/domain/entities/Memory.ts:20`](../src/domain/entities/Memory.ts#L20)
+📍 [`src/domain/entities/Memory.ts:21`](../src/domain/entities/Memory.ts#L21)
 
 Memory entities for WorkingMemory
 
@@ -23346,7 +23350,7 @@ type SimpleScope = 'session' | 'persistent'
 
 ### StaleReason `type`
 
-📍 [`src/domain/entities/Memory.ts:319`](../src/domain/entities/Memory.ts#L319)
+📍 [`src/domain/entities/Memory.ts:320`](../src/domain/entities/Memory.ts#L320)
 
 Reason why an entry became stale
 
@@ -23373,7 +23377,7 @@ type SubRoutineSpec = TaskInput[] | RoutineDefinition
 
 ### TaskAwareScope `type`
 
-📍 [`src/domain/entities/Memory.ts:25`](../src/domain/entities/Memory.ts#L25)
+📍 [`src/domain/entities/Memory.ts:26`](../src/domain/entities/Memory.ts#L26)
 
 Task-aware scope for TaskAgent/UniversalAgent
 
@@ -23450,7 +23454,7 @@ type TaskStatus = | 'pending'           // Not started
 
 ### TaskStatusForMemory `type`
 
-📍 [`src/domain/entities/Memory.ts:219`](../src/domain/entities/Memory.ts#L219)
+📍 [`src/domain/entities/Memory.ts:220`](../src/domain/entities/Memory.ts#L220)
 
 Task status values for priority calculation
 
@@ -23462,7 +23466,7 @@ type TaskStatusForMemory = 'pending' | 'in_progress' | 'completed' | 'failed' | 
 
 ### addTierPrefix `function`
 
-📍 [`src/domain/entities/Memory.ts:190`](../src/domain/entities/Memory.ts#L190)
+📍 [`src/domain/entities/Memory.ts:191`](../src/domain/entities/Memory.ts#L191)
 
 Add tier prefix to key (if not already present)
 
@@ -23486,7 +23490,7 @@ function buildPlanOverview(execution: RoutineExecution, definition: RoutineDefin
 
 ### calculateEntrySize `function`
 
-📍 [`src/domain/entities/Memory.ts:539`](../src/domain/entities/Memory.ts#L539)
+📍 [`src/domain/entities/Memory.ts:540`](../src/domain/entities/Memory.ts#L540)
 
 Calculate the size of a value in bytes (JSON serialization)
 Uses Buffer.byteLength for accurate UTF-8 byte count
@@ -23532,7 +23536,7 @@ async function cleanupMemoryKeys(
 
 ### compareTaskByDueThenRecency `function`
 
-📍 [`src/memory/MemorySystem.ts:6615`](../src/memory/MemorySystem.ts#L6615)
+📍 [`src/memory/MemorySystem.ts:6616`](../src/memory/MemorySystem.ts#L6616)
 
 Cross-source relevance ordering for related-tasks output. Matches the
 push-down sort on `listOpenTasks` / `resolveRelatedTasks` per-role query
@@ -23549,7 +23553,7 @@ function compareTaskByDueThenRecency(a: IEntity, b: IEntity): number
 
 ### copyUsage `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:47`](../src/core/model-execution/ModelTask.ts#L47)
+📍 [`src/core/model-execution/ModelTask.ts:43`](../src/core/model-execution/ModelTask.ts#L43)
 
 ```typescript
 function copyUsage(value: TokenUsage | undefined | null): TokenUsage | undefined
@@ -23571,7 +23575,7 @@ export function createInContextMemoryContributor(plugin: InContextMemoryPluginNe
 
 ### createMemoryEntry `function`
 
-📍 [`src/domain/entities/Memory.ts:557`](../src/domain/entities/Memory.ts#L557)
+📍 [`src/domain/entities/Memory.ts:558`](../src/domain/entities/Memory.ts#L558)
 
 Create a memory entry with defaults and validation
 
@@ -23648,7 +23652,7 @@ export function createPlan(input: PlanInput): Plan
 
 ### createRoutineGetTaskSteps `function`
 
-📍 [`src/tools/routines/routineGetTaskSteps.ts:42`](../src/tools/routines/routineGetTaskSteps.ts#L42)
+📍 [`src/tools/routines/routineGetTaskSteps.ts:43`](../src/tools/routines/routineGetTaskSteps.ts#L43)
 
 ```typescript
 export function createRoutineGetTaskSteps(
@@ -23660,7 +23664,7 @@ export function createRoutineGetTaskSteps(
 
 ### createRoutineUpdateTask `function`
 
-📍 [`src/tools/routines/routineUpdateTask.ts:29`](../src/tools/routines/routineUpdateTask.ts#L29)
+📍 [`src/tools/routines/routineUpdateTask.ts:30`](../src/tools/routines/routineUpdateTask.ts#L30)
 
 ```typescript
 export function createRoutineUpdateTask(
@@ -23720,7 +23724,7 @@ export function detectDependencyCycle(tasks: Task[]): string[] | null
 
 ### detectStaleEntries `function`
 
-📍 [`src/domain/entities/Memory.ts:340`](../src/domain/entities/Memory.ts#L340)
+📍 [`src/domain/entities/Memory.ts:341`](../src/domain/entities/Memory.ts#L341)
 
 Detect entries that became stale after task completion
 
@@ -23749,9 +23753,19 @@ export async function evaluateCondition(
 
 ---
 
+### fetchForState `function`
+
+📍 [`src/core/model-execution/ModelTask.ts:101`](../src/core/model-execution/ModelTask.ts#L101)
+
+```typescript
+async function fetchForState(state: InvocationState | undefined, input: Parameters&lt;typeof fetch&gt;[0], init?: Parameters&lt;typeof fetch&gt;[1]): Promise&lt;Response&gt;
+```
+
+---
+
 ### formatEntryFlags `function`
 
-📍 [`src/domain/entities/Memory.ts:638`](../src/domain/entities/Memory.ts#L638)
+📍 [`src/domain/entities/Memory.ts:639`](../src/domain/entities/Memory.ts#L639)
 
 Format entry flags for display
 
@@ -23763,7 +23777,7 @@ function formatEntryFlags(entry: MemoryIndexEntry): string
 
 ### formatMemoryIndex `function`
 
-📍 [`src/domain/entities/Memory.ts:657`](../src/domain/entities/Memory.ts#L657)
+📍 [`src/domain/entities/Memory.ts:658`](../src/domain/entities/Memory.ts#L658)
 
 Format memory index for context injection
 
@@ -23775,7 +23789,7 @@ export function formatMemoryIndex(index: MemoryIndex, storeId?: string): string
 
 ### formatScope `function`
 
-📍 [`src/domain/entities/Memory.ts:624`](../src/domain/entities/Memory.ts#L624)
+📍 [`src/domain/entities/Memory.ts:625`](../src/domain/entities/Memory.ts#L625)
 
 Format scope for display
 
@@ -23787,7 +23801,7 @@ function formatScope(scope: MemoryScope): string
 
 ### formatSizeHuman `function`
 
-📍 [`src/domain/entities/Memory.ts:602`](../src/domain/entities/Memory.ts#L602)
+📍 [`src/domain/entities/Memory.ts:603`](../src/domain/entities/Memory.ts#L603)
 
 Format bytes to human-readable string
 
@@ -23799,7 +23813,7 @@ export function formatSizeHuman(bytes: number): string
 
 ### forPlan `function`
 
-📍 [`src/domain/entities/Memory.ts:487`](../src/domain/entities/Memory.ts#L487)
+📍 [`src/domain/entities/Memory.ts:488`](../src/domain/entities/Memory.ts#L488)
 
 Create a plan-scoped memory entry input
 
@@ -23816,7 +23830,7 @@ export function forPlan(
 
 ### forTasks `function`
 
-📍 [`src/domain/entities/Memory.ts:467`](../src/domain/entities/Memory.ts#L467)
+📍 [`src/domain/entities/Memory.ts:468`](../src/domain/entities/Memory.ts#L468)
 
 Create a task-scoped memory entry input
 
@@ -23849,7 +23863,7 @@ export async function generateSimplePlan(
 
 ### getFailedModelUsage `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:33`](../src/core/model-execution/ModelTask.ts#L33)
+📍 [`src/core/model-execution/ModelTask.ts:29`](../src/core/model-execution/ModelTask.ts#L29)
 
 ```typescript
 export function getFailedModelUsage(error: unknown): TokenUsage | undefined
@@ -23859,7 +23873,7 @@ export function getFailedModelUsage(error: unknown): TokenUsage | undefined
 
 ### getModelAccountingUsage `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:41`](../src/core/model-execution/ModelTask.ts#L41)
+📍 [`src/core/model-execution/ModelTask.ts:37`](../src/core/model-execution/ModelTask.ts#L37)
 
 ```typescript
 export function getModelAccountingUsage(value: TokenUsage): TokenUsage
@@ -23893,7 +23907,7 @@ export function getTaskDependencies(task: Task, allTasks: Task[]): Task[]
 
 ### getTierFromKey `function`
 
-📍 [`src/domain/entities/Memory.ts:171`](../src/domain/entities/Memory.ts#L171)
+📍 [`src/domain/entities/Memory.ts:172`](../src/domain/entities/Memory.ts#L172)
 
 Check if a key has a tier prefix
 
@@ -23905,7 +23919,7 @@ export function getTierFromKey(key: string): MemoryTier | undefined
 
 ### hasConflictingModelPricing `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:76`](../src/core/model-execution/ModelTask.ts#L76)
+📍 [`src/core/model-execution/ModelTask.ts:72`](../src/core/model-execution/ModelTask.ts#L72)
 
 ```typescript
 export function hasConflictingModelPricing(usage: Partial&lt;TokenUsage&gt;): boolean
@@ -23915,7 +23929,7 @@ export function hasConflictingModelPricing(usage: Partial&lt;TokenUsage&gt;): bo
 
 ### hasModelTransport `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:98`](../src/core/model-execution/ModelTask.ts#L98)
+📍 [`src/core/model-execution/ModelTask.ts:94`](../src/core/model-execution/ModelTask.ts#L94)
 
 ```typescript
 export function hasModelTransport(provider: object): boolean
@@ -23925,7 +23939,7 @@ export function hasModelTransport(provider: object): boolean
 
 ### isSimpleScope `function`
 
-📍 [`src/domain/entities/Memory.ts:45`](../src/domain/entities/Memory.ts#L45)
+📍 [`src/domain/entities/Memory.ts:46`](../src/domain/entities/Memory.ts#L46)
 
 Type guard: is this a simple scope?
 
@@ -23937,7 +23951,7 @@ export function isSimpleScope(scope: MemoryScope): scope is SimpleScope
 
 ### isTaskAwareScope `function`
 
-📍 [`src/domain/entities/Memory.ts:38`](../src/domain/entities/Memory.ts#L38)
+📍 [`src/domain/entities/Memory.ts:39`](../src/domain/entities/Memory.ts#L39)
 
 Type guard: is this a task-aware scope?
 
@@ -23961,7 +23975,7 @@ export function isTaskBlocked(task: Task, allTasks: Task[]): boolean
 
 ### isTerminalMemoryStatus `function`
 
-📍 [`src/domain/entities/Memory.ts:229`](../src/domain/entities/Memory.ts#L229)
+📍 [`src/domain/entities/Memory.ts:230`](../src/domain/entities/Memory.ts#L230)
 
 Check if a task status is terminal (task will not progress further)
 
@@ -23985,7 +23999,7 @@ export function isTerminalStatus(status: TaskStatus): boolean
 
 ### markFailedModelUsage `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:29`](../src/core/model-execution/ModelTask.ts#L29)
+📍 [`src/core/model-execution/ModelTask.ts:25`](../src/core/model-execution/ModelTask.ts#L25)
 
 ```typescript
 export function markFailedModelUsage(error: unknown, usage: TokenUsage | null): void
@@ -23995,7 +24009,7 @@ export function markFailedModelUsage(error: unknown, usage: TokenUsage | null): 
 
 ### markSeparateReasoningUsage `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:38`](../src/core/model-execution/ModelTask.ts#L38)
+📍 [`src/core/model-execution/ModelTask.ts:34`](../src/core/model-execution/ModelTask.ts#L34)
 
 ```typescript
 export function markSeparateReasoningUsage(usage: TokenUsage): void
@@ -24005,10 +24019,30 @@ export function markSeparateReasoningUsage(usage: TokenUsage): void
 
 ### modelRequestOptions `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:100`](../src/core/model-execution/ModelTask.ts#L100)
+📍 [`src/core/model-execution/ModelTask.ts:96`](../src/core/model-execution/ModelTask.ts#L96)
 
 ```typescript
 export function modelRequestOptions(options: { signal?: AbortSignal }): [] | [{ signal: AbortSignal }]
+```
+
+---
+
+### modelTransportClient `function`
+
+📍 [`src/core/model-execution/ModelTask.ts:123`](../src/core/model-execution/ModelTask.ts#L123)
+
+```typescript
+export function modelTransportClient&lt;T extends { withOptions(options: { fetch: typeof globalThis.fetch }): T }&gt;(client: T, signal?: AbortSignal): T
+```
+
+---
+
+### modelTransportFetch `function`
+
+📍 [`src/core/model-execution/ModelTask.ts:118`](../src/core/model-execution/ModelTask.ts#L118)
+
+```typescript
+export function modelTransportFetch(signal?: AbortSignal): typeof globalThis.fetch | undefined
 ```
 
 ---
@@ -24047,7 +24081,7 @@ export async function readMemoryValue(
 
 ### registerModelTransport `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:96`](../src/core/model-execution/ModelTask.ts#L96)
+📍 [`src/core/model-execution/ModelTask.ts:92`](../src/core/model-execution/ModelTask.ts#L92)
 
 ```typescript
 export function registerModelTransport(provider: object): void
@@ -24107,7 +24141,7 @@ export function resolveTaskTemplates(
 
 ### scopeEquals `function`
 
-📍 [`src/domain/entities/Memory.ts:53`](../src/domain/entities/Memory.ts#L53)
+📍 [`src/domain/entities/Memory.ts:54`](../src/domain/entities/Memory.ts#L54)
 
 Compare two scopes for equality
 Handles both simple scopes (string comparison) and task-aware scopes (deep comparison)
@@ -24120,7 +24154,7 @@ export function scopeEquals(a: MemoryScope, b: MemoryScope): boolean
 
 ### scopeMatches `function`
 
-📍 [`src/domain/entities/Memory.ts:83`](../src/domain/entities/Memory.ts#L83)
+📍 [`src/domain/entities/Memory.ts:84`](../src/domain/entities/Memory.ts#L84)
 
 Check if a scope matches a filter scope
 More flexible than scopeEquals - supports partial matching for task scopes
@@ -24133,7 +24167,7 @@ export function scopeMatches(entryScope: MemoryScope, filterScope: MemoryScope):
 
 ### stripTierPrefix `function`
 
-📍 [`src/domain/entities/Memory.ts:181`](../src/domain/entities/Memory.ts#L181)
+📍 [`src/domain/entities/Memory.ts:182`](../src/domain/entities/Memory.ts#L182)
 
 Strip tier prefix from key
 
@@ -24157,7 +24191,7 @@ export function updateTaskStatus(task: Task, status: TaskStatus): Task
 
 ### usageCost `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:84`](../src/core/model-execution/ModelTask.ts#L84)
+📍 [`src/core/model-execution/ModelTask.ts:80`](../src/core/model-execution/ModelTask.ts#L80)
 
 ```typescript
 function usageCost(model: string, usage: TokenUsage): number | null
@@ -24167,7 +24201,7 @@ function usageCost(model: string, usage: TokenUsage): number | null
 
 ### validateMemoryKey `function`
 
-📍 [`src/domain/entities/Memory.ts:519`](../src/domain/entities/Memory.ts#L519)
+📍 [`src/domain/entities/Memory.ts:520`](../src/domain/entities/Memory.ts#L520)
 
 Validate memory key format
 Valid: "simple", "user.profile", "order.items.123"
@@ -24205,7 +24239,7 @@ async function validateTaskCompletion(
 
 ### validateTaskStates `function`
 
-📍 [`src/memory/MemorySystem.ts:6652`](../src/memory/MemorySystem.ts#L6652)
+📍 [`src/memory/MemorySystem.ts:6653`](../src/memory/MemorySystem.ts#L6653)
 
 ```typescript
 function validateTaskStates(cfg: TaskStatesConfig | undefined): TaskStatesConfig
@@ -24215,7 +24249,7 @@ function validateTaskStates(cfg: TaskStatesConfig | undefined): TaskStatesConfig
 
 ### withoutModelTracking `function`
 
-📍 [`src/core/model-execution/ModelTask.ts:24`](../src/core/model-execution/ModelTask.ts#L24)
+📍 [`src/core/model-execution/ModelTask.ts:20`](../src/core/model-execution/ModelTask.ts#L20)
 
 ```typescript
 export function withoutModelTracking&lt;T&gt;(operation: () =&gt; T): T
@@ -24258,7 +24292,7 @@ function wrapMemoryContent(body: string): string
 
 ### DEFAULT_MEMORY_CONFIG `const`
 
-📍 [`src/domain/entities/Memory.ts:506`](../src/domain/entities/Memory.ts#L506)
+📍 [`src/domain/entities/Memory.ts:507`](../src/domain/entities/Memory.ts#L507)
 
 Default configuration values
 
@@ -24279,7 +24313,7 @@ Default configuration values
 
 ### MEMORY_PRIORITY_VALUES `const`
 
-📍 [`src/domain/entities/Memory.ts:115`](../src/domain/entities/Memory.ts#L115)
+📍 [`src/domain/entities/Memory.ts:116`](../src/domain/entities/Memory.ts#L116)
 
 Priority values for comparison (higher = more important, less likely to evict)
 
@@ -24299,7 +24333,7 @@ Priority values for comparison (higher = more important, less likely to evict)
 
 ### TIER_KEY_PREFIXES `const`
 
-📍 [`src/domain/entities/Memory.ts:150`](../src/domain/entities/Memory.ts#L150)
+📍 [`src/domain/entities/Memory.ts:151`](../src/domain/entities/Memory.ts#L151)
 
 Key prefixes for tiered data (used by helper methods)
 
@@ -24318,7 +24352,7 @@ Key prefixes for tiered data (used by helper methods)
 
 ### TIER_PRIORITIES `const`
 
-📍 [`src/domain/entities/Memory.ts:141`](../src/domain/entities/Memory.ts#L141)
+📍 [`src/domain/entities/Memory.ts:142`](../src/domain/entities/Memory.ts#L142)
 
 Default priorities for each tier
 
@@ -25396,7 +25430,7 @@ async updateFromTemplate(
 
 ### EvidenceStorage `class`
 
-📍 [`src/infrastructure/storage/EvidenceStorage.ts:29`](../src/infrastructure/storage/EvidenceStorage.ts#L29)
+📍 [`src/infrastructure/storage/EvidenceStorageBase.ts:26`](../src/infrastructure/storage/EvidenceStorageBase.ts#L26)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -25404,11 +25438,12 @@ async updateFromTemplate(
 #### `constructor`
 
 ```typescript
-constructor(options: EvidenceStorageOptions)
+constructor(options: EvidenceStorageOptions, private readonly codec: { encode(text: string): Bytes; decode(bytes: Bytes): string })
 ```
 
 **Parameters:**
 - `options`: `EvidenceStorageOptions`
+- `codec`: `{ encode(text: string): Bytes; decode(bytes: Bytes): string; }`
 
 </details>
 
@@ -25426,25 +25461,25 @@ protected abstract inventory(): Promise&lt;Array&lt;{ id: string; bytes: number 
 #### `writeBlob()`
 
 ```typescript
-protected abstract writeBlob(id: string, bytes: Buffer): Promise&lt;void&gt;;
+protected abstract writeBlob(id: string, bytes: Bytes): Promise&lt;void&gt;;
 ```
 
 **Parameters:**
 - `id`: `string`
-- `bytes`: `Buffer&lt;ArrayBufferLike&gt;`
+- `bytes`: `Bytes`
 
 **Returns:** `Promise&lt;void&gt;`
 
 #### `readBlob()`
 
 ```typescript
-protected abstract readBlob(id: string): Promise&lt;Buffer | null&gt;;
+protected abstract readBlob(id: string): Promise&lt;Bytes | null&gt;;
 ```
 
 **Parameters:**
 - `id`: `string`
 
-**Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt; | null&gt;`
+**Returns:** `Promise&lt;Bytes | null&gt;`
 
 #### `removeBlob()`
 
@@ -26183,7 +26218,7 @@ getPath(userId: string | undefined): string
 
 ### FileEvidenceStorage `class`
 
-📍 [`src/infrastructure/storage/EvidenceStorage.ts:213`](../src/infrastructure/storage/EvidenceStorage.ts#L213)
+📍 [`src/infrastructure/storage/EvidenceStorage.ts:11`](../src/infrastructure/storage/EvidenceStorage.ts#L11)
 
 Immutable atomic files, hashed scope directories (no sanitization collisions).
 
@@ -27840,7 +27875,7 @@ override on&lt;K extends keyof OpenAIResponsesWebSocketSessionEvents&gt;(
 
 ### OutcomeSession `class`
 
-📍 [`src/portable/OutcomeClient.ts:26`](../src/portable/OutcomeClient.ts#L26)
+📍 [`src/portable/OutcomeClient.ts:27`](../src/portable/OutcomeClient.ts#L27)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -28696,7 +28731,7 @@ Index entry for fast listing
 
 ### EvidenceStorageOptions `interface`
 
-📍 [`src/infrastructure/storage/EvidenceStorage.ts:7`](../src/infrastructure/storage/EvidenceStorage.ts#L7)
+📍 [`src/infrastructure/storage/EvidenceStorageBase.ts:4`](../src/infrastructure/storage/EvidenceStorageBase.ts#L4)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -28845,7 +28880,7 @@ Configuration for FileCustomToolStorage
 
 ### FileEvidenceStorageOptions `interface`
 
-📍 [`src/infrastructure/storage/EvidenceStorage.ts:19`](../src/infrastructure/storage/EvidenceStorage.ts#L19)
+📍 [`src/infrastructure/storage/EvidenceStorageBase.ts:16`](../src/infrastructure/storage/EvidenceStorageBase.ts#L16)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -30546,7 +30581,7 @@ export function createFileRoutineExecutionStorage(
 
 ### createSession `function`
 
-📍 [`src/portable/OutcomeClient.ts:241`](../src/portable/OutcomeClient.ts#L241)
+📍 [`src/portable/OutcomeClient.ts:242`](../src/portable/OutcomeClient.ts#L242)
 
 ```typescript
 async function createSession(input: OutcomeAgentPackage, options: { transport: RemoteOutcomeTransport; storage?: IEvidenceStorage; maxRequests?: number; onObservation?: AgentPackageOutcomeToolOptions['onObservation'] }): Promise&lt;OutcomeSession&gt;
@@ -31555,7 +31590,7 @@ executeLoad(category: string): Record&lt;string, unknown&gt;
 
 ### ToolCatalogRegistry `class`
 
-📍 [`src/core/ToolCatalogRegistry.ts:144`](../src/core/ToolCatalogRegistry.ts#L144)
+📍 [`src/core/ToolCatalogRegistry.ts:145`](../src/core/ToolCatalogRegistry.ts#L145)
 
 Static global registry for tool categories and their tools.
 
@@ -31921,7 +31956,7 @@ static reset(): void
 
 ### ToolEvidenceMiddleware `class`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:70`](../src/core/evidence/ToolEvidenceMiddleware.ts#L70)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:71`](../src/core/evidence/ToolEvidenceMiddleware.ts#L71)
 
 Opt-in post-settlement middleware, deliberately outside the execution plugin/error pipeline.
 
@@ -33726,7 +33761,7 @@ within this window, it's treated as a timeout error. |
 
 ### CatalogToolEntry `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:52`](../src/core/ToolCatalogRegistry.ts#L52)
+📍 [`src/core/ToolCatalogRegistry.ts:53`](../src/core/ToolCatalogRegistry.ts#L53)
 
 A single tool entry in the catalog.
 
@@ -33798,7 +33833,7 @@ the routine executor then resolves those names against the source agent.
 
 ### ConnectorCategoryInfo `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:118`](../src/core/ToolCatalogRegistry.ts#L118)
+📍 [`src/core/ToolCatalogRegistry.ts:119`](../src/core/ToolCatalogRegistry.ts#L119)
 
 Connector category metadata returned by discoverConnectorCategories().
 
@@ -34143,7 +34178,7 @@ Test case for a custom tool
 
 ### DeliveryProvenance `interface`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:31`](../src/core/evidence/ToolEvidenceMiddleware.ts#L31)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:32`](../src/core/evidence/ToolEvidenceMiddleware.ts#L32)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -35117,7 +35152,7 @@ reportFailure(error: Error): void;
 
 ### ParsedConnectorCategory `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:108`](../src/core/ToolCatalogRegistry.ts#L108)
+📍 [`src/core/ToolCatalogRegistry.ts:109`](../src/core/ToolCatalogRegistry.ts#L109)
 
 Parsed connector category: connector name + optional account alias.
 
@@ -35830,7 +35865,7 @@ Tool call detected and starting
 
 ### ToolCategoryDefinition `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:40`](../src/core/ToolCatalogRegistry.ts#L40)
+📍 [`src/core/ToolCatalogRegistry.ts:41`](../src/core/ToolCatalogRegistry.ts#L41)
 
 Definition of a tool category in the catalog.
 
@@ -35964,7 +35999,7 @@ Resolution order in connector tools:
 
 ### ToolEvidenceConfig `interface`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:14`](../src/core/evidence/ToolEvidenceMiddleware.ts#L14)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:15`](../src/core/evidence/ToolEvidenceMiddleware.ts#L15)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -35987,7 +36022,7 @@ Custom stores without a hint retain their own capacity policy unless this option
 
 ### ToolEvidenceDelivery `interface`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:13`](../src/core/evidence/ToolEvidenceMiddleware.ts#L13)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:14`](../src/core/evidence/ToolEvidenceMiddleware.ts#L14)
 
 Projection belongs only to the managed prompt view. Raw returns/events stay raw.
 
@@ -36004,7 +36039,7 @@ Projection belongs only to the managed prompt view. Raw returns/events stay raw.
 
 ### ToolEvidenceReceipt `interface`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:6`](../src/core/evidence/ToolEvidenceMiddleware.ts#L6)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:7`](../src/core/evidence/ToolEvidenceMiddleware.ts#L7)
 
 Metadata is diagnostic; storage/projection failures never change tool-effect status.
 
@@ -36531,7 +36566,7 @@ Options for tool registration
 
 ### ToolRegistryEntry `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:81`](../src/core/ToolCatalogRegistry.ts#L81)
+📍 [`src/core/ToolCatalogRegistry.ts:82`](../src/core/ToolCatalogRegistry.ts#L82)
 
 Entry format from the generated tool registry (registry.generated.ts).
 Used by initializeFromRegistry() and registerFromToolRegistry().
@@ -36548,6 +36583,32 @@ Used by initializeFromRegistry() and registerFromToolRegistry().
 | `tool` | `tool: ToolFunction;` | - |
 | `safeByDefault` | `safeByDefault: boolean;` | - |
 | `requiresConnector?` | `requiresConnector?: boolean;` | - |
+
+</details>
+
+---
+
+### ToolRegistryEntry `interface`
+
+📍 [`src/tools/registry.browser.generated.ts:25`](../src/tools/registry.browser.generated.ts#L25)
+
+Metadata for a tool in the registry
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: string;` | Tool name (matches definition.function.name) |
+| `exportName` | `exportName: string;` | Export variable name |
+| `displayName` | `displayName: string;` | Human-readable display name |
+| `category` | `category: ToolCategory;` | Category for grouping |
+| `description` | `description: string;` | Brief description |
+| `tool` | `tool: ToolFunction;` | The actual tool function |
+| `safeByDefault` | `safeByDefault: boolean;` | Whether this tool is safe without explicit approval |
+| `implementationHash?` | `implementationHash?: string;` | SHA-256 fingerprint of the tool source and its OneRingAI runtime source. |
+| `requiresConnector?` | `requiresConnector?: boolean;` | Whether this tool requires a connector |
+| `connectorServiceTypes?` | `connectorServiceTypes?: string[];` | Supported connector service types (if requiresConnector) |
 
 </details>
 
@@ -37144,6 +37205,18 @@ type ToolCallOutputContent = InputTextContent | InputImageContent | InputFileCon
 
 ### ToolCategory `type`
 
+📍 [`src/tools/registry.browser.generated.ts:22`](../src/tools/registry.browser.generated.ts#L22)
+
+Tool category for grouping
+
+```typescript
+type ToolCategory = 'filesystem' | 'shell' | 'web' | 'code' | 'json' | 'connector' | 'desktop' | 'custom-tools' | 'routines' | 'other'
+```
+
+---
+
+### ToolCategory `type`
+
 📍 [`src/tools/registry.generated.ts:52`](../src/tools/registry.generated.ts#L52)
 
 Tool category for grouping
@@ -37156,7 +37229,7 @@ type ToolCategory = 'filesystem' | 'shell' | 'web' | 'code' | 'json' | 'connecto
 
 ### ToolCategoryScope `type`
 
-📍 [`src/core/ToolCatalogRegistry.ts:99`](../src/core/ToolCatalogRegistry.ts#L99)
+📍 [`src/core/ToolCatalogRegistry.ts:100`](../src/core/ToolCatalogRegistry.ts#L100)
 
 Scope for filtering which categories are visible/allowed.
 
@@ -37406,7 +37479,7 @@ export function createAddReactionTool(
 
 ### createAgentPackageOutcomeTools `function`
 
-📍 [`src/portable/OutcomeClient.ts:247`](../src/portable/OutcomeClient.ts#L247)
+📍 [`src/portable/OutcomeClient.ts:248`](../src/portable/OutcomeClient.ts#L248)
 
 ```typescript
 export async function createAgentPackageOutcomeTools(input: OutcomeAgentPackage, options: AgentPackageOutcomeToolOptions): Promise&lt;AgentPackageOutcomeTools&gt;
@@ -37969,7 +38042,7 @@ export function createGetUsersTool(
 
 ### createGitHubReadFileTool `function`
 
-📍 [`src/tools/github/readFile.ts:46`](../src/tools/github/readFile.ts#L46)
+📍 [`src/tools/github/readFile.ts:47`](../src/tools/github/readFile.ts#L47)
 
 Create a GitHub read_file tool
 
@@ -38624,7 +38697,7 @@ export function createRoutineTool(options: CreateRoutineToolOptions): ToolFuncti
 
 ### createSearchCodeTool `function`
 
-📍 [`src/tools/github/searchCode.ts:104`](../src/tools/github/searchCode.ts#L104)
+📍 [`src/tools/github/searchCode.ts:105`](../src/tools/github/searchCode.ts#L105)
 
 Create a GitHub search_code tool
 
@@ -38989,7 +39062,7 @@ function detectAPIError(data: unknown): string | null
 
 ### evidenceProjection `function`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:47`](../src/core/evidence/ToolEvidenceMiddleware.ts#L47)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:48`](../src/core/evidence/ToolEvidenceMiddleware.ts#L48)
 
 Internal: a mutable host result must still match the observation used to create its projection.
 
@@ -39001,7 +39074,7 @@ export function evidenceProjection(value: unknown, result: unknown): string | un
 
 ### evidenceProvenance `function`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:43`](../src/core/evidence/ToolEvidenceMiddleware.ts#L43)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:44`](../src/core/evidence/ToolEvidenceMiddleware.ts#L44)
 
 Internal correlation survives optional outcome omission without exposing new public fields.
 
@@ -39052,7 +39125,7 @@ export function formatGitHubToolError(prefix: string, error: unknown): string
 
 ### formatGoogleToolError `function`
 
-📍 [`src/tools/google/types.ts:187`](../src/tools/google/types.ts#L187)
+📍 [`src/tools/google/types.ts:188`](../src/tools/google/types.ts#L188)
 
 Format any error caught in a Google tool's catch block into a detailed string.
 
@@ -39064,7 +39137,7 @@ export function formatGoogleToolError(prefix: string, error: unknown): string
 
 ### formatMicrosoftToolError `function`
 
-📍 [`src/tools/microsoft/types.ts:200`](../src/tools/microsoft/types.ts#L200)
+📍 [`src/tools/microsoft/types.ts:201`](../src/tools/microsoft/types.ts#L201)
 
 Format any error caught in a Microsoft tool's catch block into a detailed string.
 
@@ -39179,6 +39252,18 @@ export function generateWebAPITool(): ToolFunction&lt;APIRequestArgs, APIRequest
 
 ### getAllBuiltInTools `function`
 
+📍 [`src/tools/registry.browser.generated.ts:143`](../src/tools/registry.browser.generated.ts#L143)
+
+Get all built-in tools as ToolFunction array
+
+```typescript
+export function getAllBuiltInTools(): ToolFunction[]
+```
+
+---
+
+### getAllBuiltInTools `function`
+
 📍 [`src/tools/registry.generated.ts:473`](../src/tools/registry.generated.ts#L473)
 
 Get all built-in tools as ToolFunction array
@@ -39191,7 +39276,7 @@ export function getAllBuiltInTools(): ToolFunction[]
 
 ### getAnthropicNativeTools `function`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:57`](../src/infrastructure/providers/anthropic/AnthropicTextProvider.ts#L57)
+📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:58`](../src/infrastructure/providers/anthropic/AnthropicTextProvider.ts#L58)
 
 ```typescript
 function getAnthropicNativeTools(model: string): AdvancedTextCapabilities['nativeTools']
@@ -39214,7 +39299,7 @@ function getBuiltInToolFingerprint(
 
 ### getConnectorTools `function`
 
-📍 [`src/connectors/vendors/helpers.ts:513`](../src/connectors/vendors/helpers.ts#L513)
+📍 [`src/connectors/vendors/helpers.ts:514`](../src/connectors/vendors/helpers.ts#L514)
 
 Get all tools for a connector (delegates to ConnectorTools)
 
@@ -39226,10 +39311,22 @@ export function getConnectorTools(connectorName: string): ToolFunction[]
 
 ### getOpenAINativeTools `function`
 
-📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:47`](../src/infrastructure/providers/openai/OpenAITextProvider.ts#L47)
+📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:48`](../src/infrastructure/providers/openai/OpenAITextProvider.ts#L48)
 
 ```typescript
 function getOpenAINativeTools(model: string): AdvancedTextCapabilities['nativeTools']
+```
+
+---
+
+### getToolByName `function`
+
+📍 [`src/tools/registry.browser.generated.ts:158`](../src/tools/registry.browser.generated.ts#L158)
+
+Get tool by name
+
+```typescript
+export function getToolByName(name: string): ToolRegistryEntry | undefined
 ```
 
 ---
@@ -39264,12 +39361,36 @@ export function getToolCallDescription&lt;TArgs&gt;(
 
 ### getToolCategories `function`
 
+📍 [`src/tools/registry.browser.generated.ts:168`](../src/tools/registry.browser.generated.ts#L168)
+
+Get all unique category names
+
+```typescript
+export function getToolCategories(): ToolCategory[]
+```
+
+---
+
+### getToolCategories `function`
+
 📍 [`src/tools/registry.generated.ts:498`](../src/tools/registry.generated.ts#L498)
 
 Get all unique category names
 
 ```typescript
 export function getToolCategories(): ToolCategory[]
+```
+
+---
+
+### getToolRegistry `function`
+
+📍 [`src/tools/registry.browser.generated.ts:148`](../src/tools/registry.browser.generated.ts#L148)
+
+Get full tool registry with metadata
+
+```typescript
+export function getToolRegistry(): ToolRegistryEntry[]
 ```
 
 ---
@@ -39288,12 +39409,36 @@ export function getToolRegistry(): ToolRegistryEntry[]
 
 ### getToolsByCategory `function`
 
+📍 [`src/tools/registry.browser.generated.ts:153`](../src/tools/registry.browser.generated.ts#L153)
+
+Get tools by category
+
+```typescript
+export function getToolsByCategory(category: ToolCategory): ToolRegistryEntry[]
+```
+
+---
+
+### getToolsByCategory `function`
+
 📍 [`src/tools/registry.generated.ts:483`](../src/tools/registry.generated.ts#L483)
 
 Get tools by category
 
 ```typescript
 export function getToolsByCategory(category: ToolCategory): ToolRegistryEntry[]
+```
+
+---
+
+### getToolsRequiringConnector `function`
+
+📍 [`src/tools/registry.browser.generated.ts:163`](../src/tools/registry.browser.generated.ts#L163)
+
+Get tools that require connector configuration
+
+```typescript
+export function getToolsRequiringConnector(): ToolRegistryEntry[]
 ```
 
 ---
@@ -39312,7 +39457,7 @@ export function getToolsRequiringConnector(): ToolRegistryEntry[]
 
 ### hasHostedTools `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:50`](../src/core/model-execution/ModelExecutor.ts#L50)
+📍 [`src/core/model-execution/ModelExecutor.ts:49`](../src/core/model-execution/ModelExecutor.ts#L49)
 
 ```typescript
 function hasHostedTools(options: TextGenerateOptions): boolean
@@ -39371,7 +39516,7 @@ async function hydrateTools(
 
 ### isEvidenceDelivery `function`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:39`](../src/core/evidence/ToolEvidenceMiddleware.ts#L39)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:40`](../src/core/evidence/ToolEvidenceMiddleware.ts#L40)
 
 ```typescript
 export function isEvidenceDelivery(value: unknown): value is ToolEvidenceDelivery
@@ -39419,6 +39564,46 @@ export function isToolCallArgumentsDone(
 
 ```typescript
 export function isToolCallStart(event: StreamEvent): event is ToolCallStartEvent
+```
+
+---
+
+### loadBuiltInToolRegistry `function`
+
+📍 [`src/core/catalogHost.browser.ts:4`](../src/core/catalogHost.browser.ts#L4)
+
+```typescript
+export function loadBuiltInToolRegistry(): { toolRegistry: typeof toolRegistry }
+```
+
+---
+
+### loadBuiltInToolRegistry `function`
+
+📍 [`src/core/catalogHost.ts:9`](../src/core/catalogHost.ts#L9)
+
+```typescript
+export function loadBuiltInToolRegistry(): any
+```
+
+---
+
+### loadConnectorToolsModule `function`
+
+📍 [`src/core/catalogHost.browser.ts:3`](../src/core/catalogHost.browser.ts#L3)
+
+```typescript
+export function loadConnectorToolsModule(): { ConnectorTools: typeof ConnectorTools }
+```
+
+---
+
+### loadConnectorToolsModule `function`
+
+📍 [`src/core/catalogHost.ts:2`](../src/core/catalogHost.ts#L2)
+
+```typescript
+export function loadConnectorToolsModule(): { ConnectorTools: any }
 ```
 
 ---
@@ -39479,7 +39664,7 @@ function parseRemoteToolRequest(input: unknown, packageId: string): RemoteToolEx
 
 ### redactKeys `function`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:55`](../src/core/evidence/ToolEvidenceMiddleware.ts#L55)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:56`](../src/core/evidence/ToolEvidenceMiddleware.ts#L56)
 
 Strict clone first: getters/toJSON hooks must never run while persisting a result.
 
@@ -40313,7 +40498,7 @@ async *convertStream(
 
 ### GoogleStreamConverter `class`
 
-📍 [`src/infrastructure/providers/google/GoogleStreamConverter.ts:14`](../src/infrastructure/providers/google/GoogleStreamConverter.ts#L14)
+📍 [`src/infrastructure/providers/google/GoogleStreamConverter.ts:15`](../src/infrastructure/providers/google/GoogleStreamConverter.ts#L15)
 
 Converts Google Gemini streaming responses to our unified StreamEvent format
 
@@ -40404,7 +40589,7 @@ reset(): void
 
 ### OpenAIResponsesStreamConverter `class`
 
-📍 [`src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts:23`](../src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts#L23)
+📍 [`src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts:24`](../src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts#L24)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -40460,7 +40645,7 @@ async *convertStream(
 
 ### StreamHelpers `class`
 
-📍 [`src/capabilities/agents/StreamHelpers.ts:19`](../src/capabilities/agents/StreamHelpers.ts#L19)
+📍 [`src/capabilities/agents/StreamHelpers.ts:20`](../src/capabilities/agents/StreamHelpers.ts#L20)
 
 Helper class for consuming and processing streams
 
@@ -41397,7 +41582,7 @@ Error event
 
 ### IStreamingSpeechToTextProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:240`](../src/domain/interfaces/IAudioProvider.ts#L240)
+📍 [`src/domain/interfaces/IAudioProvider.ts:241`](../src/domain/interfaces/IAudioProvider.ts#L241)
 
 Opt-in extension implemented by providers with a live STT WebSocket API.
 
@@ -41429,7 +41614,7 @@ transcribeStream(options: STTStreamOptions): AsyncIterableIterator&lt;STTStreamE
 
 ### IStreamingTextToSpeechProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:91`](../src/domain/interfaces/IAudioProvider.ts#L91)
+📍 [`src/domain/interfaces/IAudioProvider.ts:92`](../src/domain/interfaces/IAudioProvider.ts#L92)
 
 Streaming Text-to-Speech provider interface (opt-in extension)
 Providers that support chunked transfer implement this alongside ITextToSpeechProvider.
@@ -41933,7 +42118,7 @@ type OrderedStreamOutputEntry = | {
 
 ### ResponseStreamEvent `type`
 
-📍 [`src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts:21`](../src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts#L21)
+📍 [`src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts:22`](../src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts#L22)
 
 ```typescript
 type ResponseStreamEvent = ResponsesAPI.ResponseStreamEvent
@@ -43155,7 +43340,7 @@ export function calculateEmbeddingCost(
 
 ### compactModel `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:125`](../src/core/model-execution/ModelExecutor.ts#L125)
+📍 [`src/core/model-execution/ModelExecutor.ts:124`](../src/core/model-execution/ModelExecutor.ts#L124)
 
 ```typescript
 export async function compactModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task: ModelTask,
@@ -43166,7 +43351,7 @@ export async function compactModel(provider: ITextProvider, connector: Connector
 
 ### generateModel `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:113`](../src/core/model-execution/ModelExecutor.ts#L113)
+📍 [`src/core/model-execution/ModelExecutor.ts:112`](../src/core/model-execution/ModelExecutor.ts#L112)
 
 ```typescript
 export async function generateModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
@@ -43315,7 +43500,7 @@ export async function selectModelRoute(config: ModelRoutingConfig | undefined, o
 
 ### streamModel `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:147`](../src/core/model-execution/ModelExecutor.ts#L147)
+📍 [`src/core/model-execution/ModelExecutor.ts:146`](../src/core/model-execution/ModelExecutor.ts#L146)
 
 ```typescript
 export async function* streamModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
@@ -48375,7 +48560,7 @@ async listAccounts(userId?: string): Promise&lt;string[]&gt;
 
 ### ApplyRefreshStrategyOptions `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:118`](../src/connectors/vendors/helpers.ts#L118)
+📍 [`src/connectors/vendors/helpers.ts:119`](../src/connectors/vendors/helpers.ts#L119)
 
 Options for applying provider refresh requirements to an existing configuration.
 
@@ -48424,7 +48609,7 @@ Validated at registry-init time — missing on an auth-code template throws. |
 
 ### BuildAuthConfigOptions `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:181`](../src/connectors/vendors/helpers.ts#L181)
+📍 [`src/connectors/vendors/helpers.ts:182`](../src/connectors/vendors/helpers.ts#L182)
 
 Options for editing a same-method authorization-code configuration.
 
@@ -48790,7 +48975,7 @@ All implementations must encrypt tokens at rest
 
 ### VendorInfo `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:520`](../src/connectors/vendors/helpers.ts#L520)
+📍 [`src/connectors/vendors/helpers.ts:521`](../src/connectors/vendors/helpers.ts#L521)
 
 Get vendor template information for display
 
@@ -48984,7 +49169,7 @@ type TemplateCredentials = {
 
 ### applyRefreshStrategy `function`
 
-📍 [`src/connectors/vendors/helpers.ts:136`](../src/connectors/vendors/helpers.ts#L136)
+📍 [`src/connectors/vendors/helpers.ts:137`](../src/connectors/vendors/helpers.ts#L137)
 
 Apply only a provider's refresh requirements. Pure and idempotent: configured
 API scopes and unrelated parameters (including prompt) are preserved.
@@ -49073,7 +49258,7 @@ function base64URLEncode(buffer: Buffer): string
 
 ### buildAuthConfig `function`
 
-📍 [`src/connectors/vendors/helpers.ts:259`](../src/connectors/vendors/helpers.ts#L259)
+📍 [`src/connectors/vendors/helpers.ts:260`](../src/connectors/vendors/helpers.ts#L260)
 
 Build ConnectorAuth from a template and credentials. Creation uses template
 defaults. With existingAuth, preserve saved authorization-code settings and
@@ -49091,7 +49276,7 @@ export function buildAuthConfig(
 
 ### buildOAuthScope `function`
 
-📍 [`src/connectors/vendors/helpers.ts:107`](../src/connectors/vendors/helpers.ts#L107)
+📍 [`src/connectors/vendors/helpers.ts:108`](../src/connectors/vendors/helpers.ts#L108)
 
 Build the final OAuth scope sent to the provider.
 
@@ -49151,7 +49336,7 @@ const personalEmails = await personalFetch('/me/messages');
 
 ### createConnectorFromTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:452`](../src/connectors/vendors/helpers.ts#L452)
+📍 [`src/connectors/vendors/helpers.ts:453`](../src/connectors/vendors/helpers.ts#L453)
 
 Create a Connector from a vendor template
 
@@ -49174,6 +49359,16 @@ const connector = createConnectorFromTemplate(
   'pat',
   { apiKey: process.env.GITHUB_TOKEN }
 );
+```
+
+---
+
+### createOAuthManager `function`
+
+📍 [`src/infrastructure/runtime/connectorAuth.browser.ts:4`](../src/infrastructure/runtime/connectorAuth.browser.ts#L4)
+
+```typescript
+export function createOAuthManager(_config: OAuthConfig): OAuthManager
 ```
 
 ---
@@ -49204,7 +49399,7 @@ export function encrypt(text: string, password: string): string
 
 ### extractNonSecretCredentials `function`
 
-📍 [`src/connectors/vendors/helpers.ts:393`](../src/connectors/vendors/helpers.ts#L393)
+📍 [`src/connectors/vendors/helpers.ts:394`](../src/connectors/vendors/helpers.ts#L394)
 
 Extract non-secret credentials from a raw credentials dict.
 Used by ConnectorConfigStore.saveFromTemplate() to preserve
@@ -49284,7 +49479,7 @@ export function getAllVendorLogos(): Map&lt;string, VendorLogo&gt;
 
 ### getAllVendorTemplates `function`
 
-📍 [`src/connectors/vendors/helpers.ts:65`](../src/connectors/vendors/helpers.ts#L65)
+📍 [`src/connectors/vendors/helpers.ts:66`](../src/connectors/vendors/helpers.ts#L66)
 
 Get all vendor templates
 
@@ -49308,7 +49503,7 @@ export function getAuthTemplate(vendorId: string, authId: string): AuthTemplate 
 
 ### getCredentialsSetupURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:603`](../src/connectors/vendors/helpers.ts#L603)
+📍 [`src/connectors/vendors/helpers.ts:604`](../src/connectors/vendors/helpers.ts#L604)
 
 Get credentials setup URL for a vendor
 
@@ -49320,7 +49515,7 @@ export function getCredentialsSetupURL(vendorId: string): string | undefined
 
 ### getDocsURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:611`](../src/connectors/vendors/helpers.ts#L611)
+📍 [`src/connectors/vendors/helpers.ts:612`](../src/connectors/vendors/helpers.ts#L612)
 
 Get docs URL for a vendor
 
@@ -49358,7 +49553,7 @@ function getSimpleIcon(slug: string): SimpleIcon | undefined
 
 ### getVendorAuthTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:77`](../src/connectors/vendors/helpers.ts#L77)
+📍 [`src/connectors/vendors/helpers.ts:78`](../src/connectors/vendors/helpers.ts#L78)
 
 Get auth template for a vendor
 
@@ -49397,7 +49592,7 @@ export function getVendorColor(vendorId: string): string | undefined
 
 ### getVendorInfo `function`
 
-📍 [`src/connectors/vendors/helpers.ts:540`](../src/connectors/vendors/helpers.ts#L540)
+📍 [`src/connectors/vendors/helpers.ts:541`](../src/connectors/vendors/helpers.ts#L541)
 
 Get vendor information suitable for display
 
@@ -49491,7 +49686,7 @@ export function getVendorsByCategory(category: ServiceCategory): VendorRegistryE
 
 ### getVendorTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:53`](../src/connectors/vendors/helpers.ts#L53)
+📍 [`src/connectors/vendors/helpers.ts:54`](../src/connectors/vendors/helpers.ts#L54)
 
 Get vendor template by ID
 
@@ -49527,7 +49722,7 @@ export function hasVendorLogo(vendorId: string): boolean
 
 ### initVendorRegistry `function`
 
-📍 [`src/connectors/vendors/helpers.ts:32`](../src/connectors/vendors/helpers.ts#L32)
+📍 [`src/connectors/vendors/helpers.ts:33`](../src/connectors/vendors/helpers.ts#L33)
 
 Initialize the vendor registry (called by generated registry file).
 
@@ -49572,7 +49767,7 @@ export function listAllVendorIds(): string[]
 
 ### listVendorIds `function`
 
-📍 [`src/connectors/vendors/helpers.ts:89`](../src/connectors/vendors/helpers.ts#L89)
+📍 [`src/connectors/vendors/helpers.ts:90`](../src/connectors/vendors/helpers.ts#L90)
 
 List all vendor IDs
 
@@ -49584,7 +49779,7 @@ export function listVendorIds(): string[]
 
 ### listVendors `function`
 
-📍 [`src/connectors/vendors/helpers.ts:565`](../src/connectors/vendors/helpers.ts#L565)
+📍 [`src/connectors/vendors/helpers.ts:566`](../src/connectors/vendors/helpers.ts#L566)
 
 List all vendors with basic info
 
@@ -49596,7 +49791,7 @@ export function listVendors(): VendorInfo[]
 
 ### listVendorsByAuthType `function`
 
-📍 [`src/connectors/vendors/helpers.ts:594`](../src/connectors/vendors/helpers.ts#L594)
+📍 [`src/connectors/vendors/helpers.ts:595`](../src/connectors/vendors/helpers.ts#L595)
 
 List vendors that support a specific auth type
 
@@ -49608,7 +49803,7 @@ export function listVendorsByAuthType(authType: 'api_key' | 'oauth'): VendorInfo
 
 ### listVendorsByCategory `function`
 
-📍 [`src/connectors/vendors/helpers.ts:587`](../src/connectors/vendors/helpers.ts#L587)
+📍 [`src/connectors/vendors/helpers.ts:588`](../src/connectors/vendors/helpers.ts#L588)
 
 List vendors by category
 
@@ -49682,7 +49877,7 @@ function normalizePrivateKeyPem(pem: string): string
 
 ### resolveOAuthUrl `function`
 
-📍 [`src/connectors/vendors/helpers.ts:193`](../src/connectors/vendors/helpers.ts#L193)
+📍 [`src/connectors/vendors/helpers.ts:194`](../src/connectors/vendors/helpers.ts#L194)
 
 Resolve only placeholders declared in the template, using supplied credentials.
 
@@ -49706,7 +49901,7 @@ function slugToKey(slug: string): string
 
 ### updateAuthorizationCodeAuth `function`
 
-📍 [`src/connectors/vendors/helpers.ts:200`](../src/connectors/vendors/helpers.ts#L200)
+📍 [`src/connectors/vendors/helpers.ts:201`](../src/connectors/vendors/helpers.ts#L201)
 
 Update auth settings without re-importing creation defaults or losing token namespaces.
 
@@ -49722,7 +49917,7 @@ function updateAuthorizationCodeAuth(
 
 ### validateCredentials `function`
 
-📍 [`src/connectors/vendors/helpers.ts:413`](../src/connectors/vendors/helpers.ts#L413)
+📍 [`src/connectors/vendors/helpers.ts:414`](../src/connectors/vendors/helpers.ts#L414)
 
 Validate that all required fields are provided
 
@@ -52846,7 +53041,7 @@ constructor(
 
 ### ConsoleMetrics `class`
 
-📍 [`src/infrastructure/observability/Metrics.ts:50`](../src/infrastructure/observability/Metrics.ts#L50)
+📍 [`src/infrastructure/observability/Metrics.ts:51`](../src/infrastructure/observability/Metrics.ts#L51)
 
 Console metrics collector (development/debugging)
 
@@ -52925,7 +53120,7 @@ histogram(metric: string, value: number, tags?: MetricTags): void
 
 ### FrameworkLogger `class`
 
-📍 [`src/infrastructure/observability/Logger.ts:158`](../src/infrastructure/observability/Logger.ts#L158)
+📍 [`src/infrastructure/observability/Logger.ts:159`](../src/infrastructure/observability/Logger.ts#L159)
 
 Framework logger
 
@@ -53081,7 +53276,7 @@ isLevelEnabled(level: LogLevel): boolean
 
 ### NoOpMetrics `class`
 
-📍 [`src/infrastructure/observability/Metrics.ts:40`](../src/infrastructure/observability/Metrics.ts#L40)
+📍 [`src/infrastructure/observability/Metrics.ts:41`](../src/infrastructure/observability/Metrics.ts#L41)
 
 No-op metrics collector (default - zero overhead)
 
@@ -53480,7 +53675,7 @@ Failure record for window tracking
 
 ### LogEntry `interface`
 
-📍 [`src/infrastructure/observability/Logger.ts:148`](../src/infrastructure/observability/Logger.ts#L148)
+📍 [`src/infrastructure/observability/Logger.ts:149`](../src/infrastructure/observability/Logger.ts#L149)
 
 Log entry
 
@@ -53558,7 +53753,7 @@ error(message: string, ...args: any[]): void;
 
 ### LoggerConfig `interface`
 
-📍 [`src/infrastructure/observability/Logger.ts:128`](../src/infrastructure/observability/Logger.ts#L128)
+📍 [`src/infrastructure/observability/Logger.ts:129`](../src/infrastructure/observability/Logger.ts#L129)
 
 Logger configuration
 
@@ -53579,7 +53774,7 @@ Logger configuration
 
 ### MetricsCollector `interface`
 
-📍 [`src/infrastructure/observability/Metrics.ts:15`](../src/infrastructure/observability/Metrics.ts#L15)
+📍 [`src/infrastructure/observability/Metrics.ts:16`](../src/infrastructure/observability/Metrics.ts#L16)
 
 Metrics collector interface
 
@@ -53717,7 +53912,7 @@ type CircuitState = 'closed' | 'open' | 'half-open'
 
 ### LogLevel `type`
 
-📍 [`src/infrastructure/observability/Logger.ts:19`](../src/infrastructure/observability/Logger.ts#L19)
+📍 [`src/infrastructure/observability/Logger.ts:20`](../src/infrastructure/observability/Logger.ts#L20)
 
 Log level
 
@@ -53729,7 +53924,7 @@ type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent'
 
 ### MetricsCollectorType `type`
 
-📍 [`src/infrastructure/observability/Metrics.ts:187`](../src/infrastructure/observability/Metrics.ts#L187)
+📍 [`src/infrastructure/observability/Metrics.ts:188`](../src/infrastructure/observability/Metrics.ts#L188)
 
 Metrics collector type
 
@@ -53741,7 +53936,7 @@ type MetricsCollectorType = 'noop' | 'console' | 'inmemory'
 
 ### MetricTags `type`
 
-📍 [`src/infrastructure/observability/Metrics.ts:10`](../src/infrastructure/observability/Metrics.ts#L10)
+📍 [`src/infrastructure/observability/Metrics.ts:11`](../src/infrastructure/observability/Metrics.ts#L11)
 
 Metrics collection infrastructure
 
@@ -53806,7 +54001,7 @@ export function calculateBackoff(attempt: number, config: BackoffConfig = DEFAUL
 
 ### createMetricsCollector `function`
 
-📍 [`src/infrastructure/observability/Metrics.ts:192`](../src/infrastructure/observability/Metrics.ts#L192)
+📍 [`src/infrastructure/observability/Metrics.ts:193`](../src/infrastructure/observability/Metrics.ts#L193)
 
 Create metrics collector from type
 
@@ -53834,7 +54029,7 @@ export async function retryWithBackoff&lt;T&gt;(
 
 ### safeStringify `function`
 
-📍 [`src/infrastructure/observability/Logger.ts:36`](../src/infrastructure/observability/Logger.ts#L36)
+📍 [`src/infrastructure/observability/Logger.ts:37`](../src/infrastructure/observability/Logger.ts#L37)
 
 Safe JSON stringify that handles circular references and problematic objects
 
@@ -53846,7 +54041,7 @@ function safeStringify(obj: unknown, indent?: number): string
 
 ### setMetricsCollector `function`
 
-📍 [`src/infrastructure/observability/Metrics.ts:216`](../src/infrastructure/observability/Metrics.ts#L216)
+📍 [`src/infrastructure/observability/Metrics.ts:217`](../src/infrastructure/observability/Metrics.ts#L217)
 
 Update global metrics collector
 
@@ -53922,7 +54117,7 @@ Default rate limiter configuration
 
 ### LOG_LEVEL_VALUES `const`
 
-📍 [`src/infrastructure/observability/Logger.ts:24`](../src/infrastructure/observability/Logger.ts#L24)
+📍 [`src/infrastructure/observability/Logger.ts:25`](../src/infrastructure/observability/Logger.ts#L25)
 
 Log levels as numbers (for comparison)
 
@@ -54137,7 +54332,7 @@ constructor(
 
 ### ErrorHandler `class`
 
-📍 [`src/core/ErrorHandler.ts:122`](../src/core/ErrorHandler.ts#L122)
+📍 [`src/core/ErrorHandler.ts:123`](../src/core/ErrorHandler.ts#L123)
 
 Centralized error handling for all agent types.
 
@@ -54304,7 +54499,7 @@ getConfig(): Readonly&lt;Required&lt;ErrorHandlerConfig&gt;&gt;
 
 ### EvidenceError `class`
 
-📍 [`src/core/evidence/validation.ts:5`](../src/core/evidence/validation.ts#L5)
+📍 [`src/core/evidence/validation.ts:6`](../src/core/evidence/validation.ts#L6)
 
 Messages contain no source payloads, credentials, or backend exception text.
 
@@ -54326,7 +54521,7 @@ constructor(readonly code: 'invalid' | 'capacity' | 'corrupt' | 'busy' | 'storag
 
 ### FactSupersededError `class`
 
-📍 [`src/memory/MemorySystem.ts:245`](../src/memory/MemorySystem.ts#L245)
+📍 [`src/memory/MemorySystem.ts:246`](../src/memory/MemorySystem.ts#L246)
 
 F1 — thrown by `restoreFact` when the target fact was superseded by a later
 non-archived fact. Un-archiving the predecessor without first handling the
@@ -54400,7 +54595,7 @@ constructor(
 
 ### GoogleAPIError `class`
 
-📍 [`src/tools/google/types.ts:151`](../src/tools/google/types.ts#L151)
+📍 [`src/tools/google/types.ts:152`](../src/tools/google/types.ts#L152)
 
 Error from Google API
 
@@ -54437,7 +54632,7 @@ constructor(
 
 ### HelperOutputError `class`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:58`](../src/core/model-execution/ModelExecutor.ts#L58)
+📍 [`src/core/model-execution/ModelExecutor.ts:57`](../src/core/model-execution/ModelExecutor.ts#L57)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -54648,7 +54843,7 @@ constructor(
 
 ### MicrosoftAPIError `class`
 
-📍 [`src/tools/microsoft/types.ts:159`](../src/tools/microsoft/types.ts#L159)
+📍 [`src/tools/microsoft/types.ts:160`](../src/tools/microsoft/types.ts#L160)
 
 Error from Microsoft Graph API
 
@@ -54781,7 +54976,7 @@ constructor(
 
 ### ProfileGeneratorMissingError `class`
 
-📍 [`src/memory/MemorySystem.ts:204`](../src/memory/MemorySystem.ts#L204)
+📍 [`src/memory/MemorySystem.ts:205`](../src/memory/MemorySystem.ts#L205)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -55057,7 +55252,7 @@ constructor(
 
 ### ScopeInvariantError `class`
 
-📍 [`src/memory/MemorySystem.ts:197`](../src/memory/MemorySystem.ts#L197)
+📍 [`src/memory/MemorySystem.ts:198`](../src/memory/MemorySystem.ts#L198)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -55097,7 +55292,7 @@ constructor(message: string)
 
 ### SemanticSearchUnavailableError `class`
 
-📍 [`src/memory/MemorySystem.ts:211`](../src/memory/MemorySystem.ts#L211)
+📍 [`src/memory/MemorySystem.ts:212`](../src/memory/MemorySystem.ts#L212)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -55352,7 +55547,7 @@ Detailed budget information for context overflow diagnosis
 
 ### ErrorContext `interface`
 
-📍 [`src/core/ErrorHandler.ts:15`](../src/core/ErrorHandler.ts#L15)
+📍 [`src/core/ErrorHandler.ts:16`](../src/core/ErrorHandler.ts#L16)
 
 Context information for error handling
 
@@ -55373,7 +55568,7 @@ Context information for error handling
 
 ### ErrorHandlerConfig `interface`
 
-📍 [`src/core/ErrorHandler.ts:35`](../src/core/ErrorHandler.ts#L35)
+📍 [`src/core/ErrorHandler.ts:36`](../src/core/ErrorHandler.ts#L36)
 
 Configuration for ErrorHandler
 
@@ -55396,7 +55591,7 @@ Configuration for ErrorHandler
 
 ### ErrorHandlerEvents `interface`
 
-📍 [`src/core/ErrorHandler.ts:61`](../src/core/ErrorHandler.ts#L61)
+📍 [`src/core/ErrorHandler.ts:62`](../src/core/ErrorHandler.ts#L62)
 
 Events emitted by ErrorHandler
 
@@ -55802,7 +55997,7 @@ type RawAudioEncoding = 'pcm' | 'mulaw' | 'alaw'
 
 ### calculateBase64Size `function`
 
-📍 [`src/utils/imageUtils.ts:159`](../src/utils/imageUtils.ts#L159)
+📍 [`src/utils/imageUtils.ts:162`](../src/utils/imageUtils.ts#L162)
 
 Calculate accurate size from base64 data (in bytes)
 Accounts for padding characters
@@ -56060,7 +56255,7 @@ function fixNewlinesInStrings(text: string): string
 
 ### formatBytes `function`
 
-📍 [`src/utils/imageUtils.ts:177`](../src/utils/imageUtils.ts#L177)
+📍 [`src/utils/imageUtils.ts:180`](../src/utils/imageUtils.ts#L180)
 
 Format bytes into human-readable string
 
@@ -56488,7 +56683,7 @@ when the option is false or omitted. |
 
 ### EmbeddingOptions `interface`
 
-📍 [`src/domain/interfaces/IEmbeddingProvider.ts:14`](../src/domain/interfaces/IEmbeddingProvider.ts#L14)
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:16`](../src/domain/interfaces/IEmbeddingProvider.ts#L16)
 
 Options for generating embeddings
 
@@ -56511,7 +56706,7 @@ Options for generating embeddings
 
 ### EmbeddingResponse `interface`
 
-📍 [`src/domain/interfaces/IEmbeddingProvider.ts:35`](../src/domain/interfaces/IEmbeddingProvider.ts#L35)
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:37`](../src/domain/interfaces/IEmbeddingProvider.ts#L37)
 
 Response from an embedding request
 
@@ -57593,7 +57788,7 @@ Methods should check this before performing operations. |
 
 ### IEmbeddingProvider `interface`
 
-📍 [`src/domain/interfaces/IEmbeddingProvider.ts:50`](../src/domain/interfaces/IEmbeddingProvider.ts#L50)
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:52`](../src/domain/interfaces/IEmbeddingProvider.ts#L52)
 
 Embedding provider interface
 
@@ -58389,7 +58584,7 @@ destroy(): void;
 
 ### IMediaStorage `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:86`](../src/domain/interfaces/IMediaStorage.ts#L86)
+📍 [`src/domain/interfaces/IMediaStorage.ts:87`](../src/domain/interfaces/IMediaStorage.ts#L87)
 
 Storage interface for multimedia outputs
 
@@ -58405,11 +58600,11 @@ Implementations:
 Save media data to storage
 
 ```typescript
-save(data: Buffer, metadata: MediaStorageMetadata): Promise&lt;MediaStorageResult&gt;;
+save(data: MediaBytes, metadata: MediaStorageMetadata): Promise&lt;MediaStorageResult&gt;;
 ```
 
 **Parameters:**
-- `data`: `Buffer&lt;ArrayBufferLike&gt;`
+- `data`: `MediaBytes`
 - `metadata`: `MediaStorageMetadata`
 
 **Returns:** `Promise&lt;MediaStorageResult&gt;`
@@ -58419,13 +58614,13 @@ save(data: Buffer, metadata: MediaStorageMetadata): Promise&lt;MediaStorageResul
 Read media data from storage
 
 ```typescript
-read(location: string): Promise&lt;Buffer | null&gt;;
+read(location: string): Promise&lt;MediaBytes | null&gt;;
 ```
 
 **Parameters:**
 - `location`: `string`
 
-**Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt; | null&gt;`
+**Returns:** `Promise&lt;MediaBytes | null&gt;`
 
 #### `delete()`
 
@@ -58880,7 +59075,7 @@ has(id: string): boolean;
 
 ### ISpeechToTextProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:197`](../src/domain/interfaces/IAudioProvider.ts#L197)
+📍 [`src/domain/interfaces/IAudioProvider.ts:198`](../src/domain/interfaces/IAudioProvider.ts#L198)
 
 Speech-to-Text provider interface
 
@@ -59036,7 +59231,7 @@ listModels(): Promise&lt;string[]&gt;;
 
 ### ITextToSpeechProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:65`](../src/domain/interfaces/IAudioProvider.ts#L65)
+📍 [`src/domain/interfaces/IAudioProvider.ts:66`](../src/domain/interfaces/IAudioProvider.ts#L66)
 
 Text-to-Speech provider interface
 
@@ -59235,7 +59430,7 @@ getPath(userId: string | undefined): string;
 
 ### MediaStorageEntry `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:50`](../src/domain/interfaces/IMediaStorage.ts#L50)
+📍 [`src/domain/interfaces/IMediaStorage.ts:51`](../src/domain/interfaces/IMediaStorage.ts#L51)
 
 Entry returned by list()
 
@@ -59256,7 +59451,7 @@ Entry returned by list()
 
 ### MediaStorageListOptions `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:66`](../src/domain/interfaces/IMediaStorage.ts#L66)
+📍 [`src/domain/interfaces/IMediaStorage.ts:67`](../src/domain/interfaces/IMediaStorage.ts#L67)
 
 Options for listing media files
 
@@ -59275,7 +59470,7 @@ Options for listing media files
 
 ### MediaStorageMetadata `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:18`](../src/domain/interfaces/IMediaStorage.ts#L18)
+📍 [`src/domain/interfaces/IMediaStorage.ts:19`](../src/domain/interfaces/IMediaStorage.ts#L19)
 
 IMediaStorage - Storage interface for multimedia outputs (images, video, audio)
 
@@ -59304,7 +59499,7 @@ implementations are in infrastructure layer.
 
 ### MediaStorageResult `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:38`](../src/domain/interfaces/IMediaStorage.ts#L38)
+📍 [`src/domain/interfaces/IMediaStorage.ts:39`](../src/domain/interfaces/IMediaStorage.ts#L39)
 
 Result of a save operation
 
@@ -59459,7 +59654,7 @@ cancel(): void;
 
 ### SegmentTimestamp `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:166`](../src/domain/interfaces/IAudioProvider.ts#L166)
+📍 [`src/domain/interfaces/IAudioProvider.ts:167`](../src/domain/interfaces/IAudioProvider.ts#L167)
 
 Segment-level timestamp
 
@@ -59728,7 +59923,7 @@ User information is stored per userId - each user has their own isolated data.
 
 ### WordTimestamp `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:153`](../src/domain/interfaces/IAudioProvider.ts#L153)
+📍 [`src/domain/interfaces/IAudioProvider.ts:154`](../src/domain/interfaces/IAudioProvider.ts#L154)
 
 Word-level timestamp
 
@@ -59779,7 +59974,7 @@ type ConnectorAccessContext = Record&lt;string, unknown&gt;
 
 ### EmbeddingContentPart `type`
 
-📍 [`src/domain/interfaces/IEmbeddingProvider.ts:7`](../src/domain/interfaces/IEmbeddingProvider.ts#L7)
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:9`](../src/domain/interfaces/IEmbeddingProvider.ts#L9)
 
 ```typescript
 type EmbeddingContentPart = | { type: 'text'; text: string }
@@ -60700,7 +60895,7 @@ export function hasAsyncConvert(
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:169`](../src/core/context-nextgen/AgentContextNextGen.ts#L169)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:170`](../src/core/context-nextgen/AgentContextNextGen.ts#L170)
 
 Next-generation context manager for AI agents.
 
@@ -61378,7 +61573,7 @@ constructor()
 
 ### AgentPackageOutcomeServer `class`
 
-📍 [`src/portable/OutcomeServer.ts:25`](../src/portable/OutcomeServer.ts#L25)
+📍 [`src/portable/OutcomeServer.ts:26`](../src/portable/OutcomeServer.ts#L26)
 
 Explicit authenticated facade over the ordinary Agent tool lifecycle. No HTTP server or credentials are supplied by a package.
 
@@ -61777,7 +61972,7 @@ protected mapProviderStatus(status: unknown): ResponseStatus
 
 ### AnthropicTextProvider `class`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:66`](../src/infrastructure/providers/anthropic/AnthropicTextProvider.ts#L66)
+📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:67`](../src/infrastructure/providers/anthropic/AnthropicTextProvider.ts#L67)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -64154,7 +64349,7 @@ convertResponsesResponse(
 
 ### DeepSeekTextProvider `class`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:71`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L71)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:72`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L72)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -64463,7 +64658,7 @@ extract(raw: EmailSignal): ExtractedSignal
 
 ### EmbeddingQueue `class`
 
-📍 [`src/memory/MemorySystem.ts:6362`](../src/memory/MemorySystem.ts#L6362)
+📍 [`src/memory/MemorySystem.ts:6363`](../src/memory/MemorySystem.ts#L6363)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -65715,7 +65910,7 @@ getModelCapabilities(model: string): ModelCapabilities
 
 ### GoogleConverter `class`
 
-📍 [`src/infrastructure/providers/google/GoogleConverter.ts:32`](../src/infrastructure/providers/google/GoogleConverter.ts#L32)
+📍 [`src/infrastructure/providers/google/GoogleConverter.ts:33`](../src/infrastructure/providers/google/GoogleConverter.ts#L33)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -65918,7 +66113,7 @@ async *convertStream(
 
 ### GoogleTextProvider `class`
 
-📍 [`src/infrastructure/providers/google/GoogleTextProvider.ts:37`](../src/infrastructure/providers/google/GoogleTextProvider.ts#L37)
+📍 [`src/infrastructure/providers/google/GoogleTextProvider.ts:38`](../src/infrastructure/providers/google/GoogleTextProvider.ts#L38)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -68598,7 +68793,7 @@ async cancelJob(_jobId: string): Promise&lt;boolean&gt;
 
 ### OpenAITextProvider `class`
 
-📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:61`](../src/infrastructure/providers/openai/OpenAITextProvider.ts#L61)
+📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:62`](../src/infrastructure/providers/openai/OpenAITextProvider.ts#L62)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -70763,7 +70958,7 @@ async execute(options: ExecuteRoutineOptions, iterationTimeoutMs?: number): Prom
 
 ### RoutineObservations `class`
 
-📍 [`src/core/routines/observations.ts:47`](../src/core/routines/observations.ts#L47)
+📍 [`src/core/routines/observations.ts:48`](../src/core/routines/observations.ts#L48)
 
 One operation's temporary data ownership; archival uses the host's existing storage.
 
@@ -72662,7 +72857,7 @@ evaluate(ctx: PolicyContext): PolicyDecision
 
 ### UserInfoPluginNextGen `class`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:323`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L323)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:324`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L324)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -76611,7 +76806,7 @@ close(): void;
 
 ### DeepSeekBalance `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:43`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L43)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:44`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L44)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -76632,7 +76827,7 @@ close(): void;
 
 ### DeepSeekConfig `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:28`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L28)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:29`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L29)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -76649,7 +76844,7 @@ close(): void;
 
 ### DeepSeekFimRequest `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:34`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L34)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:35`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L35)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -76669,7 +76864,7 @@ close(): void;
 
 ### DeepSeekFimResponse `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:53`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L53)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:54`](../src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L54)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -77286,6 +77481,39 @@ If omitted, result is stored as `__prestep_{name}` or `__poststep_{name}`. |
 | `message?` | `message?: string;` | Summary message with next steps |
 | `matched_output?` | `matched_output?: string;` | If wait_for was used, the line that matched the pattern |
 | `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### Digest `interface`
+
+📍 [`src/infrastructure/runtime/primitives.browser.ts:28`](../src/infrastructure/runtime/primitives.browser.ts#L28)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `update()`
+
+```typescript
+update(value: string | Uint8Array): Digest;
+```
+
+**Parameters:**
+- `value`: `string | Uint8Array&lt;ArrayBufferLike&gt;`
+
+**Returns:** `Digest`
+
+#### `digest()`
+
+```typescript
+digest(encoding: 'hex' | 'base64url' | 'base64'): string
+```
+
+**Parameters:**
+- `encoding`: `"base64" | "hex" | "base64url"`
+
+**Returns:** `string`
 
 </details>
 
@@ -78184,7 +78412,7 @@ as object OR in contextIds, ranked by confidence × recency × predicateWeight
 
 ### EnvFlag `interface`
 
-📍 [`src/memory/envFlag.ts:8`](../src/memory/envFlag.ts#L8)
+📍 [`src/memory/envFlag.ts:9`](../src/memory/envFlag.ts#L9)
 
 Process-env boolean flag with one-shot caching. Used by the memory layer's
 warning subsystems (`ONERINGAI_SUPPRESS_CAP_WARNINGS`,
@@ -79511,7 +79739,7 @@ reject(error: unknown): void
 
 ### GenerateRoutineArgs `interface`
 
-📍 [`src/tools/routines/generateRoutine.ts:12`](../src/tools/routines/generateRoutine.ts#L12)
+📍 [`src/tools/routines/generateRoutine.ts:13`](../src/tools/routines/generateRoutine.ts#L13)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -79526,7 +79754,7 @@ reject(error: unknown): void
 
 ### GenerateRoutineResult `interface`
 
-📍 [`src/tools/routines/generateRoutine.ts:16`](../src/tools/routines/generateRoutine.ts#L16)
+📍 [`src/tools/routines/generateRoutine.ts:17`](../src/tools/routines/generateRoutine.ts#L17)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -80195,7 +80423,7 @@ Result from pr_files tool
 
 ### GitHubReadFileArgs `interface`
 
-📍 [`src/tools/github/readFile.ts:30`](../src/tools/github/readFile.ts#L30)
+📍 [`src/tools/github/readFile.ts:31`](../src/tools/github/readFile.ts#L31)
 
 Arguments for the GitHub read_file tool
 
@@ -80711,7 +80939,7 @@ Result of a glob operation
 
 ### GoogleFetchOptions `interface`
 
-📍 [`src/tools/google/types.ts:135`](../src/tools/google/types.ts#L135)
+📍 [`src/tools/google/types.ts:136`](../src/tools/google/types.ts#L136)
 
 Options for googleFetch
 
@@ -81051,7 +81279,7 @@ Google Veo-specific options
 
 ### GraphCalendarViewEvent `interface`
 
-📍 [`src/tools/microsoft/types.ts:534`](../src/tools/microsoft/types.ts#L534)
+📍 [`src/tools/microsoft/types.ts:535`](../src/tools/microsoft/types.ts#L535)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81080,7 +81308,7 @@ Google Veo-specific options
 
 ### GraphCalendarViewResponse `interface`
 
-📍 [`src/tools/microsoft/types.ts:554`](../src/tools/microsoft/types.ts#L554)
+📍 [`src/tools/microsoft/types.ts:555`](../src/tools/microsoft/types.ts#L555)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81097,7 +81325,7 @@ Google Veo-specific options
 
 ### GraphDriveItem `interface`
 
-📍 [`src/tools/microsoft/types.ts:586`](../src/tools/microsoft/types.ts#L586)
+📍 [`src/tools/microsoft/types.ts:587`](../src/tools/microsoft/types.ts#L587)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81128,7 +81356,7 @@ Google Veo-specific options
 
 ### GraphDriveItemListResponse `interface`
 
-📍 [`src/tools/microsoft/types.ts:607`](../src/tools/microsoft/types.ts#L607)
+📍 [`src/tools/microsoft/types.ts:608`](../src/tools/microsoft/types.ts#L608)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81145,7 +81373,7 @@ Google Veo-specific options
 
 ### GraphEventResponse `interface`
 
-📍 [`src/tools/microsoft/types.ts:525`](../src/tools/microsoft/types.ts#L525)
+📍 [`src/tools/microsoft/types.ts:526`](../src/tools/microsoft/types.ts#L526)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81163,7 +81391,7 @@ Google Veo-specific options
 
 ### GraphFindMeetingTimesResponse `interface`
 
-📍 [`src/tools/microsoft/types.ts:566`](../src/tools/microsoft/types.ts#L566)
+📍 [`src/tools/microsoft/types.ts:567`](../src/tools/microsoft/types.ts#L567)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81189,7 +81417,7 @@ Google Veo-specific options
 
 ### GraphMessageResponse `interface`
 
-📍 [`src/tools/microsoft/types.ts:517`](../src/tools/microsoft/types.ts#L517)
+📍 [`src/tools/microsoft/types.ts:518`](../src/tools/microsoft/types.ts#L518)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81206,7 +81434,7 @@ Google Veo-specific options
 
 ### GraphOnlineMeetingListResponse `interface`
 
-📍 [`src/tools/microsoft/types.ts:355`](../src/tools/microsoft/types.ts#L355)
+📍 [`src/tools/microsoft/types.ts:356`](../src/tools/microsoft/types.ts#L356)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81221,7 +81449,7 @@ Google Veo-specific options
 
 ### GraphSearchResponse `interface`
 
-📍 [`src/tools/microsoft/types.ts:614`](../src/tools/microsoft/types.ts#L614)
+📍 [`src/tools/microsoft/types.ts:615`](../src/tools/microsoft/types.ts#L615)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81248,7 +81476,7 @@ Google Veo-specific options
 
 ### GraphTranscriptListResponse `interface`
 
-📍 [`src/tools/microsoft/types.ts:561`](../src/tools/microsoft/types.ts#L561)
+📍 [`src/tools/microsoft/types.ts:562`](../src/tools/microsoft/types.ts#L562)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -83219,6 +83447,48 @@ reportFailure(error?: Error): void
 
 ---
 
+### InvocationState `interface`
+
+📍 [`src/core/model-execution/invocationTypes.ts:3`](../src/core/model-execution/invocationTypes.ts#L3)
+
+Private invocation ownership, shared by the ledger and host transport binding.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `beginTransport()`
+
+```typescript
+beginTransport(): ModelAttemptRecord;
+```
+
+**Returns:** `ModelAttemptRecord`
+
+#### `endTransport()`
+
+```typescript
+endTransport(attempt: ModelAttemptRecord, status?: number): void;
+```
+
+**Parameters:**
+- `attempt`: `ModelAttemptRecord`
+- `status`: `number | undefined` *(optional)*
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `signal` | `signal: AbortSignal;` | - |
+
+</details>
+
+---
+
 ### IPermissionPolicy `interface`
 
 📍 [`src/core/permissions/types.ts:482`](../src/core/permissions/types.ts#L482)
@@ -84248,7 +84518,7 @@ destroy(): Promise&lt;void&gt;;
 
 ### JsonManipulateArgs `interface`
 
-📍 [`src/tools/json/jsonManipulator.ts:11`](../src/tools/json/jsonManipulator.ts#L11)
+📍 [`src/tools/json/jsonManipulator.ts:12`](../src/tools/json/jsonManipulator.ts#L12)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -84266,7 +84536,7 @@ destroy(): Promise&lt;void&gt;;
 
 ### JsonManipulateResult `interface`
 
-📍 [`src/tools/json/jsonManipulator.ts:18`](../src/tools/json/jsonManipulator.ts#L18)
+📍 [`src/tools/json/jsonManipulator.ts:19`](../src/tools/json/jsonManipulator.ts#L19)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85089,7 +85359,7 @@ Example: { 'GITHUB_PERSONAL_ACCESS_TOKEN': 'my-github-connector' } |
 
 ### MeetingListEntry `interface`
 
-📍 [`src/tools/microsoft/types.ts:448`](../src/tools/microsoft/types.ts#L448)
+📍 [`src/tools/microsoft/types.ts:449`](../src/tools/microsoft/types.ts#L449)
 
 Summary of a calendar event returned by list_meetings
 
@@ -85160,7 +85430,7 @@ Identical to MeetingSlotSuggestion in both google and microsoft types.
 
 ### MeetingSlotSuggestion `interface`
 
-📍 [`src/tools/microsoft/types.ts:504`](../src/tools/microsoft/types.ts#L504)
+📍 [`src/tools/microsoft/types.ts:505`](../src/tools/microsoft/types.ts#L505)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85340,7 +85610,7 @@ rawCollection(): {
 
 ### MicrosoftCreateMeetingResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:425`](../src/tools/microsoft/types.ts#L425)
+📍 [`src/tools/microsoft/types.ts:426`](../src/tools/microsoft/types.ts#L426)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85359,7 +85629,7 @@ rawCollection(): {
 
 ### MicrosoftDraftEmailResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:413`](../src/tools/microsoft/types.ts#L413)
+📍 [`src/tools/microsoft/types.ts:414`](../src/tools/microsoft/types.ts#L414)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85377,7 +85647,7 @@ rawCollection(): {
 
 ### MicrosoftEditMeetingResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:433`](../src/tools/microsoft/types.ts#L433)
+📍 [`src/tools/microsoft/types.ts:434`](../src/tools/microsoft/types.ts#L434)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85395,7 +85665,7 @@ rawCollection(): {
 
 ### MicrosoftFetchOptions `interface`
 
-📍 [`src/tools/microsoft/types.ts:145`](../src/tools/microsoft/types.ts#L145)
+📍 [`src/tools/microsoft/types.ts:146`](../src/tools/microsoft/types.ts#L146)
 
 Options for microsoftFetch
 
@@ -85418,7 +85688,7 @@ Options for microsoftFetch
 
 ### MicrosoftFindSlotsResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:497`](../src/tools/microsoft/types.ts#L497)
+📍 [`src/tools/microsoft/types.ts:498`](../src/tools/microsoft/types.ts#L498)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85436,7 +85706,7 @@ Options for microsoftFetch
 
 ### MicrosoftGetMeetingResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:475`](../src/tools/microsoft/types.ts#L475)
+📍 [`src/tools/microsoft/types.ts:476`](../src/tools/microsoft/types.ts#L476)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85467,7 +85737,7 @@ Options for microsoftFetch
 
 ### MicrosoftGetTranscriptResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:440`](../src/tools/microsoft/types.ts#L440)
+📍 [`src/tools/microsoft/types.ts:441`](../src/tools/microsoft/types.ts#L441)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85485,7 +85755,7 @@ Options for microsoftFetch
 
 ### MicrosoftListFilesResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:642`](../src/tools/microsoft/types.ts#L642)
+📍 [`src/tools/microsoft/types.ts:643`](../src/tools/microsoft/types.ts#L643)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85514,7 +85784,7 @@ Options for microsoftFetch
 
 ### MicrosoftListMeetingsResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:468`](../src/tools/microsoft/types.ts#L468)
+📍 [`src/tools/microsoft/types.ts:469`](../src/tools/microsoft/types.ts#L469)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85548,7 +85818,7 @@ Options for microsoftFetch
 
 ### MicrosoftReadFileResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:632`](../src/tools/microsoft/types.ts#L632)
+📍 [`src/tools/microsoft/types.ts:633`](../src/tools/microsoft/types.ts#L633)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85569,7 +85839,7 @@ Options for microsoftFetch
 
 ### MicrosoftSearchFilesResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:660`](../src/tools/microsoft/types.ts#L660)
+📍 [`src/tools/microsoft/types.ts:661`](../src/tools/microsoft/types.ts#L661)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -85598,7 +85868,7 @@ Options for microsoftFetch
 
 ### MicrosoftSendEmailResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:420`](../src/tools/microsoft/types.ts#L420)
+📍 [`src/tools/microsoft/types.ts:421`](../src/tools/microsoft/types.ts#L421)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -86217,7 +86487,7 @@ SDP answer returned by a server-created OpenAI Realtime WebRTC call.
 
 ### Operation `interface`
 
-📍 [`src/portable/OutcomeClient.ts:21`](../src/portable/OutcomeClient.ts#L21)
+📍 [`src/portable/OutcomeClient.ts:22`](../src/portable/OutcomeClient.ts#L22)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -86241,7 +86511,7 @@ SDP answer returned by a server-created OpenAI Realtime WebRTC call.
 
 ### Operation `interface`
 
-📍 [`src/portable/OutcomeServer.ts:15`](../src/portable/OutcomeServer.ts#L15)
+📍 [`src/portable/OutcomeServer.ts:16`](../src/portable/OutcomeServer.ts#L16)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -87990,7 +88260,7 @@ diagnosable rather than an opaque empty/failed response.
 
 ### QueueItem `interface`
 
-📍 [`src/memory/MemorySystem.ts:6351`](../src/memory/MemorySystem.ts#L6351)
+📍 [`src/memory/MemorySystem.ts:6352`](../src/memory/MemorySystem.ts#L6352)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -89513,7 +89783,7 @@ id, createdAt, updatedAt are auto-generated if not provided.
 
 ### RoutineDeleteArgs `interface`
 
-📍 [`src/tools/routines/routineDelete.ts:14`](../src/tools/routines/routineDelete.ts#L14)
+📍 [`src/tools/routines/routineDelete.ts:15`](../src/tools/routines/routineDelete.ts#L15)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -89528,7 +89798,7 @@ id, createdAt, updatedAt are auto-generated if not provided.
 
 ### RoutineDeleteResult `interface`
 
-📍 [`src/tools/routines/routineDelete.ts:18`](../src/tools/routines/routineDelete.ts#L18)
+📍 [`src/tools/routines/routineDelete.ts:19`](../src/tools/routines/routineDelete.ts#L19)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -89626,7 +89896,7 @@ Created from a RoutineDefinition, delegates task management to Plan.
 
 ### RoutineGetArgs `interface`
 
-📍 [`src/tools/routines/routineGet.ts:10`](../src/tools/routines/routineGet.ts#L10)
+📍 [`src/tools/routines/routineGet.ts:11`](../src/tools/routines/routineGet.ts#L11)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -89665,7 +89935,7 @@ Created from a RoutineDefinition, delegates task management to Plan.
 
 ### RoutineListArgs `interface`
 
-📍 [`src/tools/routines/routineList.ts:17`](../src/tools/routines/routineList.ts#L17)
+📍 [`src/tools/routines/routineList.ts:18`](../src/tools/routines/routineList.ts#L18)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -89683,7 +89953,7 @@ Created from a RoutineDefinition, delegates task management to Plan.
 
 ### RoutineListExecutionsArgs `interface`
 
-📍 [`src/tools/routines/routineListExecutions.ts:12`](../src/tools/routines/routineListExecutions.ts#L12)
+📍 [`src/tools/routines/routineListExecutions.ts:13`](../src/tools/routines/routineListExecutions.ts#L13)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -89700,7 +89970,7 @@ Created from a RoutineDefinition, delegates task management to Plan.
 
 ### RoutineListResult `interface`
 
-📍 [`src/tools/routines/routineList.ts:24`](../src/tools/routines/routineList.ts#L24)
+📍 [`src/tools/routines/routineList.ts:25`](../src/tools/routines/routineList.ts#L25)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -89995,7 +90265,7 @@ full definition (tasks, pre/postSteps, instructions, etc.).
 
 ### RoutineUpdateArgs `interface`
 
-📍 [`src/tools/routines/routineUpdate.ts:35`](../src/tools/routines/routineUpdate.ts#L35)
+📍 [`src/tools/routines/routineUpdate.ts:36`](../src/tools/routines/routineUpdate.ts#L36)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -90011,7 +90281,7 @@ full definition (tasks, pre/postSteps, instructions, etc.).
 
 ### RoutineUpdates `interface`
 
-📍 [`src/tools/routines/routineUpdate.ts:18`](../src/tools/routines/routineUpdate.ts#L18)
+📍 [`src/tools/routines/routineUpdate.ts:19`](../src/tools/routines/routineUpdate.ts#L19)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -90052,6 +90322,71 @@ Options for running a test suite.
 | `connectorName?` | `connectorName?: string;` | Connector name (for result tracking) |
 | `onProgress?` | `onProgress?: (result: TestCaseResult) =&gt; void;` | Called after each test case completes (for real-time UI updates) |
 | `signal?` | `signal?: AbortSignal;` | Abort signal for cancellation |
+
+</details>
+
+---
+
+### SchemaCompiler `interface`
+
+📍 [`src/infrastructure/runtime/schemaTypes.ts:4`](../src/infrastructure/runtime/schemaTypes.ts#L4)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `compile()`
+
+```typescript
+compile(schema: object): SchemaValidator;
+```
+
+**Parameters:**
+- `schema`: `object`
+
+**Returns:** `SchemaValidator`
+
+#### `errorsText()`
+
+```typescript
+errorsText(errors?: SchemaIssue[] | null): string;
+```
+
+**Parameters:**
+- `errors`: `SchemaIssue[] | null | undefined` *(optional)*
+
+**Returns:** `string`
+
+</details>
+
+---
+
+### SchemaIssue `interface`
+
+📍 [`src/infrastructure/runtime/schemaTypes.ts:2`](../src/infrastructure/runtime/schemaTypes.ts#L2)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `instancePath` | `instancePath: string;` | - |
+| `keyword` | `keyword: string;` | - |
+| `message?` | `message?: string` | - |
+
+</details>
+
+---
+
+### SchemaValidator `interface`
+
+📍 [`src/infrastructure/runtime/schemaTypes.ts:3`](../src/infrastructure/runtime/schemaTypes.ts#L3)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `errors?` | `errors?: SchemaIssue[] | null` | - |
 
 </details>
 
@@ -90323,7 +90658,7 @@ Scraped content result
 
 ### SearchCodeArgs `interface`
 
-📍 [`src/tools/github/searchCode.ts:30`](../src/tools/github/searchCode.ts#L30)
+📍 [`src/tools/github/searchCode.ts:31`](../src/tools/github/searchCode.ts#L31)
 
 Arguments for the search_code tool
 
@@ -90957,7 +91292,7 @@ Serialized policy state for session persistence.
 
 ### SerializedUserInfoState `interface`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:55`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L55)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:56`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L56)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -92129,7 +92464,7 @@ Generic interfaces for research sources that work with any data provider:
 
 ### SourceState `interface`
 
-📍 [`src/core/routines/observations.ts:38`](../src/core/routines/observations.ts#L38)
+📍 [`src/core/routines/observations.ts:39`](../src/core/routines/observations.ts#L39)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -92264,7 +92599,7 @@ Stdio transport configuration
 
 ### StepPhaseSummary `interface`
 
-📍 [`src/tools/routines/routineListExecutions.ts:18`](../src/tools/routines/routineListExecutions.ts#L18)
+📍 [`src/tools/routines/routineListExecutions.ts:19`](../src/tools/routines/routineListExecutions.ts#L19)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -93141,7 +93476,7 @@ Text pipeline configuration — STT → Agent → TTS
 
 ### TodoValue `interface`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:262`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L262)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:263`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L263)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -93896,7 +94231,7 @@ Usage statistics for a response
 
 ### UserInfoPluginConfig `interface`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:44`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L44)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:45`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L45)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -95900,6 +96235,30 @@ type MCPTransportType = 'stdio' | 'http' | 'https'
 
 ---
 
+### MediaBytes `type`
+
+📍 [`src/infrastructure/runtime/mediaTypes.browser.ts:2`](../src/infrastructure/runtime/mediaTypes.browser.ts#L2)
+
+Browser storage adapters use native bytes; no Buffer ambient is installed.
+
+```typescript
+type MediaBytes = Uint8Array
+```
+
+---
+
+### MediaBytes `type`
+
+📍 [`src/infrastructure/runtime/mediaTypes.ts:2`](../src/infrastructure/runtime/mediaTypes.ts#L2)
+
+Private type boundary for StorageRegistry's optional host media slot.
+
+```typescript
+type MediaBytes = Buffer
+```
+
+---
+
 ### ModifyingHook `type`
 
 📍 [`src/capabilities/agents/types/HookTypes.ts:22`](../src/capabilities/agents/types/HookTypes.ts#L22)
@@ -96000,6 +96359,16 @@ the storage layer.
 
 ```typescript
 type NewFact = Omit&lt;IFact, 'id' | 'createdAt'&gt;
+```
+
+---
+
+### Node `type`
+
+📍 [`src/infrastructure/runtime/schemaCompiler.browser.ts:15`](../src/infrastructure/runtime/schemaCompiler.browser.ts#L15)
+
+```typescript
+type Node = Record&lt;string, any&gt;
 ```
 
 ---
@@ -96942,6 +97311,36 @@ type RoutineStepType = | 'task.started'
 
 ---
 
+### RuntimeContext `type`
+
+📍 [`src/infrastructure/runtime/schemaCompiler.browser.ts:17`](../src/infrastructure/runtime/schemaCompiler.browser.ts#L17)
+
+```typescript
+type RuntimeContext = SchemaContext & { path: Array&lt;string | number&gt;; resolve(ref: string): string }
+```
+
+---
+
+### RuntimeValidator `type`
+
+📍 [`src/infrastructure/runtime/schemaCompiler.browser.ts:16`](../src/infrastructure/runtime/schemaCompiler.browser.ts#L16)
+
+```typescript
+type RuntimeValidator = Validator & { types: Record&lt;string, (value: unknown) =&gt; boolean&gt;; resolve(schema: Node, ref: string, context: unknown): { subschema: Node; switchSchema: string }; validateSchema(value: unknown, schema: Node, options: Options, context: SchemaContext): ValidatorResult }
+```
+
+---
+
+### SchemaProfile `type`
+
+📍 [`src/infrastructure/runtime/schemaTypes.ts:1`](../src/infrastructure/runtime/schemaTypes.ts#L1)
+
+```typescript
+type SchemaProfile = 'helper' | 'collection'
+```
+
+---
+
 ### ScrapeFeature `type`
 
 📍 [`src/capabilities/scrape/ScrapeProvider.ts:129`](../src/capabilities/scrape/ScrapeProvider.ts#L129)
@@ -97343,7 +97742,7 @@ export function _renderFactLineForTest(
 
 ### _resetCapWarningSuppression `function`
 
-📍 [`src/memory/MemorySystem.ts:6586`](../src/memory/MemorySystem.ts#L6586)
+📍 [`src/memory/MemorySystem.ts:6587`](../src/memory/MemorySystem.ts#L6587)
 
 Test-only: reset the cached env-var read.
 
@@ -97461,9 +97860,29 @@ export function allowOrchestratorAutoContinuation(agent: object): boolean
 
 ---
 
+### ambientInvocation `function`
+
+📍 [`src/core/model-execution/invocationBinding.browser.ts:15`](../src/core/model-execution/invocationBinding.browser.ts#L15)
+
+```typescript
+export function ambientInvocation(): InvocationState | undefined
+```
+
+---
+
+### ambientInvocation `function`
+
+📍 [`src/core/model-execution/invocationBinding.ts:6`](../src/core/model-execution/invocationBinding.ts#L6)
+
+```typescript
+export function ambientInvocation(): InvocationState | undefined
+```
+
+---
+
 ### apiBasedSearch `function`
 
-📍 [`src/tools/github/searchCode.ts:244`](../src/tools/github/searchCode.ts#L244)
+📍 [`src/tools/github/searchCode.ts:245`](../src/tools/github/searchCode.ts#L245)
 
 Search using GitHub's Code Search API (fast, default branch only)
 
@@ -97482,7 +97901,7 @@ async function apiBasedSearch(
 
 ### appendUniqueAliases `function`
 
-📍 [`src/memory/MemorySystem.ts:6224`](../src/memory/MemorySystem.ts#L6224)
+📍 [`src/memory/MemorySystem.ts:6225`](../src/memory/MemorySystem.ts#L6225)
 
 Append `incoming` aliases to `existing` (case-insensitive de-dupe). Returns
 the original array reference when no new aliases were added — lets callers
@@ -97506,7 +97925,7 @@ function applyDateFormat(date: Date, format: string): string
 
 ### applyDocFilters `function`
 
-📍 [`src/memory/MemorySystem.ts:6242`](../src/memory/MemorySystem.ts#L6242)
+📍 [`src/memory/MemorySystem.ts:6243`](../src/memory/MemorySystem.ts#L6243)
 
 Apply `role` filter to an in-memory document array (used by `listDocuments`
 when `attachedTo` triggered an id-set fetch instead of `listEntities`).
@@ -97531,7 +97950,7 @@ export async function applyHumanDelay(config: DesktopToolConfig): Promise&lt;voi
 
 ### applyMetadataMerge `function`
 
-📍 [`src/memory/MemorySystem.ts:6151`](../src/memory/MemorySystem.ts#L6151)
+📍 [`src/memory/MemorySystem.ts:6152`](../src/memory/MemorySystem.ts#L6152)
 
 Shallow-merge `incoming` into `existing.metadata` per the chosen mode,
 optionally restricted to `keys`. Returns the (possibly updated) entity and
@@ -97712,6 +98131,26 @@ export function assertEvidenceSnapshotScope(state: unknown, scope: EvidenceScope
 
 ---
 
+### assertFileLogging `function`
+
+📍 [`src/infrastructure/runtime/logFile.browser.ts:2`](../src/infrastructure/runtime/logFile.browser.ts#L2)
+
+```typescript
+export function assertFileLogging(): void
+```
+
+---
+
+### assertFileLogging `function`
+
+📍 [`src/infrastructure/runtime/logFile.ts:3`](../src/infrastructure/runtime/logFile.ts#L3)
+
+```typescript
+export function assertFileLogging(): void
+```
+
+---
+
 ### assertJsonByteLimit `function`
 
 📍 [`src/portable/AgentPackage.ts:1499`](../src/portable/AgentPackage.ts#L1499)
@@ -97851,7 +98290,7 @@ export function assertRemoteSourceAdmission(options: ToolExecutionOptions, tool:
 
 ### assertScopeInvariant `function`
 
-📍 [`src/memory/MemorySystem.ts:6066`](../src/memory/MemorySystem.ts#L6066)
+📍 [`src/memory/MemorySystem.ts:6067`](../src/memory/MemorySystem.ts#L6067)
 
 ```typescript
 function assertScopeInvariant(subject: IEntity, factScope: ScopeFields): void
@@ -97994,7 +98433,7 @@ function boolean(value: boolean): boolean
 
 ### bounded `function`
 
-📍 [`src/portable/OutcomeServer.ts:19`](../src/portable/OutcomeServer.ts#L19)
+📍 [`src/portable/OutcomeServer.ts:20`](../src/portable/OutcomeServer.ts#L20)
 
 ```typescript
 function bounded(value: number | undefined, fallback: number, maximum: number, minimum = 1): number
@@ -98004,7 +98443,7 @@ function bounded(value: number | undefined, fallback: number, maximum: number, m
 
 ### boundedData `function`
 
-📍 [`src/core/routines/observations.ts:6`](../src/core/routines/observations.ts#L6)
+📍 [`src/core/routines/observations.ts:7`](../src/core/routines/observations.ts#L7)
 
 JSON snapshot semantics, with an early allocation guard and exact final byte check.
 
@@ -98097,7 +98536,7 @@ function buildDeps(args: CreateMemoryToolsArgs): MemoryToolDeps
 
 ### buildDocumentMetadata `function`
 
-📍 [`src/memory/MemorySystem.ts:6192`](../src/memory/MemorySystem.ts#L6192)
+📍 [`src/memory/MemorySystem.ts:6193`](../src/memory/MemorySystem.ts#L6193)
 
 Build the canonical document metadata shape from the incoming input. Merges
 caller-supplied `metadata` (extras) with the standard fields (body, role,
@@ -98238,7 +98677,7 @@ export function buildLLMResponse(options: ResponseBuilderOptions): LLMResponse
 
 ### buildMimeMessage `function`
 
-📍 [`src/tools/google/types.ts:304`](../src/tools/google/types.ts#L304)
+📍 [`src/tools/google/types.ts:305`](../src/tools/google/types.ts#L305)
 
 Build a RFC 2822 MIME message for Gmail API.
 
@@ -98311,7 +98750,7 @@ function buildSignalText(
 
 ### buildSnippet `function`
 
-📍 [`src/memory/MemorySystem.ts:6288`](../src/memory/MemorySystem.ts#L6288)
+📍 [`src/memory/MemorySystem.ts:6289`](../src/memory/MemorySystem.ts#L6289)
 
 Build a ~200-char preview of a document. Keyword mode centers the snippet
 around the first case-insensitive match of `query` (radius 100 chars).
@@ -98336,7 +98775,7 @@ function buildSourceDescription(raw: EmailSignal): string | undefined
 
 ### buildStepSummary `function`
 
-📍 [`src/tools/routines/routineListExecutions.ts:25`](../src/tools/routines/routineListExecutions.ts#L25)
+📍 [`src/tools/routines/routineListExecutions.ts:26`](../src/tools/routines/routineListExecutions.ts#L26)
 
 ```typescript
 function buildStepSummary(
@@ -98375,7 +98814,7 @@ function buildStorageContext(toolContext?: ToolContext): StorageContext | undefi
 
 ### buildStorageContext `function`
 
-📍 [`src/tools/routines/routineGetTaskSteps.ts:19`](../src/tools/routines/routineGetTaskSteps.ts#L19)
+📍 [`src/tools/routines/routineGetTaskSteps.ts:20`](../src/tools/routines/routineGetTaskSteps.ts#L20)
 
 ```typescript
 function buildStorageContext(toolContext?: ToolContext): StorageContext | undefined
@@ -98385,7 +98824,7 @@ function buildStorageContext(toolContext?: ToolContext): StorageContext | undefi
 
 ### buildStorageContext `function`
 
-📍 [`src/tools/routines/routineListExecutions.ts:48`](../src/tools/routines/routineListExecutions.ts#L48)
+📍 [`src/tools/routines/routineListExecutions.ts:49`](../src/tools/routines/routineListExecutions.ts#L49)
 
 ```typescript
 function buildStorageContext(toolContext?: ToolContext): StorageContext | undefined
@@ -98395,7 +98834,7 @@ function buildStorageContext(toolContext?: ToolContext): StorageContext | undefi
 
 ### buildStorageContext `function`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:248`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L248)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:249`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L249)
 
 Build StorageContext from ToolContext
 
@@ -98495,7 +98934,7 @@ function buildWriteInstructions(registry: PredicateRegistry | undefined): string
 
 ### calculateValueSize `function`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:240`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L240)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:241`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L241)
 
 Calculate size of a value in bytes (approximate)
 
@@ -98775,7 +99214,7 @@ export function clamp(
 
 ### clampPositive `function`
 
-📍 [`src/memory/MemorySystem.ts:6274`](../src/memory/MemorySystem.ts#L6274)
+📍 [`src/memory/MemorySystem.ts:6275`](../src/memory/MemorySystem.ts#L6275)
 
 Clamp `n` into `[1, max]` with `defaultValue` fallback for undefined.
 
@@ -98804,7 +99243,7 @@ export function clampUnit(v: number | undefined): number | undefined
 
 ### clampUnit01 `function`
 
-📍 [`src/memory/MemorySystem.ts:5942`](../src/memory/MemorySystem.ts#L5942)
+📍 [`src/memory/MemorySystem.ts:5943`](../src/memory/MemorySystem.ts#L5943)
 
 Clamp to [0, 1]; preserve undefined (so registry defaults still apply).
 
@@ -99032,7 +99471,7 @@ export async function compactConversationTransaction(args: {
 
 ### compareEventByWhenDesc `function`
 
-📍 [`src/memory/MemorySystem.ts:6637`](../src/memory/MemorySystem.ts#L6637)
+📍 [`src/memory/MemorySystem.ts:6638`](../src/memory/MemorySystem.ts#L6638)
 
 Relevance ordering for related-events output. Sort: when desc (most-recent
 past + upcoming first), nulls-last, then id asc tiebreak. Mirrors the
@@ -99053,6 +99492,16 @@ function compareEventByWhenDesc(
 
 ```typescript
 function compareRange(actual: unknown, op: '$lt' | '$lte' | '$gt' | '$gte', rhs: unknown): boolean
+```
+
+---
+
+### compileInterpreted `function`
+
+📍 [`src/infrastructure/runtime/schemaCompiler.browser.ts:20`](../src/infrastructure/runtime/schemaCompiler.browser.ts#L20)
+
+```typescript
+function compileInterpreted(input: object, profile: SchemaProfile): SchemaValidator
 ```
 
 ---
@@ -99120,7 +99569,7 @@ function computeFreeSlots(
 
 ### computeIsSemantic `function`
 
-📍 [`src/memory/MemorySystem.ts:5937`](../src/memory/MemorySystem.ts#L5937)
+📍 [`src/memory/MemorySystem.ts:5938`](../src/memory/MemorySystem.ts#L5938)
 
 Default `isSemantic` value when the caller didn't supply one. Every fact is
 eligible for embedding by default — the composer decides whether there's
@@ -99229,7 +99678,7 @@ export function consumeOrchestratorAsync(batch: ToolResult[]): void
 
 ### containAsyncRejection `function`
 
-📍 [`src/core/evidence/validation.ts:111`](../src/core/evidence/validation.ts#L111)
+📍 [`src/core/evidence/validation.ts:112`](../src/core/evidence/validation.ts#L112)
 
 Contain asynchronous rejection from a host callback whose contract is synchronous/observational.
 
@@ -99357,7 +99806,7 @@ function cosine(a: number[], b: number[]): number
 
 ### cosineSimilarity `function`
 
-📍 [`src/memory/MemorySystem.ts:6331`](../src/memory/MemorySystem.ts#L6331)
+📍 [`src/memory/MemorySystem.ts:6332`](../src/memory/MemorySystem.ts#L6332)
 
 Cosine similarity between two equal-length unit-ish vectors. Same math as
 the adapter-local helpers, duplicated here so `searchDocumentsSemantic`
@@ -99509,7 +99958,7 @@ export function createExecutionSignal(signals: Array&lt;AbortSignal | null | und
 
 ### createGenerateRoutine `function`
 
-📍 [`src/tools/routines/generateRoutine.ts:226`](../src/tools/routines/generateRoutine.ts#L226)
+📍 [`src/tools/routines/generateRoutine.ts:227`](../src/tools/routines/generateRoutine.ts#L227)
 
 ```typescript
 export function createGenerateRoutine(storage?: IRoutineDefinitionStorage): ToolFunction&lt;GenerateRoutineArgs, GenerateRoutineResult&gt;
@@ -99530,6 +99979,26 @@ export function createGoogleCalendarSlotsProvider(
   name?: string,
   userId?: string,
 ): ICalendarSlotsProvider
+```
+
+---
+
+### createHash `function`
+
+📍 [`src/infrastructure/runtime/primitives.browser.ts:35`](../src/infrastructure/runtime/primitives.browser.ts#L35)
+
+```typescript
+export function createHash(algorithm: string): Digest
+```
+
+---
+
+### createHmac `function`
+
+📍 [`src/infrastructure/runtime/primitives.browser.ts:39`](../src/infrastructure/runtime/primitives.browser.ts#L39)
+
+```typescript
+export function createHmac(algorithm: string, key: Uint8Array): Digest
 ```
 
 ---
@@ -99680,7 +100149,7 @@ export function createRoutineDefinition(input: RoutineDefinitionInput): RoutineD
 
 ### createRoutineDelete `function`
 
-📍 [`src/tools/routines/routineDelete.ts:25`](../src/tools/routines/routineDelete.ts#L25)
+📍 [`src/tools/routines/routineDelete.ts:26`](../src/tools/routines/routineDelete.ts#L26)
 
 ```typescript
 export function createRoutineDelete(
@@ -99723,7 +100192,7 @@ export function createRoutineExecutionRecord(
 
 ### createRoutineGet `function`
 
-📍 [`src/tools/routines/routineGet.ts:15`](../src/tools/routines/routineGet.ts#L15)
+📍 [`src/tools/routines/routineGet.ts:16`](../src/tools/routines/routineGet.ts#L16)
 
 ```typescript
 export function createRoutineGet(storage?: IRoutineDefinitionStorage): ToolFunction&lt;RoutineGetArgs&gt;
@@ -99733,7 +100202,7 @@ export function createRoutineGet(storage?: IRoutineDefinitionStorage): ToolFunct
 
 ### createRoutineList `function`
 
-📍 [`src/tools/routines/routineList.ts:32`](../src/tools/routines/routineList.ts#L32)
+📍 [`src/tools/routines/routineList.ts:33`](../src/tools/routines/routineList.ts#L33)
 
 ```typescript
 export function createRoutineList(
@@ -99745,7 +100214,7 @@ export function createRoutineList(
 
 ### createRoutineListExecutions `function`
 
-📍 [`src/tools/routines/routineListExecutions.ts:71`](../src/tools/routines/routineListExecutions.ts#L71)
+📍 [`src/tools/routines/routineListExecutions.ts:72`](../src/tools/routines/routineListExecutions.ts#L72)
 
 ```typescript
 export function createRoutineListExecutions(
@@ -99769,12 +100238,36 @@ export function createRoutineRunner(options: RoutineRunnerOptions): RoutineRunne
 
 ### createRoutineUpdate `function`
 
-📍 [`src/tools/routines/routineUpdate.ts:57`](../src/tools/routines/routineUpdate.ts#L57)
+📍 [`src/tools/routines/routineUpdate.ts:58`](../src/tools/routines/routineUpdate.ts#L58)
 
 ```typescript
 export function createRoutineUpdate(
   storage?: IRoutineDefinitionStorage,
 ): ToolFunction&lt;RoutineUpdateArgs&gt;
+```
+
+---
+
+### createSchemaCompiler `function`
+
+📍 [`src/infrastructure/runtime/schemaCompiler.browser.ts:272`](../src/infrastructure/runtime/schemaCompiler.browser.ts#L272)
+
+One synchronous browser implementation; compiler lifetime belongs to its caller.
+
+```typescript
+export function createSchemaCompiler(profile: SchemaProfile): SchemaCompiler
+```
+
+---
+
+### createSchemaCompiler `function`
+
+📍 [`src/infrastructure/runtime/schemaCompiler.ts:5`](../src/infrastructure/runtime/schemaCompiler.ts#L5)
+
+Preserve the existing two AJV configurations and their caller-owned lifetimes.
+
+```typescript
+export function createSchemaCompiler(profile: SchemaProfile): SchemaCompiler
 ```
 
 ---
@@ -99834,6 +100327,26 @@ export function createValidatedOpenAIAPIKeyProvider(
 
 ---
 
+### createVertexProvider `function`
+
+📍 [`src/infrastructure/runtime/hostProvider.browser.ts:4`](../src/infrastructure/runtime/hostProvider.browser.ts#L4)
+
+```typescript
+export function createVertexProvider(_config: VertexAIConfig): ITextProvider
+```
+
+---
+
+### createVertexProvider `function`
+
+📍 [`src/infrastructure/runtime/hostProvider.ts:4`](../src/infrastructure/runtime/hostProvider.ts#L4)
+
+```typescript
+export function createVertexProvider(config: VertexAIConfig): ITextProvider
+```
+
+---
+
 ### createWebScrapeSuite `function`
 
 📍 [`src/testing/integration/suites/web-scrape.ts:11`](../src/testing/integration/suites/web-scrape.ts#L11)
@@ -99872,9 +100385,19 @@ function decisionData(value: VerificationDecision): VerificationDecision
 
 ---
 
+### decodeBase64 `function`
+
+📍 [`src/infrastructure/runtime/primitives.browser.ts:20`](../src/infrastructure/runtime/primitives.browser.ts#L20)
+
+```typescript
+export function decodeBase64(text: string): Uint8Array
+```
+
+---
+
 ### dedupValueEqual `function`
 
-📍 [`src/memory/MemorySystem.ts:5971`](../src/memory/MemorySystem.ts#L5971)
+📍 [`src/memory/MemorySystem.ts:5972`](../src/memory/MemorySystem.ts#L5972)
 
 Order-independent deep equality for LLM-extracted fact `value` payloads.
 
@@ -99962,7 +100485,7 @@ export function deleteAtPath(obj: any, path: string): boolean
 
 ### deriveFactScope `function`
 
-📍 [`src/memory/MemorySystem.ts:6037`](../src/memory/MemorySystem.ts#L6037)
+📍 [`src/memory/MemorySystem.ts:6038`](../src/memory/MemorySystem.ts#L6038)
 
 ```typescript
 function deriveFactScope(
@@ -100096,6 +100619,16 @@ export function diffEntityMetadata(
 
 ---
 
+### digestAdapter `function`
+
+📍 [`src/infrastructure/runtime/primitives.browser.ts:29`](../src/infrastructure/runtime/primitives.browser.ts#L29)
+
+```typescript
+function digestAdapter(state: ReturnType&lt;typeof sha256.create&gt; | ReturnType&lt;typeof hmac.create&gt;): Digest
+```
+
+---
+
 ### documentSlugIdentifier `function`
 
 📍 [`src/memory/documents/types.ts:54`](../src/memory/documents/types.ts#L54)
@@ -100205,7 +100738,7 @@ export function effectivePermissions(
 
 ### embeddingsEqual `function`
 
-📍 [`src/memory/MemorySystem.ts:6312`](../src/memory/MemorySystem.ts#L6312)
+📍 [`src/memory/MemorySystem.ts:6313`](../src/memory/MemorySystem.ts#L6313)
 
 ```typescript
 function embeddingsEqual(a: number[], b: number[]): boolean
@@ -100237,9 +100770,19 @@ export function emitRestraintEvent(
 
 ---
 
+### encodeBase64 `function`
+
+📍 [`src/infrastructure/runtime/primitives.browser.ts:14`](../src/infrastructure/runtime/primitives.browser.ts#L14)
+
+```typescript
+export function encodeBase64(bytes: Uint8Array, url = false): string
+```
+
+---
+
 ### encodeBase64Url `function`
 
-📍 [`src/tools/google/types.ts:342`](../src/tools/google/types.ts#L342)
+📍 [`src/tools/google/types.ts:343`](../src/tools/google/types.ts#L343)
 
 Encode a MIME message string to base64url (RFC 4648 Section 5) for Gmail API.
 
@@ -100277,7 +100820,7 @@ export function encodeSearchQuery(query: string): string
 
 ### encodeSharingUrl `function`
 
-📍 [`src/tools/microsoft/types.ts:724`](../src/tools/microsoft/types.ts#L724)
+📍 [`src/tools/microsoft/types.ts:725`](../src/tools/microsoft/types.ts#L725)
 
 Encode a sharing URL into the Graph API sharing token format.
 
@@ -100617,7 +101160,7 @@ function estimateInputTokens(input: string | InputItem[]): number
 
 ### estimateProfileGenInputChars `function`
 
-📍 [`src/memory/MemorySystem.ts:6710`](../src/memory/MemorySystem.ts#L6710)
+📍 [`src/memory/MemorySystem.ts:6711`](../src/memory/MemorySystem.ts#L6711)
 
 Estimate the char count that will be fed into the profile generator. Rough
 upper-bound: prior profile details + every new fact's details / stringified
@@ -100797,6 +101340,16 @@ Expand tilde (~) to the user's home directory
 
 ```typescript
 export function expandTilde(inputPath: string): string
+```
+
+---
+
+### explicitInvocation `function`
+
+📍 [`src/core/model-execution/invocationBinding.ts:7`](../src/core/model-execution/invocationBinding.ts#L7)
+
+```typescript
+export function explicitInvocation(_signal?: AbortSignal): InvocationState | undefined
 ```
 
 ---
@@ -101383,7 +101936,7 @@ function formatAliases(aliases: string[] | undefined): string
 
 ### formatAttendees `function`
 
-📍 [`src/tools/microsoft/types.ts:324`](../src/tools/microsoft/types.ts#L324)
+📍 [`src/tools/microsoft/types.ts:325`](../src/tools/microsoft/types.ts#L325)
 
 Convert an array of email addresses (any format) to Microsoft Graph attendee format.
 Normalizes input first, so it's safe to pass LLM output directly.
@@ -101567,7 +102120,7 @@ export function formatPluginDisplayName(name: string): string
 
 ### formatRecipients `function`
 
-📍 [`src/tools/microsoft/types.ts:316`](../src/tools/microsoft/types.ts#L316)
+📍 [`src/tools/microsoft/types.ts:317`](../src/tools/microsoft/types.ts#L317)
 
 Convert an array of email addresses (any format) to Microsoft Graph recipient format.
 Normalizes input first, so it's safe to pass LLM output directly.
@@ -101590,7 +102143,7 @@ function formatTime(format?: string): string
 
 ### formatValue `function`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:309`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L309)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:310`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L310)
 
 Format a value for context rendering
 
@@ -101612,7 +102165,7 @@ function freeze&lt;T&gt;(value: T): T
 
 ### freezeData `function`
 
-📍 [`src/core/routines/observations.ts:21`](../src/core/routines/observations.ts#L21)
+📍 [`src/core/routines/observations.ts:22`](../src/core/routines/observations.ts#L22)
 
 ```typescript
 export function freezeData&lt;T&gt;(value: T): T
@@ -101717,7 +102270,7 @@ function generateLogPath(cwd: string, command: string): string
 
 ### generateTodoId `function`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:280`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L280)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:281`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L281)
 
 ```typescript
 function generateTodoId(): string
@@ -101948,7 +102501,7 @@ export function getFileSizeLimit(
 
 ### getFileSizeLimit `function`
 
-📍 [`src/tools/microsoft/types.ts:698`](../src/tools/microsoft/types.ts#L698)
+📍 [`src/tools/microsoft/types.ts:699`](../src/tools/microsoft/types.ts#L699)
 
 Get the file size limit for a given extension.
 Checks per-extension overrides first, then falls back to the default.
@@ -101965,7 +102518,7 @@ export function getFileSizeLimit(
 
 ### getGoogleCalendarUserId `function`
 
-📍 [`src/tools/google/types.ts:92`](../src/tools/google/types.ts#L92)
+📍 [`src/tools/google/types.ts:93`](../src/tools/google/types.ts#L93)
 
 Get the calendar identifier for Google Calendar API requests.
 
@@ -101988,7 +102541,7 @@ export function getGoogleCalendarUserId(
 
 ### getGoogleUserId `function`
 
-📍 [`src/tools/google/types.ts:59`](../src/tools/google/types.ts#L59)
+📍 [`src/tools/google/types.ts:60`](../src/tools/google/types.ts#L60)
 
 Get the user identifier for Google API requests.
 
@@ -102007,6 +102560,26 @@ export function getGoogleUserId(
   targetUser?: string,
   actAs?: string,
 ): string
+```
+
+---
+
+### getInvocation `function`
+
+📍 [`src/core/model-execution/invocationBinding.browser.ts:14`](../src/core/model-execution/invocationBinding.browser.ts#L14)
+
+```typescript
+export function getInvocation(signal?: AbortSignal): InvocationState | undefined
+```
+
+---
+
+### getInvocation `function`
+
+📍 [`src/core/model-execution/invocationBinding.ts:5`](../src/core/model-execution/invocationBinding.ts#L5)
+
+```typescript
+export function getInvocation(_signal?: AbortSignal): InvocationState | undefined
 ```
 
 ---
@@ -102220,7 +102793,7 @@ async function getUnpdf()
 
 ### getUserPathPrefix `function`
 
-📍 [`src/tools/microsoft/types.ts:84`](../src/tools/microsoft/types.ts#L84)
+📍 [`src/tools/microsoft/types.ts:85`](../src/tools/microsoft/types.ts#L85)
 
 Get the user path prefix for Microsoft Graph API requests.
 
@@ -102260,7 +102833,7 @@ export function getValueAtPath(obj: any, path: string): any
 
 ### getValueType `function`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:231`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L231)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:232`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L232)
 
 Determine the type of a value for display
 
@@ -102313,7 +102886,7 @@ export function githubPage(operation: string): PageReader | undefined
 
 ### googleFetch `function`
 
-📍 [`src/tools/google/types.ts:205`](../src/tools/google/types.ts#L205)
+📍 [`src/tools/google/types.ts:206`](../src/tools/google/types.ts#L206)
 
 Make an authenticated Google API request through the connector.
 
@@ -102436,10 +103009,10 @@ export function hasCompositionOwner(agent: object): boolean
 
 ### hash `function`
 
-📍 [`src/core/evidence/validation.ts:15`](../src/core/evidence/validation.ts#L15)
+📍 [`src/core/evidence/validation.ts:16`](../src/core/evidence/validation.ts#L16)
 
 ```typescript
-export function hash(value: string | Buffer): string
+export function hash(value: string | Uint8Array): string
 ```
 
 ---
@@ -102544,7 +103117,7 @@ export async function hydrateAgentPackage(
 
 ### hydrateAgentPackageWithOutcomes `function`
 
-📍 [`src/portable/OutcomeClient.ts:250`](../src/portable/OutcomeClient.ts#L250)
+📍 [`src/portable/OutcomeClient.ts:251`](../src/portable/OutcomeClient.ts#L251)
 
 ```typescript
 export async function hydrateAgentPackageWithOutcomes(input: OutcomeAgentPackage, options: HydrateAgentPackageWithOutcomesOptions): Promise&lt;OutcomeHydratedAgent&gt;
@@ -102697,7 +103270,7 @@ function install(subject: object): Coordination | undefined
 
 ### integer `function`
 
-📍 [`src/core/evidence/validation.ts:11`](../src/core/evidence/validation.ts#L11)
+📍 [`src/core/evidence/validation.ts:12`](../src/core/evidence/validation.ts#L12)
 
 ```typescript
 export function integer(value: number, minimum = 1): number
@@ -102727,7 +103300,7 @@ function invalid(): never
 
 ### invokeConfiguredHelper `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:168`](../src/core/model-execution/ModelExecutor.ts#L168)
+📍 [`src/core/model-execution/ModelExecutor.ts:167`](../src/core/model-execution/ModelExecutor.ts#L167)
 
 ```typescript
 export async function invokeConfiguredHelper&lt;T&gt;(args: {
@@ -102742,7 +103315,7 @@ export async function invokeConfiguredHelper&lt;T&gt;(args: {
 
 ### isAppPermissionAuth `function`
 
-📍 [`src/tools/microsoft/types.ts:45`](../src/tools/microsoft/types.ts#L45)
+📍 [`src/tools/microsoft/types.ts:46`](../src/tools/microsoft/types.ts#L46)
 
 Check whether a connector uses app-level (non-delegated) authentication.
 App-level connectors access resources on behalf of the application, not a
@@ -102855,7 +103428,7 @@ function isInFilter(v: unknown): v is { $in: unknown[] }
 
 ### isInternalEntry `function`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:276`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L276)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:277`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L277)
 
 ```typescript
 function isInternalEntry(entry: UserInfoEntry): boolean
@@ -102915,7 +103488,7 @@ function isRecord(value: unknown): value is Record&lt;string, unknown&gt;
 
 ### isServiceAccountAuth `function`
 
-📍 [`src/tools/google/types.ts:34`](../src/tools/google/types.ts#L34)
+📍 [`src/tools/google/types.ts:35`](../src/tools/google/types.ts#L35)
 
 Check whether a connector uses service-account (non-delegated) authentication.
 Service-account connectors impersonate via the `sub` claim (domain-wide delegation),
@@ -102956,7 +103529,7 @@ export function isStoreHandler(plugin: IContextPluginNextGen): plugin is IContex
 
 ### isTeamsMeetingUrl `function`
 
-📍 [`src/tools/microsoft/types.ts:342`](../src/tools/microsoft/types.ts#L342)
+📍 [`src/tools/microsoft/types.ts:343`](../src/tools/microsoft/types.ts#L343)
 
 Check if a meeting ID input is a Teams join URL.
 
@@ -102976,7 +103549,7 @@ export function isTeamsMeetingUrl(input: string): boolean
 
 ### isTodoEntry `function`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:272`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L272)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:273`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L273)
 
 ```typescript
 function isTodoEntry(entry: UserInfoEntry): boolean
@@ -103044,7 +103617,7 @@ function joinLines(lines: Array&lt;string | null | undefined&gt;): string
 
 ### json `function`
 
-📍 [`src/core/evidence/validation.ts:22`](../src/core/evidence/validation.ts#L22)
+📍 [`src/core/evidence/validation.ts:23`](../src/core/evidence/validation.ts#L23)
 
 Strict JSON with an optional incremental UTF-8 byte/work budget. Never invokes getters or toJSON.
 
@@ -103273,7 +103846,7 @@ function makeEntityComparator(
 
 ### makeEnvFlag `function`
 
-📍 [`src/memory/envFlag.ts:13`](../src/memory/envFlag.ts#L13)
+📍 [`src/memory/envFlag.ts:14`](../src/memory/envFlag.ts#L14)
 
 ```typescript
 export function makeEnvFlag(name: string): EnvFlag
@@ -103476,7 +104049,7 @@ function maskedBody(reference: EvidenceReference): string
 
 ### matchesFilters `function`
 
-📍 [`src/tools/github/searchCode.ts:79`](../src/tools/github/searchCode.ts#L79)
+📍 [`src/tools/github/searchCode.ts:80`](../src/tools/github/searchCode.ts#L80)
 
 Check if a file path matches the given filters
 
@@ -103578,7 +104151,7 @@ export function mergeFilters(...filters: Array&lt;MongoFilter | null | undefined
 
 ### mergeIdentifiersAndAliases `function`
 
-📍 [`src/memory/MemorySystem.ts:6103`](../src/memory/MemorySystem.ts#L6103)
+📍 [`src/memory/MemorySystem.ts:6104`](../src/memory/MemorySystem.ts#L6104)
 
 ```typescript
 function mergeIdentifiersAndAliases(
@@ -103647,7 +104220,7 @@ function metadataFilterToMongo(filter: Record&lt;string, unknown&gt;): MongoFilt
 
 ### microsoftFetch `function`
 
-📍 [`src/tools/microsoft/types.ts:217`](../src/tools/microsoft/types.ts#L217)
+📍 [`src/tools/microsoft/types.ts:218`](../src/tools/microsoft/types.ts#L218)
 
 Make an authenticated Microsoft Graph API request through the connector.
 
@@ -103802,7 +104375,7 @@ function normalizeEffort(
 
 ### normalizeEmails `function`
 
-📍 [`src/tools/google/types.ts:279`](../src/tools/google/types.ts#L279)
+📍 [`src/tools/google/types.ts:280`](../src/tools/google/types.ts#L280)
 
 Normalize an email array from any format the LLM might send into plain strings.
 Same logic as Microsoft tools for consistency.
@@ -103815,7 +104388,7 @@ export function normalizeEmails(input: unknown[]): string[]
 
 ### normalizeEmails `function`
 
-📍 [`src/tools/microsoft/types.ts:292`](../src/tools/microsoft/types.ts#L292)
+📍 [`src/tools/microsoft/types.ts:293`](../src/tools/microsoft/types.ts#L293)
 
 Normalize an email array from any format the LLM might send into plain strings.
 
@@ -103940,7 +104513,7 @@ export function normalizePhoneNumber(phone: string): string
 
 ### normalizeStringForDedup `function`
 
-📍 [`src/memory/MemorySystem.ts:5978`](../src/memory/MemorySystem.ts#L5978)
+📍 [`src/memory/MemorySystem.ts:5979`](../src/memory/MemorySystem.ts#L5979)
 
 ```typescript
 function normalizeStringForDedup(s: string): string
@@ -103979,7 +104552,7 @@ function normalizeTable(table: string): string
 
 ### normalizeUser `function`
 
-📍 [`src/tools/google/types.ts:23`](../src/tools/google/types.ts#L23)
+📍 [`src/tools/google/types.ts:24`](../src/tools/google/types.ts#L24)
 
 Coerce empty / whitespace-only strings to `undefined`.
 
@@ -103997,7 +104570,7 @@ function normalizeUser(s: string | undefined): string | undefined
 
 ### normalizeUser `function`
 
-📍 [`src/tools/microsoft/types.ts:27`](../src/tools/microsoft/types.ts#L27)
+📍 [`src/tools/microsoft/types.ts:28`](../src/tools/microsoft/types.ts#L28)
 
 Coerce empty / whitespace-only strings to `undefined`.
 
@@ -104068,6 +104641,26 @@ export function observeAssemblyUsage(manifest: ContextSelectionManifest, usage?:
 
 ---
 
+### onProcessShutdown `function`
+
+📍 [`src/infrastructure/runtime/environment.browser.ts:4`](../src/infrastructure/runtime/environment.browser.ts#L4)
+
+```typescript
+export function onProcessShutdown(_close: () =&gt; void): void
+```
+
+---
+
+### onProcessShutdown `function`
+
+📍 [`src/infrastructure/runtime/environment.ts:5`](../src/infrastructure/runtime/environment.ts#L5)
+
+```typescript
+export function onProcessShutdown(close: () =&gt; void): void
+```
+
+---
+
 ### openAICompactedWindow `function`
 
 📍 [`src/infrastructure/providers/shared/nativeCompaction.ts:79`](../src/infrastructure/providers/shared/nativeCompaction.ts#L79)
@@ -104086,6 +104679,46 @@ export function openAICompactedWindow(output: unknown): InputItem[]
 
 ```typescript
 export function openAISamplingConstraint(model: string, effort?: string, legacyOnly = false)
+```
+
+---
+
+### openGCM `function`
+
+📍 [`src/infrastructure/runtime/primitives.browser.ts:49`](../src/infrastructure/runtime/primitives.browser.ts#L49)
+
+```typescript
+export function openGCM(key: Uint8Array, iv: Uint8Array, aad: Uint8Array, ciphertext: Uint8Array, tag: Uint8Array): Uint8Array
+```
+
+---
+
+### openGCM `function`
+
+📍 [`src/infrastructure/runtime/primitives.ts:17`](../src/infrastructure/runtime/primitives.ts#L17)
+
+```typescript
+export function openGCM(key: Uint8Array, iv: Uint8Array, aad: Uint8Array, ciphertext: Uint8Array, tag: Uint8Array): Uint8Array
+```
+
+---
+
+### openLogFile `function`
+
+📍 [`src/infrastructure/runtime/logFile.browser.ts:3`](../src/infrastructure/runtime/logFile.browser.ts#L3)
+
+```typescript
+export function openLogFile(_filePath: string): never
+```
+
+---
+
+### openLogFile `function`
+
+📍 [`src/infrastructure/runtime/logFile.ts:4`](../src/infrastructure/runtime/logFile.ts#L4)
+
+```typescript
+export function openLogFile(filePath: string): fs.WriteStream
 ```
 
 ---
@@ -104722,7 +105355,7 @@ export function permissionsToVisibility(p: Permissions | undefined): Visibility
 
 ### pickMostSpecificProfile `function`
 
-📍 [`src/memory/MemorySystem.ts:6090`](../src/memory/MemorySystem.ts#L6090)
+📍 [`src/memory/MemorySystem.ts:6091`](../src/memory/MemorySystem.ts#L6091)
 
 Precedence: ownerId match > groupId match > global. First hit wins.
 
@@ -104832,9 +105465,29 @@ export function preflightRoutine(definition: RoutineDefinition, agent: Agent, di
 
 ---
 
+### preflightUserInfoStorage `function`
+
+📍 [`src/infrastructure/runtime/storageDefaults.browser.ts:14`](../src/infrastructure/runtime/storageDefaults.browser.ts#L14)
+
+```typescript
+export function preflightUserInfoStorage(storage?: IUserInfoStorage): void
+```
+
+---
+
+### preflightUserInfoStorage `function`
+
+📍 [`src/infrastructure/runtime/storageDefaults.ts:12`](../src/infrastructure/runtime/storageDefaults.ts#L12)
+
+```typescript
+export function preflightUserInfoStorage(_storage?: IUserInfoStorage): void
+```
+
+---
+
 ### prepare `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:76`](../src/core/model-execution/ModelExecutor.ts#L76)
+📍 [`src/core/model-execution/ModelExecutor.ts:75`](../src/core/model-execution/ModelExecutor.ts#L75)
 
 ```typescript
 function prepare(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task: ModelTask,
@@ -104913,7 +105566,7 @@ export function principalsForLibraryRecord(rec: {
 
 ### projectDocument `function`
 
-📍 [`src/memory/MemorySystem.ts:6263`](../src/memory/MemorySystem.ts#L6263)
+📍 [`src/memory/MemorySystem.ts:6264`](../src/memory/MemorySystem.ts#L6264)
 
 Strip `metadata.body` from the document if the caller didn't ask for it.
 Returns a NEW object (no mutation of the input). The body is the only
@@ -104949,6 +105602,16 @@ Only the acknowledged evidence middleware can replace a source with this view.
 
 ```typescript
 function projectRead(value: unknown): string
+```
+
+---
+
+### randomKey `function`
+
+📍 [`src/infrastructure/runtime/primitives.browser.ts:43`](../src/infrastructure/runtime/primitives.browser.ts#L43)
+
+```typescript
+export function randomKey(length: number): Uint8Array
 ```
 
 ---
@@ -105070,7 +105733,7 @@ function record(value: unknown): value is Record&lt;string, unknown&gt;
 
 ### referenceData `function`
 
-📍 [`src/core/routines/observations.ts:29`](../src/core/routines/observations.ts#L29)
+📍 [`src/core/routines/observations.ts:30`](../src/core/routines/observations.ts#L30)
 
 ```typescript
 function referenceData(value: EvidenceReference): EvidenceReference
@@ -105080,7 +105743,7 @@ function referenceData(value: EvidenceReference): EvidenceReference
 
 ### regenKey `function`
 
-📍 [`src/memory/MemorySystem.ts:6083`](../src/memory/MemorySystem.ts#L6083)
+📍 [`src/memory/MemorySystem.ts:6084`](../src/memory/MemorySystem.ts#L6084)
 
 ```typescript
 function regenKey(entityId: EntityId, scope: ScopeFields): string
@@ -105180,7 +105843,7 @@ export function registerSuite(suite: IntegrationTestSuite): void
 
 ### registryPriceBound `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:62`](../src/core/model-execution/ModelExecutor.ts#L62)
+📍 [`src/core/model-execution/ModelExecutor.ts:61`](../src/core/model-execution/ModelExecutor.ts#L61)
 
 ```typescript
 function registryPriceBound(connector: Connector, options: TextGenerateOptions): ModelPriceBound | undefined
@@ -105468,7 +106131,7 @@ function renderSignalThread(
 
 ### renderTodoEntry `function`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:289`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L289)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:290`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L290)
 
 ```typescript
 function renderTodoEntry(entry: UserInfoEntry): string
@@ -105711,7 +106374,7 @@ export function resolveMaxContextTokens(
 
 ### resolveMeetingId `function`
 
-📍 [`src/tools/microsoft/types.ts:368`](../src/tools/microsoft/types.ts#L368)
+📍 [`src/tools/microsoft/types.ts:369`](../src/tools/microsoft/types.ts#L369)
 
 Resolve a meeting input (ID or Teams URL) to a Graph API online meeting ID.
 
@@ -105802,7 +106465,7 @@ export function resolveRoutineDefinitionStorage(
 
 ### resolveRoutineExecutionStorage `function`
 
-📍 [`src/tools/routines/routineGetTaskSteps.ts:26`](../src/tools/routines/routineGetTaskSteps.ts#L26)
+📍 [`src/tools/routines/routineGetTaskSteps.ts:27`](../src/tools/routines/routineGetTaskSteps.ts#L27)
 
 ```typescript
 function resolveRoutineExecutionStorage(
@@ -105815,7 +106478,7 @@ function resolveRoutineExecutionStorage(
 
 ### resolveRoutineExecutionStorage `function`
 
-📍 [`src/tools/routines/routineListExecutions.ts:55`](../src/tools/routines/routineListExecutions.ts#L55)
+📍 [`src/tools/routines/routineListExecutions.ts:56`](../src/tools/routines/routineListExecutions.ts#L56)
 
 ```typescript
 function resolveRoutineExecutionStorage(
@@ -106152,7 +106815,7 @@ function sameScope(a: EvidenceScope, b: EvidenceScope): boolean
 
 ### sameScope `function`
 
-📍 [`src/memory/MemorySystem.ts:6079`](../src/memory/MemorySystem.ts#L6079)
+📍 [`src/memory/MemorySystem.ts:6080`](../src/memory/MemorySystem.ts#L6080)
 
 ```typescript
 function sameScope(a: ScopeFields, b: ScopeFields): boolean
@@ -106279,6 +106942,26 @@ importanceMultiplier = 0.3 + importance × 1.4
 
 ```typescript
 export function scoreFact(fact: IFact, config: RankingConfig, now: Date): number
+```
+
+---
+
+### sealGCM `function`
+
+📍 [`src/infrastructure/runtime/primitives.browser.ts:45`](../src/infrastructure/runtime/primitives.browser.ts#L45)
+
+```typescript
+export function sealGCM(key: Uint8Array, iv: Uint8Array, aad: Uint8Array, plaintext: Uint8Array): { ciphertext: Uint8Array; tag: Uint8Array }
+```
+
+---
+
+### sealGCM `function`
+
+📍 [`src/infrastructure/runtime/primitives.ts:13`](../src/infrastructure/runtime/primitives.ts#L13)
+
+```typescript
+export function sealGCM(key: Uint8Array, iv: Uint8Array, aad: Uint8Array, plaintext: Uint8Array): { ciphertext: Uint8Array; tag: Uint8Array }
 ```
 
 ---
@@ -106498,7 +107181,7 @@ function shapeFact(f: import('../../memory/index.js').IFact): Record&lt;string, 
 
 ### shouldBypassNameDedup `function`
 
-📍 [`src/memory/MemorySystem.ts:6025`](../src/memory/MemorySystem.ts#L6025)
+📍 [`src/memory/MemorySystem.ts:6026`](../src/memory/MemorySystem.ts#L6026)
 
 0.9.1 person-rule: detect single-token person displayNames with no
 identifier. These never auto-dedupe by name — the atomic find-or-create
@@ -106521,7 +107204,7 @@ function shouldBypassNameDedup(
 
 ### shouldExposeTargetUserParam `function`
 
-📍 [`src/tools/google/types.ts:111`](../src/tools/google/types.ts#L111)
+📍 [`src/tools/google/types.ts:112`](../src/tools/google/types.ts#L112)
 
 Whether to expose the per-tool `targetUser` JSON-schema parameter to the LLM
 for a given (connector, actAs) combination.
@@ -106538,7 +107221,7 @@ export function shouldExposeTargetUserParam(connector: Connector, actAs?: string
 
 ### shouldExposeTargetUserParam `function`
 
-📍 [`src/tools/microsoft/types.ts:121`](../src/tools/microsoft/types.ts#L121)
+📍 [`src/tools/microsoft/types.ts:122`](../src/tools/microsoft/types.ts#L122)
 
 Whether the per-tool `targetUser` JSON-schema parameter should be exposed to the LLM
 for a given (connector, actAs) combination.
@@ -106678,7 +107361,7 @@ function snakeToCamel(s: string): string
 
 ### snapshotRequestData `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:23`](../src/core/model-execution/ModelExecutor.ts#L23)
+📍 [`src/core/model-execution/ModelExecutor.ts:22`](../src/core/model-execution/ModelExecutor.ts#L22)
 
 ```typescript
 function snapshotRequestData&lt;T&gt;(value: T, seen = new Map&lt;object, unknown&gt;(), record = false): T
@@ -106718,7 +107401,7 @@ export function sourceRecord(outcome: ToolExecutionOutcome, args: unknown, princ
 
 ### stableEqual `function`
 
-📍 [`src/memory/MemorySystem.ts:5982`](../src/memory/MemorySystem.ts#L5982)
+📍 [`src/memory/MemorySystem.ts:5983`](../src/memory/MemorySystem.ts#L5983)
 
 ```typescript
 function stableEqual(a: unknown, b: unknown): boolean
@@ -106760,7 +107443,7 @@ function state(manager: object, create = false): State | undefined
 
 ### storageOf `function`
 
-📍 [`src/portable/OutcomeClient.ts:240`](../src/portable/OutcomeClient.ts#L240)
+📍 [`src/portable/OutcomeClient.ts:241`](../src/portable/OutcomeClient.ts#L241)
 
 ```typescript
 function storageOf(session: OutcomeSession): IEvidenceStorage
@@ -106950,7 +107633,7 @@ function supportedThinkingModes(model: string): ReadonlySet&lt;AnthropicThinking
 
 ### supportsAnthropicNativeStructuredOutput `function`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:62`](../src/infrastructure/providers/anthropic/AnthropicTextProvider.ts#L62)
+📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:63`](../src/infrastructure/providers/anthropic/AnthropicTextProvider.ts#L63)
 
 ```typescript
 export function supportsAnthropicNativeStructuredOutput(model: string): boolean
@@ -107094,7 +107777,7 @@ function toDate(v: unknown): Date
 
 ### toDateMaybe `function`
 
-📍 [`src/memory/MemorySystem.ts:6566`](../src/memory/MemorySystem.ts#L6566)
+📍 [`src/memory/MemorySystem.ts:6567`](../src/memory/MemorySystem.ts#L6567)
 
 ```typescript
 function toDateMaybe(v: unknown): Date | undefined
@@ -107232,7 +107915,7 @@ function translateIdField(filter: MongoFilter): MongoFilter
 
 ### treeBasedSearch `function`
 
-📍 [`src/tools/github/searchCode.ts:287`](../src/tools/github/searchCode.ts#L287)
+📍 [`src/tools/github/searchCode.ts:288`](../src/tools/github/searchCode.ts#L288)
 
 Search by fetching the file tree and scanning blobs (slower, supports any ref)
 
@@ -107401,6 +108084,26 @@ function ulaw2linear(ulawbyte: number): number
 
 ---
 
+### unrefTimer `function`
+
+📍 [`src/infrastructure/runtime/environment.browser.ts:3`](../src/infrastructure/runtime/environment.browser.ts#L3)
+
+```typescript
+export function unrefTimer(_timer: ReturnType&lt;typeof setTimeout&gt;): void
+```
+
+---
+
+### unrefTimer `function`
+
+📍 [`src/infrastructure/runtime/environment.ts:4`](../src/infrastructure/runtime/environment.ts#L4)
+
+```typescript
+export function unrefTimer(timer: ReturnType&lt;typeof setTimeout&gt;): void
+```
+
+---
+
 ### unresolvedAsyncKeys `function`
 
 📍 [`src/core/context-nextgen/tool-pairs.ts:28`](../src/core/context-nextgen/tool-pairs.ts#L28)
@@ -107503,7 +108206,7 @@ export function validateCompactionConfig(config: StructuredSummaryStrategyConfig
 
 ### validateEvidenceId `function`
 
-📍 [`src/core/evidence/validation.ts:101`](../src/core/evidence/validation.ts#L101)
+📍 [`src/core/evidence/validation.ts:102`](../src/core/evidence/validation.ts#L102)
 
 ```typescript
 export function validateEvidenceId(id: string): void
@@ -107523,7 +108226,7 @@ function validateKey(key: unknown): string | null
 
 ### validateKey `function`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:219`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L219)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:220`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L220)
 
 Validate key format
 
@@ -107639,7 +108342,7 @@ function validateRealtimeProfile(value: unknown): void
 
 ### validateRecord `function`
 
-📍 [`src/core/evidence/validation.ts:91`](../src/core/evidence/validation.ts#L91)
+📍 [`src/core/evidence/validation.ts:92`](../src/core/evidence/validation.ts#L92)
 
 ```typescript
 export function validateRecord(r: EvidenceRecord): void
@@ -107649,7 +108352,7 @@ export function validateRecord(r: EvidenceRecord): void
 
 ### validateReference `function`
 
-📍 [`src/core/evidence/validation.ts:104`](../src/core/evidence/validation.ts#L104)
+📍 [`src/core/evidence/validation.ts:105`](../src/core/evidence/validation.ts#L105)
 
 ```typescript
 export function validateReference(r: EvidenceReference): void
@@ -107669,7 +108372,7 @@ export async function validateRemoteEvidenceRecord(manager: object, record: Evid
 
 ### validateScope `function`
 
-📍 [`src/core/evidence/validation.ts:16`](../src/core/evidence/validation.ts#L16)
+📍 [`src/core/evidence/validation.ts:17`](../src/core/evidence/validation.ts#L17)
 
 ```typescript
 export function validateScope(scope: EvidenceScope): Readonly&lt;EvidenceScope&gt;
@@ -107689,7 +108392,7 @@ export function validateSource(record: EvidenceRecord | null, request: Admission
 
 ### validateStateHistoryCap `function`
 
-📍 [`src/memory/MemorySystem.ts:6694`](../src/memory/MemorySystem.ts#L6694)
+📍 [`src/memory/MemorySystem.ts:6695`](../src/memory/MemorySystem.ts#L6695)
 
 ```typescript
 function validateStateHistoryCap(v: number | undefined): number
@@ -107728,7 +108431,7 @@ export function validateThinkingConfig(
 
 ### vendorContainers `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:38`](../src/core/model-execution/ModelExecutor.ts#L38)
+📍 [`src/core/model-execution/ModelExecutor.ts:37`](../src/core/model-execution/ModelExecutor.ts#L37)
 
 ```typescript
 function vendorContainers(options: TextGenerateOptions): Record&lt;string, unknown&gt;[]
@@ -107849,7 +108552,7 @@ export function warnIfLimitWithoutOrder(
 
 ### warnIfTruncated `function`
 
-📍 [`src/memory/MemorySystem.ts:6589`](../src/memory/MemorySystem.ts#L6589)
+📍 [`src/memory/MemorySystem.ts:6590`](../src/memory/MemorySystem.ts#L6590)
 
 ```typescript
 function warnIfTruncated(
@@ -107871,6 +108574,46 @@ Wait without leaking a listener, even when the underlying operation ignores abor
 
 ```typescript
 export async function withAbort&lt;T&gt;(promise: Promise&lt;T&gt;, signal?: AbortSignal | null): Promise&lt;T&gt;
+```
+
+---
+
+### withInvocation `function`
+
+📍 [`src/core/model-execution/invocationBinding.browser.ts:3`](../src/core/model-execution/invocationBinding.browser.ts#L3)
+
+```typescript
+export function withInvocation&lt;T&gt;(state: InvocationState, operation: () =&gt; T): T
+```
+
+---
+
+### withInvocation `function`
+
+📍 [`src/core/model-execution/invocationBinding.ts:4`](../src/core/model-execution/invocationBinding.ts#L4)
+
+```typescript
+export function withInvocation&lt;T&gt;(state: InvocationState, operation: () =&gt; T): T
+```
+
+---
+
+### withoutInvocation `function`
+
+📍 [`src/core/model-execution/invocationBinding.browser.ts:17`](../src/core/model-execution/invocationBinding.browser.ts#L17)
+
+```typescript
+export function withoutInvocation&lt;T&gt;(operation: () =&gt; T): T
+```
+
+---
+
+### withoutInvocation `function`
+
+📍 [`src/core/model-execution/invocationBinding.ts:8`](../src/core/model-execution/invocationBinding.ts#L8)
+
+```typescript
+export function withoutInvocation&lt;T&gt;(operation: () =&gt; T): T
 ```
 
 ---
@@ -108011,6 +108754,27 @@ export async function zoomFetch&lt;T = unknown&gt;(
 | `type` | `'blocklist'` | - |
 
 </details>
+
+---
+
+### browserSDKOptions `const`
+
+📍 [`src/infrastructure/runtime/environment.browser.ts:2`](../src/infrastructure/runtime/environment.browser.ts#L2)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `dangerouslyAllowBrowser` | `true` | - |
+
+</details>
+
+---
+
+### browserSDKOptions `const`
+
+📍 [`src/infrastructure/runtime/environment.ts:3`](../src/infrastructure/runtime/environment.ts#L3)
 
 ---
 
@@ -108273,7 +109037,7 @@ Per-extension file size limits
 
 ### DEFAULT_FILE_SIZE_LIMITS `const`
 
-📍 [`src/tools/microsoft/types.ts:688`](../src/tools/microsoft/types.ts#L688)
+📍 [`src/tools/microsoft/types.ts:689`](../src/tools/microsoft/types.ts#L689)
 
 Per-extension file size limits.
 Presentations can be very large due to embedded images, but since we extract
@@ -109343,7 +110107,7 @@ Map of Google-native MIME types to their export format
 
 ### jsonManipulator `const`
 
-📍 [`src/tools/json/jsonManipulator.ts:25`](../src/tools/json/jsonManipulator.ts#L25)
+📍 [`src/tools/json/jsonManipulator.ts:26`](../src/tools/json/jsonManipulator.ts#L26)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -109645,7 +110409,7 @@ The tool returns a result object with:
 
 ### LANGUAGE_EXTENSIONS `const`
 
-📍 [`src/tools/github/searchCode.ts:53`](../src/tools/github/searchCode.ts#L53)
+📍 [`src/tools/github/searchCode.ts:54`](../src/tools/github/searchCode.ts#L54)
 
 Language → common file extensions mapping for tree-based search
 
@@ -110130,7 +110894,7 @@ and stakeholder displayNames.
 
 ### ROLE_BY_FIELD `const`
 
-📍 [`src/memory/MemorySystem.ts:189`](../src/memory/MemorySystem.ts#L189)
+📍 [`src/memory/MemorySystem.ts:190`](../src/memory/MemorySystem.ts#L190)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -110467,7 +111231,7 @@ Normalizes markdown table alignment for spreadsheet formats
 
 ### TARGET_USER_PARAM_SCHEMA `const`
 
-📍 [`src/tools/google/types.ts:121`](../src/tools/google/types.ts#L121)
+📍 [`src/tools/google/types.ts:122`](../src/tools/google/types.ts#L122)
 
 Standard JSON-schema fragment for the optional `targetUser` LLM parameter.
 Tools spread this into their `properties` block when `shouldExposeTargetUserParam`
@@ -110488,7 +111252,7 @@ returns true.
 
 ### TARGET_USER_PARAM_SCHEMA `const`
 
-📍 [`src/tools/microsoft/types.ts:131`](../src/tools/microsoft/types.ts#L131)
+📍 [`src/tools/microsoft/types.ts:132`](../src/tools/microsoft/types.ts#L132)
 
 Standard JSON-schema fragment for the optional `targetUser` LLM parameter.
 Tools spread this into their `properties` block when `shouldExposeTargetUserParam`
@@ -110653,7 +111417,7 @@ the same generic title (e.g. "Follow up").
 
 ### todoAddDefinition `const`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:113`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L113)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:114`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L114)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -110700,7 +111464,7 @@ the same generic title (e.g. "Follow up").
 
 ### todoRemoveDefinition `const`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:194`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L194)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:195`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L195)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -110729,7 +111493,7 @@ the same generic title (e.g. "Follow up").
 
 ### todoUpdateDefinition `const`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:149`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L149)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:150`](../src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L150)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -110975,6 +111739,23 @@ Enforces maxTokens limit by truncating at paragraph boundaries
       },
     },
   ]` | - |
+
+</details>
+
+---
+
+### types `const`
+
+📍 [`src/infrastructure/runtime/comparisonTypes.browser.ts:3`](../src/infrastructure/runtime/comparisonTypes.browser.ts#L3)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `isDate` | `(value: unknown): boolean =&gt; tag(value) === '[object Date]'` | - |
+| `isRegExp` | `(value: unknown): boolean =&gt; tag(value) === '[object RegExp]'` | - |
+| `isNativeError` | `(value: unknown): boolean =&gt; tag(value) === '[object Error]' || value instanceof Error` | - |
 
 </details>
 

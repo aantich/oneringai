@@ -1,5 +1,4 @@
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
+import { createSchemaCompiler } from '../../infrastructure/runtime/schemaCompiler.js';
 import { AIError, InvalidConfigError, ProviderCapabilityNotSupportedError } from '../../domain/errors/AIErrors.js';
 import { getModelInfo } from '../../domain/entities/Model.js';
 import type { ITextProvider, TextGenerateOptions } from '../../domain/interfaces/ITextProvider.js';
@@ -200,8 +199,7 @@ export async function invokeConfiguredHelper<T>(args: {
   const validationSchema = options.validationSchema === undefined ? undefined : structuredClone(options.validationSchema);
   // A helper owns its schema compiler for its bounded generation/repair lifetime.
   // Reusing a global compiler retains cloned schemas and collides on public $ids.
-  const ajv = new Ajv({ allErrors: true, strict: false, strictSchema: true });
-  addFormats(ajv);
+  const ajv = createSchemaCompiler('helper');
   let validate: ReturnType<typeof ajv.compile>;
   let validateAdditional: ReturnType<typeof ajv.compile> | undefined;
   try {
@@ -209,8 +207,7 @@ export async function invokeConfiguredHelper<T>(args: {
     if (validationSchema) {
       // Separate schema roots preserve $refs/$ids and avoid collisions when the
       // optional local constraints reuse a caller's native schema identifier.
-      const localAjv = new Ajv({ allErrors: true, strict: false, strictSchema: true });
-      addFormats(localAjv);
+      const localAjv = createSchemaCompiler('helper');
       validateAdditional = localAjv.compile(validationSchema);
     }
   }

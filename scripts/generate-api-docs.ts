@@ -949,6 +949,11 @@ This document provides a complete reference for the public API of \`oneringai\`.
 
 For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 
+Agents use the same API in browsers and Node.js since 2.0.0-beta.2.
+The browser condition exposes compatible exports; host-only APIs in this full
+reference retain their environment requirements. See [Browser Agents](./docs/BROWSER_AGENTS.md)
+for TypeScript setup, custom plugins, storage and capability boundaries.
+
 > **Note:** This documentation is auto-generated from source code. Items marked with \`@internal\` are excluded.
 `.trim(),
     };

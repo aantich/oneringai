@@ -1,10 +1,11 @@
+import { browserSDKOptions } from '../../runtime/environment.js';
 import type { TokenUsage } from '../../../domain/entities/Response.js';
 /**
  * OpenAI text provider using Responses API
  */
 
 import OpenAI, { toFile } from 'openai';
-import { modelExecutionFetch, modelRequestOptions, registerModelTransport, withoutModelTracking, markFailedModelUsage } from '../../../core/model-execution/ModelTask.js';
+import { modelTransportClient, modelExecutionFetch, modelRequestOptions, registerModelTransport, withoutModelTracking, markFailedModelUsage } from '../../../core/model-execution/ModelTask.js';
 import { assertNativeCompactionOptions, nativeCompactionUsage, openAICompactedWindow } from '../shared/nativeCompaction.js';
 import type { ITextCompactionProvider, TextCompactionResponse } from '../../../domain/interfaces/ITextProvider.js';
 import { createValidatedOpenAIAPIKeyProvider } from './OpenAIAuth.js';
@@ -87,7 +88,7 @@ export class OpenAITextProvider extends BaseTextProvider {
     if (tier !== undefined) params.service_tier = tier;
     let observed: TokenUsage | null = null;
     try {
-      const response = await this.client.responses.compact(params, ...modelRequestOptions(options));
+      const response = await modelTransportClient(this.client, options.signal).responses.compact(params, ...modelRequestOptions(options));
       observed = nativeCompactionUsage(response.usage, 'openai');
       const actualTier = (response as unknown as { service_tier?: unknown }).service_tier;
       if (observed && typeof actualTier === 'string') observed.service_tier = actualTier;
@@ -143,6 +144,7 @@ export class OpenAITextProvider extends BaseTextProvider {
       timeout: this.getTimeout(),
       maxRetries: this.getMaxRetries(),
       fetch: modelExecutionFetch,
+      ...browserSDKOptions,
     });
     registerModelTransport(this);
 
@@ -189,7 +191,7 @@ export class OpenAITextProvider extends BaseTextProvider {
         const genStartTime = Date.now();
 
         // Call Responses API
-        const response = await this.client.responses.create(params as any, ...modelRequestOptions(options));
+        const response = await modelTransportClient(this.client, options.signal).responses.create(params as any, ...modelRequestOptions(options));
         this.logger.debug(
           { model: options.model, duration: Date.now() - genStartTime },
           'generate: response received',
@@ -234,7 +236,7 @@ export class OpenAITextProvider extends BaseTextProvider {
 
       // Call Responses API with streaming
       let streamRef: any;
-      const stream = await this.client.responses.create(params as any, ...modelRequestOptions(options)) as any;
+      const stream = await modelTransportClient(this.client, options.signal).responses.create(params as any, ...modelRequestOptions(options)) as any;
       streamRef = stream;
       this.logger.debug(
         { model: options.model, duration: Date.now() - streamStartTime },

@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash } from '../infrastructure/runtime/primitives.js';
 import { json, validateReference } from '../core/evidence/validation.js';
 import { AgentPackageCompatibilityError, assertAgentPackageCompatible, createPortableToolImplementationFingerprint } from './AgentPackage.js';
 import type { FunctionToolDefinition } from '../domain/entities/Tool.js';

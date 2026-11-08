@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash } from '../../infrastructure/runtime/primitives.js';
 import { AIError } from '../../domain/errors/AIErrors.js';
 import type { InputItem } from '../../domain/entities/Message.js';
 import type { IContextPluginNextGen, ITokenEstimator } from './types.js';

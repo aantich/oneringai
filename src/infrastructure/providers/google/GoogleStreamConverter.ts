@@ -1,9 +1,10 @@
+import { env } from '../../runtime/environment.js';
 import { markSeparateReasoningUsage } from '../../../core/model-execution/ModelTask.js';
 /**
  * Google Gemini stream converter - converts Google streaming responses to our unified StreamEvent format
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID } from '../../runtime/primitives.js';
 import { GenerateContentResponse } from '@google/genai';
 import { StreamEvent, StreamEventType, ReasoningDeltaEvent, ReasoningDoneEvent } from '../../../domain/entities/StreamEvent.js';
 import { mapGoogleStatus } from '../shared/ResponseBuilder.js';
@@ -249,10 +250,10 @@ export class GoogleStreamConverter {
           // Store signature in external storage for use in next request
           if (thoughtSignature && this.thoughtSignatureStorage) {
             this.thoughtSignatureStorage.set(toolCallId, thoughtSignature);
-            if (process.env.DEBUG_GOOGLE) {
+            if (env('DEBUG_GOOGLE')) {
               console.error(`[DEBUG] Stream: Captured thought signature for tool ID: ${toolCallId}`);
             }
-          } else if (process.env.DEBUG_GOOGLE && !thoughtSignature) {
+          } else if (env('DEBUG_GOOGLE') && !thoughtSignature) {
             console.error(`[DEBUG] Stream: NO thought signature in part for ${toolName}`);
           }
 
@@ -271,7 +272,7 @@ export class GoogleStreamConverter {
             buffer.signature = thoughtSignature;
             if (this.thoughtSignatureStorage) {
               this.thoughtSignatureStorage.set(toolCallId, thoughtSignature);
-              if (process.env.DEBUG_GOOGLE) {
+              if (env('DEBUG_GOOGLE')) {
                 console.error(`[DEBUG] Stream: Updated thought signature for tool ID: ${toolCallId}`);
               }
             }

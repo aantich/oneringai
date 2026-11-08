@@ -8,6 +8,14 @@ runtime sessions. External harness integrations retain their preview boundaries.
 Native mode also exposes context diagnostics, model routing, helper models and
 adoption presets; see the commands below and the [v2 guide](../../docs/VERSION_2_GUIDE.md).
 
+The library browser target in 2.0.0-beta.2 uses the **same Agent API as Node.js**.
+AMOS remains a Node terminal application with its existing configuration and host
+tools; its build, types and regression tests validate that consumer path. See
+[Browser Agents](../../docs/BROWSER_AGENTS.md) for page/Worker examples and limits.
+
+Closed stdin ends setup prompts and shuts down the REPL cleanly, including when
+EOF arrives before the next prompt. Normal `/help` and `/exit` commands are unchanged.
+
 > The historical name says “Multimodal,” but the current CLI implements text agents and tools only. Image, audio, and video commands are not implemented yet.
 
 ## Features
@@ -543,7 +551,7 @@ entries become JSON user data while trusted usage guidance remains instructions.
 `stable-prefix` by itself only changes layout; it does not lower ordinary plugin
 data's authority. Other unregistered plugin views remain in instructions. The
 shared Claude/Gemini/Vertex adapter correction now preserves that intended role;
-it is not yet in the published beta. See [plugin prompt authority](../../docs/PLUGIN_PROMPT_AUTHORITY.md).
+it is included in 2.0.0-beta.2. See [plugin prompt authority](../../docs/PLUGIN_PROMPT_AUTHORITY.md).
 AMOS needs no new placement setting or provider-specific conversion code.
 
 Critical entries stay protected; source state persists, while trusted companions

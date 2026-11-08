@@ -25,8 +25,8 @@ import type { ToolEvidenceDelivery } from './evidence/ToolEvidenceMiddleware.js'
  * in this class for clarity and simplicity.
  */
 
-import { createHash, randomUUID } from 'crypto';
-import { isDeepStrictEqual } from 'node:util';
+import { createHash, randomUUID } from '../infrastructure/runtime/primitives.js';
+import { isDeepStrictEqual } from '../infrastructure/runtime/primitives.js';
 import { BaseAgent, BaseAgentConfig, BaseSessionConfig } from './BaseAgent.js';
 import { ExecutionContext, HistoryMode } from '../capabilities/agents/ExecutionContext.js';
 import { HookManager } from '../capabilities/agents/HookManager.js';
@@ -84,7 +84,7 @@ import type { TemplateContext } from './TemplateEngine.js';
 import { AgentRegistry } from './AgentRegistry.js';
 import { SuspendSignal } from './SuspendSignal.js';
 import type { ICorrelationStorage, SessionRef } from '../domain/interfaces/ICorrelationStorage.js';
-import { FileCorrelationStorage } from '../infrastructure/storage/FileCorrelationStorage.js';
+import { defaultCorrelationStorage } from '../infrastructure/runtime/storageDefaults.js';
 import { ProviderErrorMapper } from '../infrastructure/providers/base/ProviderErrorMapper.js';
 import {
   type ResponseFormat,
@@ -2473,7 +2473,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         };
         const correlationStorage = StorageRegistry.resolve(
           'correlations' as keyof import('./StorageRegistry.js').StorageConfig,
-          () => new FileCorrelationStorage(),
+          defaultCorrelationStorage,
         ) as ICorrelationStorage;
         let suspendResponse: AgentResponse;
         try {

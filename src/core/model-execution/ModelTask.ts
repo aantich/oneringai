@@ -1,5 +1,7 @@
-import { randomUUID } from 'node:crypto';
-import { AsyncLocalStorage } from 'node:async_hooks';
+import { randomUUID } from '../../infrastructure/runtime/primitives.js';
+import { withInvocation, getInvocation, ambientInvocation, explicitInvocation, withoutInvocation } from './invocationBinding.js';
+import type { InvocationState } from './invocationTypes.js';
+import { unrefTimer } from '../../infrastructure/runtime/environment.js';
 import { AIError, InvalidConfigError } from '../../domain/errors/AIErrors.js';
 import { calculateCost } from '../../domain/entities/Model.js';
 import type { TokenUsage } from '../../domain/entities/Response.js';
@@ -14,14 +16,8 @@ export class ModelBudgetExceededError extends AIError {
   }
 }
 
-interface InvocationState {
-  signal: AbortSignal;
-  beginTransport(): ModelAttemptRecord;
-  endTransport(attempt: ModelAttemptRecord, status?: number): void;
-}
-const invocationStorage = new AsyncLocalStorage<InvocationState>();
 /** @internal Counting/discovery are bounded auxiliary I/O, not generation attempts. */
-export function withoutModelTracking<T>(operation: () => T): T { return invocationStorage.exit(operation); }
+export function withoutModelTracking<T>(operation: () => T): T { return withoutInvocation(operation); }
 const instrumentedProviders = new WeakSet<object>();
 const separateReasoningUsages = new WeakSet<TokenUsage>();
 const failedModelUsages = new WeakMap<object, TokenUsage>();
@@ -102,8 +98,7 @@ export function modelRequestOptions(options: { signal?: AbortSignal }): [] | [{ 
 }
 
 /** @internal No task means exactly the ordinary fetch call, without accounting. */
-export const modelExecutionFetch: typeof globalThis.fetch = async (input, init) => {
-  const state = invocationStorage.getStore();
+async function fetchForState(state: InvocationState | undefined, input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]): Promise<Response> {
   if (!state) return globalThis.fetch(input, init);
   state.signal.throwIfAborted();
   const attempt = state.beginTransport();
@@ -117,7 +112,18 @@ export const modelExecutionFetch: typeof globalThis.fetch = async (input, init) 
     state.endTransport(attempt);
     throw error;
   }
-};
+}
+export const modelExecutionFetch: typeof globalThis.fetch = (input, init) => fetchForState(ambientInvocation(), input, init);
+/** @internal Capture the exact operation owner before an SDK replaces its signal. */
+export function modelTransportFetch(signal?: AbortSignal): typeof globalThis.fetch | undefined {
+  const state = explicitInvocation(signal);
+  return state ? (input, init) => fetchForState(state, input, init) : undefined;
+}
+/** @internal Node keeps its existing client; browser ownership uses an SDK-scoped fetch. */
+export function modelTransportClient<T extends { withOptions(options: { fetch: typeof globalThis.fetch }): T }>(client: T, signal?: AbortSignal): T {
+  const fetch = modelTransportFetch(signal);
+  return fetch ? client.withOptions({ fetch }) : client;
+}
 
 /** In-process shared admission, reservations and usage. Never stores prompts or credentials. */
 export class ModelTask {
@@ -148,7 +154,7 @@ export class ModelTask {
       if (this.limits.deadline === undefined || this.signal.aborted) return;
       const delay = this.limits.deadline - Date.now();
       if (delay <= 0) this.cancel(new DOMException('Model task deadline exceeded', 'TimeoutError'));
-      else { this.deadlineTimer = setTimeout(armDeadline, Math.min(delay, 2_147_483_647)); this.deadlineTimer.unref(); }
+      else { this.deadlineTimer = setTimeout(armDeadline, Math.min(delay, 2_147_483_647)); unrefTimer(this.deadlineTimer); }
     };
     armDeadline();
   }
@@ -264,7 +270,7 @@ export class ModelTask {
       if (!first.dispatched) { first.status = 'not_dispatched'; first.reservedTokens = 0; first.reservedCostUSD = 0; }
       call.lateSettlement = callerStopped;
     };
-    const pending = invocationStorage.run(state, async () => {
+    const pending = withInvocation(state, async () => {
       try {
         if (!options.transport) {
           options.beforeDispatch?.();
@@ -316,10 +322,10 @@ export class ModelTask {
     void completion.catch(() => undefined);
     const work = this.execute(descriptor, async signal => {
       const iterator = factory(signal)[Symbol.asyncIterator]();
-      const state = invocationStorage.getStore()!;
+      const state = getInvocation(signal)!;
       actualSignal = signal;
-      next = () => invocationStorage.run(state, () => iterator.next());
-      close = async () => invocationStorage.run(state, () => iterator.return?.());
+      next = () => withInvocation(state, () => iterator.next());
+      close = async () => withInvocation(state, () => iterator.return?.());
       readyResolve();
       await completion;
       return usage;

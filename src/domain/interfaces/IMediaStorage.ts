@@ -1,3 +1,4 @@
+import type { MediaBytes } from '#oneringai-media-bytes';
 /**
  * IMediaStorage - Storage interface for multimedia outputs (images, video, audio)
  *
@@ -91,7 +92,7 @@ export interface IMediaStorage {
    * @param metadata - Information about the media for naming/organization
    * @returns Location and metadata of the saved file
    */
-  save(data: Buffer, metadata: MediaStorageMetadata): Promise<MediaStorageResult>;
+  save(data: MediaBytes, metadata: MediaStorageMetadata): Promise<MediaStorageResult>;
 
   /**
    * Read media data from storage
@@ -99,7 +100,7 @@ export interface IMediaStorage {
    * @param location - Location string returned by save() or known file path
    * @returns The raw media data, or null if not found
    */
-  read(location: string): Promise<Buffer | null>;
+  read(location: string): Promise<MediaBytes | null>;
 
   /**
    * Delete media from storage

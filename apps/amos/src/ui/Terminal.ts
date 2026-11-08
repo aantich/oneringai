@@ -9,15 +9,22 @@ import chalk from 'chalk';
 
 export class Terminal {
   private rl: readline.Interface | null = null;
+  private inputClosed = false;
   private colorEnabled: boolean = true;
 
   /**
    * Initialize readline interface
    */
   initialize(): void {
-    this.rl = readline.createInterface({
+    if (this.rl || this.inputClosed) return;
+    const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
+    });
+    this.rl = rl;
+    rl.once('close', () => {
+      this.inputClosed = true;
+      if (this.rl === rl) this.rl = null;
     });
   }
 
@@ -25,6 +32,7 @@ export class Terminal {
    * Close readline interface
    */
   close(): void {
+    this.inputClosed = true;
     this.rl?.close();
     this.rl = null;
   }
@@ -103,23 +111,15 @@ export class Terminal {
    * Prompt for input
    */
   async prompt(question: string): Promise<string> {
-    return new Promise((resolve) => {
-      if (this.rl) {
-        this.rl.question(question, (answer) => {
-          resolve(answer);
-        });
-      } else {
-        // Fallback if rl not initialized
-        const tempRl = readline.createInterface({
-          input: process.stdin,
-          output: process.stdout,
-        });
-        tempRl.question(question, (answer) => {
-          tempRl.close();
-          resolve(answer);
-        });
-      }
-    });
+    if (this.rl) return (await this.readline(question)) ?? '';
+    if (this.inputClosed || process.stdin.readableEnded || process.stdin.destroyed) return '';
+    // Preserve the temporary-interface fallback before initialize().
+    const temporary = readline.createInterface({ input: process.stdin, output: process.stdout });
+    try {
+      const answer = await this.readQuestion(temporary, question);
+      if (answer === null) this.inputClosed = true;
+      return answer ?? '';
+    } finally { temporary.close(); }
   }
 
   /**
@@ -216,23 +216,17 @@ export class Terminal {
    * Read line from stdin (for REPL)
    */
   async readline(promptStr: string): Promise<string | null> {
+    return this.rl ? this.readQuestion(this.rl, promptStr) : null;
+  }
+
+  private readQuestion(rl: readline.Interface, promptStr: string): Promise<string | null> {
     return new Promise((resolve) => {
-      if (this.rl) {
-        // Create close handler that we can remove after question is answered
-        const closeHandler = () => {
-          resolve(null);
-        };
-
-        this.rl.once('close', closeHandler);
-
-        this.rl.question(promptStr, (answer) => {
-          // Remove the close handler since we got an answer
-          this.rl?.removeListener('close', closeHandler);
-          resolve(answer);
-        });
-      } else {
-        resolve(null);
-      }
+      const closeHandler = () => resolve(null);
+      rl.once('close', closeHandler);
+      rl.question(promptStr, (answer) => {
+        rl.removeListener('close', closeHandler);
+        resolve(answer);
+      });
     });
   }
 

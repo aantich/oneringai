@@ -1,3 +1,4 @@
+import { env } from '../infrastructure/runtime/environment.js';
 /**
  * ErrorHandler - Centralized error handling for agents
  *
@@ -126,7 +127,7 @@ export class ErrorHandler extends EventEmitter<ErrorHandlerEvents> {
   constructor(config: ErrorHandlerConfig = {}) {
     super();
 
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = env('NODE_ENV') === 'production';
 
     this.config = {
       logErrors: config.logErrors ?? true,

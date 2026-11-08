@@ -1,3 +1,4 @@
+/** @browserCompatible Complete implementation; existing configured storage is required where applicable. */
 /**
  * routine_get - Retrieves a routine definition by ID or name.
  */

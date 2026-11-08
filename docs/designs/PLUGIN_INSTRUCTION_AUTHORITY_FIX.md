@@ -1,8 +1,8 @@
 # Plugin instruction authority correction
 
-Date: 2026-11-08. Availability: implemented on `codex/provider-instruction-authority`,
-unreleased. The verified published version remains `2.0.0-beta.1`; this record
-does not announce a package release.
+Date: 2026-11-08. Originally implemented on `codex/provider-instruction-authority`,
+then explicitly merged into main. Included in `2.0.0-beta.2`; see the
+[beta.2 validation/publication record](../evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json).
 
 ## Scope and authorization
 

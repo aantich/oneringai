@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../../infrastructure/runtime/primitives.js';
 import type { InputItem, Message } from '../../../domain/entities/Message.js';
 import { MessageRole } from '../../../domain/entities/Message.js';
 import { ContentType } from '../../../domain/entities/Content.js';

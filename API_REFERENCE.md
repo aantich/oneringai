@@ -7,6 +7,11 @@ This document provides a complete reference for the public API of `oneringai`.
 
 For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 
+Agents use the same API in browsers and Node.js since 2.0.0-beta.2.
+The browser condition exposes compatible exports; host-only APIs in this full
+reference retain their environment requirements. See [Browser Agents](./docs/BROWSER_AGENTS.md)
+for TypeScript setup, custom plugins, storage and capability boundaries.
+
 > **Note:** This documentation is auto-generated from source code. Items marked with `@internal` are excluded.
 
 ## Table of Contents
@@ -17,10 +22,10 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Image Generation](#image-generation) (25 items)
 - [Video Generation](#video-generation) (23 items)
 - [Agent Runtime](#agent-runtime) (103 items)
-- [Task Agents](#task-agents) (133 items)
+- [Task Agents](#task-agents) (134 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (79 items)
-- [Tools & Function Calling](#tools--function-calling) (225 items)
+- [Tools & Function Calling](#tools--function-calling) (233 items)
 - [Streaming](#streaming) (35 items)
 - [Model Registry](#model-registry) (52 items)
 - [OAuth & External APIs](#oauth--external-apis) (46 items)
@@ -1251,7 +1256,7 @@ static clear(): void
 
 ### Connector `class`
 
-📍 [`src/core/Connector.ts:62`](src/core/Connector.ts#L62)
+📍 [`src/core/Connector.ts:63`](src/core/Connector.ts#L63)
 
 Connector class - represents a single authenticated connection
 
@@ -2009,7 +2014,7 @@ Aggregate statistics across all tracked agents
 
 ### ConnectorFetchOptions `interface`
 
-📍 [`src/core/Connector.ts:46`](src/core/Connector.ts#L46)
+📍 [`src/core/Connector.ts:47`](src/core/Connector.ts#L47)
 
 Fetch options with additional connector-specific settings
 
@@ -2192,7 +2197,7 @@ type Vendor = (typeof Vendor)[keyof typeof Vendor]
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:89`](src/core/createProvider.ts#L89)
+📍 [`src/core/createProvider.ts:90`](src/core/createProvider.ts#L90)
 
 Create a text provider from a connector
 
@@ -2204,7 +2209,7 @@ export function createProvider(connector: Connector): ITextProvider
 
 ### getVendorDefaultBaseURL `function`
 
-📍 [`src/core/createProvider.ts:57`](src/core/createProvider.ts#L57)
+📍 [`src/core/createProvider.ts:58`](src/core/createProvider.ts#L58)
 
 Get the default API base URL for a vendor.
 For OpenAI/Anthropic reads from the installed SDK at runtime.
@@ -2523,7 +2528,7 @@ Complete TTS model description
 
 ### STTStreamEvent `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:225`](src/domain/interfaces/IAudioProvider.ts#L225)
+📍 [`src/domain/interfaces/IAudioProvider.ts:226`](src/domain/interfaces/IAudioProvider.ts#L226)
 
 Normalized event emitted by a live transcription session.
 
@@ -2548,7 +2553,7 @@ Normalized event emitted by a live transcription session.
 
 ### STTStreamOptions `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:213`](src/domain/interfaces/IAudioProvider.ts#L213)
+📍 [`src/domain/interfaces/IAudioProvider.ts:214`](src/domain/interfaces/IAudioProvider.ts#L214)
 
 Audio source and normalized controls for a live transcription session.
 
@@ -2635,7 +2640,7 @@ TTS model capabilities
 
 ### TTSOptions `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:16`](src/domain/interfaces/IAudioProvider.ts#L16)
+📍 [`src/domain/interfaces/IAudioProvider.ts:17`](src/domain/interfaces/IAudioProvider.ts#L17)
 
 Options for text-to-speech synthesis
 
@@ -2661,7 +2666,7 @@ are forwarded to the SDK as `{ id }` automatically. |
 
 ### TTSResponse `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:45`](src/domain/interfaces/IAudioProvider.ts#L45)
+📍 [`src/domain/interfaces/IAudioProvider.ts:46`](src/domain/interfaces/IAudioProvider.ts#L46)
 
 Response from text-to-speech synthesis
 
@@ -2682,7 +2687,7 @@ Response from text-to-speech synthesis
 
 ### TTSStreamChunk `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:80`](src/domain/interfaces/IAudioProvider.ts#L80)
+📍 [`src/domain/interfaces/IAudioProvider.ts:81`](src/domain/interfaces/IAudioProvider.ts#L81)
 
 A single chunk of streamed TTS audio
 
@@ -2700,7 +2705,7 @@ A single chunk of streamed TTS audio
 
 ### STTStreamInput `type`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:210`](src/domain/interfaces/IAudioProvider.ts#L210)
+📍 [`src/domain/interfaces/IAudioProvider.ts:211`](src/domain/interfaces/IAudioProvider.ts#L211)
 
 Input frame for live STT. `finalize` ends the current utterance without closing the session.
 
@@ -3448,7 +3453,7 @@ STT model capabilities
 
 ### STTOptions `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:115`](src/domain/interfaces/IAudioProvider.ts#L115)
+📍 [`src/domain/interfaces/IAudioProvider.ts:116`](src/domain/interfaces/IAudioProvider.ts#L116)
 
 Options for speech-to-text transcription
 
@@ -3475,7 +3480,7 @@ Options for speech-to-text transcription
 
 ### STTResponse `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:177`](src/domain/interfaces/IAudioProvider.ts#L177)
+📍 [`src/domain/interfaces/IAudioProvider.ts:178`](src/domain/interfaces/IAudioProvider.ts#L178)
 
 Response from speech-to-text transcription
 
@@ -3508,7 +3513,7 @@ type STTOutputFormat = 'json' | 'text' | 'srt' | 'vtt' | 'verbose_json'
 
 ### STTOutputFormat `type`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:110`](src/domain/interfaces/IAudioProvider.ts#L110)
+📍 [`src/domain/interfaces/IAudioProvider.ts:111`](src/domain/interfaces/IAudioProvider.ts#L111)
 
 STT output format types
 
@@ -4171,7 +4176,7 @@ Complete image model description
 
 ### IImageProvider `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:53`](src/domain/interfaces/IImageProvider.ts#L53)
+📍 [`src/domain/interfaces/IImageProvider.ts:54`](src/domain/interfaces/IImageProvider.ts#L54)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -4231,7 +4236,7 @@ listModels?(): Promise&lt;string[]&gt;;
 
 ### ImageEditOptions `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:20`](src/domain/interfaces/IImageProvider.ts#L20)
+📍 [`src/domain/interfaces/IImageProvider.ts:21`](src/domain/interfaces/IImageProvider.ts#L21)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -4272,7 +4277,7 @@ listModels?(): Promise&lt;string[]&gt;;
 
 ### ImageGenerateOptions `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:7`](src/domain/interfaces/IImageProvider.ts#L7)
+📍 [`src/domain/interfaces/IImageProvider.ts:8`](src/domain/interfaces/IImageProvider.ts#L8)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -4384,7 +4389,7 @@ Image model pricing
 
 ### ImageResponse `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:40`](src/domain/interfaces/IImageProvider.ts#L40)
+📍 [`src/domain/interfaces/IImageProvider.ts:41`](src/domain/interfaces/IImageProvider.ts#L41)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -4408,7 +4413,7 @@ Image model pricing
 
 ### ImageVariationOptions `interface`
 
-📍 [`src/domain/interfaces/IImageProvider.ts:32`](src/domain/interfaces/IImageProvider.ts#L32)
+📍 [`src/domain/interfaces/IImageProvider.ts:33`](src/domain/interfaces/IImageProvider.ts#L33)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -6154,7 +6159,7 @@ getConnector(): Connector
 
 ### CharacterRef `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:84`](src/domain/interfaces/IVideoProvider.ts#L84)
+📍 [`src/domain/interfaces/IVideoProvider.ts:85`](src/domain/interfaces/IVideoProvider.ts#L85)
 
 A reusable character reference (Sora character API).
 
@@ -6172,7 +6177,7 @@ A reusable character reference (Sora character API).
 
 ### CreateCharacterOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:74`](src/domain/interfaces/IVideoProvider.ts#L74)
+📍 [`src/domain/interfaces/IVideoProvider.ts:75`](src/domain/interfaces/IVideoProvider.ts#L75)
 
 Options for creating a reusable character from a reference video
 (Sora character API).
@@ -6209,7 +6214,7 @@ Video model description
 
 ### IVideoProvider `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:151`](src/domain/interfaces/IVideoProvider.ts#L151)
+📍 [`src/domain/interfaces/IVideoProvider.ts:152`](src/domain/interfaces/IVideoProvider.ts#L152)
 
 Video provider interface
 
@@ -6254,7 +6259,7 @@ downloadVideo?(jobId: string): Promise&lt;Buffer&gt;;
 **Parameters:**
 - `jobId`: `string`
 
-**Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt;&gt;`
+**Returns:** `Promise&lt;MediaBytes&gt;`
 
 #### `extendVideo()?`
 
@@ -6377,7 +6382,7 @@ Simplified options for quick generation
 
 ### VideoEditOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:61`](src/domain/interfaces/IVideoProvider.ts#L61)
+📍 [`src/domain/interfaces/IVideoProvider.ts:62`](src/domain/interfaces/IVideoProvider.ts#L62)
 
 Options for editing an existing video.
 Edit = apply a prompt-described change to a completed video.
@@ -6397,7 +6402,7 @@ Edit = apply a prompt-described change to a completed video.
 
 ### VideoExtendOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:32`](src/domain/interfaces/IVideoProvider.ts#L32)
+📍 [`src/domain/interfaces/IVideoProvider.ts:33`](src/domain/interfaces/IVideoProvider.ts#L33)
 
 Options for extending an existing video
 
@@ -6418,7 +6423,7 @@ Options for extending an existing video
 
 ### VideoGenerateOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:10`](src/domain/interfaces/IVideoProvider.ts#L10)
+📍 [`src/domain/interfaces/IVideoProvider.ts:11`](src/domain/interfaces/IVideoProvider.ts#L11)
 
 Options for generating a video
 
@@ -6459,7 +6464,7 @@ Options for creating a VideoGeneration instance
 
 ### VideoJob `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:99`](src/domain/interfaces/IVideoProvider.ts#L99)
+📍 [`src/domain/interfaces/IVideoProvider.ts:100`](src/domain/interfaces/IVideoProvider.ts#L100)
 
 Video generation job
 
@@ -6537,7 +6542,7 @@ Video model pricing
 
 ### VideoRemixOptions `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:50`](src/domain/interfaces/IVideoProvider.ts#L50)
+📍 [`src/domain/interfaces/IVideoProvider.ts:51`](src/domain/interfaces/IVideoProvider.ts#L51)
 
 Options for remixing an existing video.
 Remix = re-generate the same clip with a new prompt steering the result.
@@ -6557,7 +6562,7 @@ The video reference is the completed-video ID returned by `generateVideo`.
 
 ### VideoResponse `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:117`](src/domain/interfaces/IVideoProvider.ts#L117)
+📍 [`src/domain/interfaces/IVideoProvider.ts:118`](src/domain/interfaces/IVideoProvider.ts#L118)
 
 Video generation response
 
@@ -6606,7 +6611,7 @@ type SimpleVideoExtendOptions = Omit&lt;VideoExtendOptions, 'model'&gt; & { mode
 
 ### VideoStatus `type`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:94`](src/domain/interfaces/IVideoProvider.ts#L94)
+📍 [`src/domain/interfaces/IVideoProvider.ts:95`](src/domain/interfaces/IVideoProvider.ts#L95)
 
 Video generation status (for async operations)
 
@@ -10905,64 +10910,43 @@ async patch(agentId: string, updates: Partial&lt;AgentState&gt;): Promise&lt;voi
 
 ### InMemoryEvidenceStorage `class`
 
-📍 [`src/infrastructure/storage/EvidenceStorage.ts:202`](src/infrastructure/storage/EvidenceStorage.ts#L202)
+📍 [`src/infrastructure/storage/InMemoryEvidenceStorage.browser.ts:5`](src/infrastructure/storage/InMemoryEvidenceStorage.browser.ts#L5)
 
-Bounded process-local store. Share the instance explicitly when resuming in-process.
+Bounded realm-local evidence; share the instance explicitly when resuming.
 
 <details>
-<summary><strong>Methods</strong></summary>
+<summary><strong>Constructor</strong></summary>
 
-#### `inventory()`
-
-```typescript
-protected async inventory(): Promise&lt;Array&lt;{ id: string; bytes: number }&gt;&gt;
-```
-
-**Returns:** `Promise&lt;{ id: string; bytes: number; }[]&gt;`
-
-#### `writeBlob()`
+#### `constructor`
 
 ```typescript
-protected async writeBlob(id: string, bytes: Buffer): Promise&lt;void&gt;
+constructor(options: EvidenceStorageOptions)
 ```
 
 **Parameters:**
-- `id`: `string`
-- `bytes`: `Buffer&lt;ArrayBufferLike&gt;`
-
-**Returns:** `Promise&lt;void&gt;`
-
-#### `readBlob()`
-
-```typescript
-protected async readBlob(id: string): Promise&lt;Buffer | null&gt;
-```
-
-**Parameters:**
-- `id`: `string`
-
-**Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt; | null&gt;`
-
-#### `removeBlob()`
-
-```typescript
-protected async removeBlob(id: string): Promise&lt;boolean&gt;
-```
-
-**Parameters:**
-- `id`: `string`
-
-**Returns:** `Promise&lt;boolean&gt;`
+- `options`: `EvidenceStorageOptions`
 
 </details>
 
-<details>
-<summary><strong>Properties</strong></summary>
+---
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `durability` | `durability: "process"` | - |
-| `queueKey` | `queueKey: `${string}-${string}-${string}-${string}-${string}`` | - |
+### InMemoryEvidenceStorage `class`
+
+📍 [`src/infrastructure/storage/InMemoryEvidenceStorage.ts:4`](src/infrastructure/storage/InMemoryEvidenceStorage.ts#L4)
+
+Bounded realm-local evidence; share the instance explicitly when resuming.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(options: EvidenceStorageOptions)
+```
+
+**Parameters:**
+- `options`: `EvidenceStorageOptions`
 
 </details>
 
@@ -11070,7 +11054,7 @@ async restoreState(state: SerializedHistoryState): Promise&lt;void&gt;
 
 ### InMemoryMetrics `class`
 
-📍 [`src/infrastructure/observability/Metrics.ts:83`](src/infrastructure/observability/Metrics.ts#L83)
+📍 [`src/infrastructure/observability/Metrics.ts:84`](src/infrastructure/observability/Metrics.ts#L84)
 
 In-memory metrics aggregator (testing/development)
 
@@ -11378,7 +11362,7 @@ async getTotalSize(): Promise&lt;number&gt;
 
 ### InvalidTaskTransitionError `class`
 
-📍 [`src/memory/MemorySystem.ts:222`](src/memory/MemorySystem.ts#L222)
+📍 [`src/memory/MemorySystem.ts:223`](src/memory/MemorySystem.ts#L223)
 
 Thrown when `transitionTaskState` is called with `validate: 'strict'` and
 the (from, to) pair is not allowed by the caller-supplied transition matrix.
@@ -11848,7 +11832,7 @@ async listKeys(): Promise&lt;string[]&gt;
 
 ### MemorySystem `class`
 
-📍 [`src/memory/MemorySystem.ts:304`](src/memory/MemorySystem.ts#L304)
+📍 [`src/memory/MemorySystem.ts:305`](src/memory/MemorySystem.ts#L305)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -13846,7 +13830,7 @@ restoreState(_state: unknown): void
 
 ### ModelBudgetExceededError `class`
 
-📍 [`src/core/model-execution/ModelTask.ts:9`](src/core/model-execution/ModelTask.ts#L9)
+📍 [`src/core/model-execution/ModelTask.ts:11`](src/core/model-execution/ModelTask.ts#L11)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -13866,7 +13850,7 @@ constructor(public readonly limit: string)
 
 ### ModelTask `class`
 
-📍 [`src/core/model-execution/ModelTask.ts:123`](src/core/model-execution/ModelTask.ts#L123)
+📍 [`src/core/model-execution/ModelTask.ts:129`](src/core/model-execution/ModelTask.ts#L129)
 
 In-process shared admission, reservations and usage. Never stores prompts or credentials.
 
@@ -16724,7 +16708,7 @@ findFacts(filter: FactFilter, opts?: { limit?: number }): Promise&lt;IFact[]&gt;
 
 ### MemoryEntry `interface`
 
-📍 [`src/domain/entities/Memory.ts:380`](src/domain/entities/Memory.ts#L380)
+📍 [`src/domain/entities/Memory.ts:381`](src/domain/entities/Memory.ts#L381)
 
 Single memory entry stored in working memory
 
@@ -16750,7 +16734,7 @@ Single memory entry stored in working memory
 
 ### MemoryEntryInput `interface`
 
-📍 [`src/domain/entities/Memory.ts:444`](src/domain/entities/Memory.ts#L444)
+📍 [`src/domain/entities/Memory.ts:445`](src/domain/entities/Memory.ts#L445)
 
 Input for creating a memory entry
 
@@ -16772,7 +16756,7 @@ Input for creating a memory entry
 
 ### MemoryIndex `interface`
 
-📍 [`src/domain/entities/Memory.ts:408`](src/domain/entities/Memory.ts#L408)
+📍 [`src/domain/entities/Memory.ts:409`](src/domain/entities/Memory.ts#L409)
 
 Full memory index with metadata
 
@@ -16796,7 +16780,7 @@ Full memory index with metadata
 
 ### MemoryIndexEntry `interface`
 
-📍 [`src/domain/entities/Memory.ts:396`](src/domain/entities/Memory.ts#L396)
+📍 [`src/domain/entities/Memory.ts:397`](src/domain/entities/Memory.ts#L397)
 
 Index entry (lightweight, always in context)
 
@@ -17830,7 +17814,7 @@ Reference to a source value for control flow operations.
 
 ### TaskStateHistoryEntry `interface`
 
-📍 [`src/memory/MemorySystem.ts:264`](src/memory/MemorySystem.ts#L264)
+📍 [`src/memory/MemorySystem.ts:265`](src/memory/MemorySystem.ts#L265)
 
 Single entry appended to `task.metadata.stateHistory` on every transition.
 No cap — retention is the caller's problem (audit systems, GDPR, archival).
@@ -18091,7 +18075,7 @@ Result of task validation (returned by LLM reflection)
 
 ### TransitionTaskStateOptions `interface`
 
-📍 [`src/memory/MemorySystem.ts:272`](src/memory/MemorySystem.ts#L272)
+📍 [`src/memory/MemorySystem.ts:273`](src/memory/MemorySystem.ts#L273)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -18115,7 +18099,7 @@ Keys include `'__initial'` for transitions into a first-time state. |
 
 ### TransitionTaskStateResult `interface`
 
-📍 [`src/memory/MemorySystem.ts:294`](src/memory/MemorySystem.ts#L294)
+📍 [`src/memory/MemorySystem.ts:295`](src/memory/MemorySystem.ts#L295)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -18228,7 +18212,7 @@ list(): Promise&lt;
 
 ### WorkingMemoryConfig `interface`
 
-📍 [`src/domain/entities/Memory.ts:424`](src/domain/entities/Memory.ts#L424)
+📍 [`src/domain/entities/Memory.ts:425`](src/domain/entities/Memory.ts#L425)
 
 Configuration for working memory
 
@@ -18310,7 +18294,7 @@ type EvictionStrategy = 'lru' | 'size'
 
 ### MemoryPriority `type`
 
-📍 [`src/domain/entities/Memory.ts:110`](src/domain/entities/Memory.ts#L110)
+📍 [`src/domain/entities/Memory.ts:111`](src/domain/entities/Memory.ts#L111)
 
 Priority determines eviction order (lower priority evicted first)
 
@@ -18327,7 +18311,7 @@ type MemoryPriority = 'critical' | 'high' | 'normal' | 'low'
 
 ### MemoryScope `type`
 
-📍 [`src/domain/entities/Memory.ts:33`](src/domain/entities/Memory.ts#L33)
+📍 [`src/domain/entities/Memory.ts:34`](src/domain/entities/Memory.ts#L34)
 
 Union type - memory system accepts both
 
@@ -18371,7 +18355,7 @@ type PlanStatus = | 'pending'
 
 ### SimpleScope `type`
 
-📍 [`src/domain/entities/Memory.ts:20`](src/domain/entities/Memory.ts#L20)
+📍 [`src/domain/entities/Memory.ts:21`](src/domain/entities/Memory.ts#L21)
 
 Memory entities for WorkingMemory
 
@@ -18403,7 +18387,7 @@ type SubRoutineSpec = TaskInput[] | RoutineDefinition
 
 ### TaskAwareScope `type`
 
-📍 [`src/domain/entities/Memory.ts:25`](src/domain/entities/Memory.ts#L25)
+📍 [`src/domain/entities/Memory.ts:26`](src/domain/entities/Memory.ts#L26)
 
 Task-aware scope for TaskAgent/UniversalAgent
 
@@ -18480,7 +18464,7 @@ type TaskStatus = | 'pending'           // Not started
 
 ### TaskStatusForMemory `type`
 
-📍 [`src/domain/entities/Memory.ts:219`](src/domain/entities/Memory.ts#L219)
+📍 [`src/domain/entities/Memory.ts:220`](src/domain/entities/Memory.ts#L220)
 
 Task status values for priority calculation
 
@@ -18492,7 +18476,7 @@ type TaskStatusForMemory = 'pending' | 'in_progress' | 'completed' | 'failed' | 
 
 ### calculateEntrySize `function`
 
-📍 [`src/domain/entities/Memory.ts:539`](src/domain/entities/Memory.ts#L539)
+📍 [`src/domain/entities/Memory.ts:540`](src/domain/entities/Memory.ts#L540)
 
 Calculate the size of a value in bytes (JSON serialization)
 Uses Buffer.byteLength for accurate UTF-8 byte count
@@ -18642,7 +18626,7 @@ export async function evaluateCondition(
 
 ### forPlan `function`
 
-📍 [`src/domain/entities/Memory.ts:487`](src/domain/entities/Memory.ts#L487)
+📍 [`src/domain/entities/Memory.ts:488`](src/domain/entities/Memory.ts#L488)
 
 Create a plan-scoped memory entry input
 
@@ -18659,7 +18643,7 @@ export function forPlan(
 
 ### forTasks `function`
 
-📍 [`src/domain/entities/Memory.ts:467`](src/domain/entities/Memory.ts#L467)
+📍 [`src/domain/entities/Memory.ts:468`](src/domain/entities/Memory.ts#L468)
 
 Create a task-scoped memory entry input
 
@@ -18716,7 +18700,7 @@ export function getTaskDependencies(task: Task, allTasks: Task[]): Task[]
 
 ### isSimpleScope `function`
 
-📍 [`src/domain/entities/Memory.ts:45`](src/domain/entities/Memory.ts#L45)
+📍 [`src/domain/entities/Memory.ts:46`](src/domain/entities/Memory.ts#L46)
 
 Type guard: is this a simple scope?
 
@@ -18728,7 +18712,7 @@ export function isSimpleScope(scope: MemoryScope): scope is SimpleScope
 
 ### isTaskAwareScope `function`
 
-📍 [`src/domain/entities/Memory.ts:38`](src/domain/entities/Memory.ts#L38)
+📍 [`src/domain/entities/Memory.ts:39`](src/domain/entities/Memory.ts#L39)
 
 Type guard: is this a task-aware scope?
 
@@ -18752,7 +18736,7 @@ export function isTaskBlocked(task: Task, allTasks: Task[]): boolean
 
 ### isTerminalMemoryStatus `function`
 
-📍 [`src/domain/entities/Memory.ts:229`](src/domain/entities/Memory.ts#L229)
+📍 [`src/domain/entities/Memory.ts:230`](src/domain/entities/Memory.ts#L230)
 
 Check if a task status is terminal (task will not progress further)
 
@@ -18789,7 +18773,7 @@ export function resolveDependencies(taskInputs: TaskInput[], tasks: Task[]): voi
 
 ### scopeEquals `function`
 
-📍 [`src/domain/entities/Memory.ts:53`](src/domain/entities/Memory.ts#L53)
+📍 [`src/domain/entities/Memory.ts:54`](src/domain/entities/Memory.ts#L54)
 
 Compare two scopes for equality
 Handles both simple scopes (string comparison) and task-aware scopes (deep comparison)
@@ -18802,7 +18786,7 @@ export function scopeEquals(a: MemoryScope, b: MemoryScope): boolean
 
 ### scopeMatches `function`
 
-📍 [`src/domain/entities/Memory.ts:83`](src/domain/entities/Memory.ts#L83)
+📍 [`src/domain/entities/Memory.ts:84`](src/domain/entities/Memory.ts#L84)
 
 Check if a scope matches a filter scope
 More flexible than scopeEquals - supports partial matching for task scopes
@@ -18846,7 +18830,7 @@ export function updateTaskStatus(task: Task, status: TaskStatus): Task
 
 ### DEFAULT_MEMORY_CONFIG `const`
 
-📍 [`src/domain/entities/Memory.ts:506`](src/domain/entities/Memory.ts#L506)
+📍 [`src/domain/entities/Memory.ts:507`](src/domain/entities/Memory.ts#L507)
 
 Default configuration values
 
@@ -18867,7 +18851,7 @@ Default configuration values
 
 ### MEMORY_PRIORITY_VALUES `const`
 
-📍 [`src/domain/entities/Memory.ts:115`](src/domain/entities/Memory.ts#L115)
+📍 [`src/domain/entities/Memory.ts:116`](src/domain/entities/Memory.ts#L116)
 
 Priority values for comparison (higher = more important, less likely to evict)
 
@@ -20334,7 +20318,7 @@ getPath(userId: string | undefined): string
 
 ### FileEvidenceStorage `class`
 
-📍 [`src/infrastructure/storage/EvidenceStorage.ts:213`](src/infrastructure/storage/EvidenceStorage.ts#L213)
+📍 [`src/infrastructure/storage/EvidenceStorage.ts:11`](src/infrastructure/storage/EvidenceStorage.ts#L11)
 
 Immutable atomic files, hashed scope directories (no sanitization collisions).
 
@@ -22430,7 +22414,7 @@ Session summary for listing (lightweight, no full state)
 
 ### EvidenceStorageOptions `interface`
 
-📍 [`src/infrastructure/storage/EvidenceStorage.ts:7`](src/infrastructure/storage/EvidenceStorage.ts#L7)
+📍 [`src/infrastructure/storage/EvidenceStorageBase.ts:4`](src/infrastructure/storage/EvidenceStorageBase.ts#L4)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -22538,7 +22522,7 @@ Configuration for FileCustomToolStorage
 
 ### FileEvidenceStorageOptions `interface`
 
-📍 [`src/infrastructure/storage/EvidenceStorage.ts:19`](src/infrastructure/storage/EvidenceStorage.ts#L19)
+📍 [`src/infrastructure/storage/EvidenceStorageBase.ts:16`](src/infrastructure/storage/EvidenceStorageBase.ts#L16)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -24417,7 +24401,7 @@ executeLoad(category: string): Record&lt;string, unknown&gt;
 
 ### ToolCatalogRegistry `class`
 
-📍 [`src/core/ToolCatalogRegistry.ts:144`](src/core/ToolCatalogRegistry.ts#L144)
+📍 [`src/core/ToolCatalogRegistry.ts:145`](src/core/ToolCatalogRegistry.ts#L145)
 
 Static global registry for tool categories and their tools.
 
@@ -24783,7 +24767,7 @@ static reset(): void
 
 ### ToolEvidenceMiddleware `class`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:70`](src/core/evidence/ToolEvidenceMiddleware.ts#L70)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:71`](src/core/evidence/ToolEvidenceMiddleware.ts#L71)
 
 Opt-in post-settlement middleware, deliberately outside the execution plugin/error pipeline.
 
@@ -26480,7 +26464,7 @@ within this window, it's treated as a timeout error. |
 
 ### CatalogToolEntry `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:52`](src/core/ToolCatalogRegistry.ts#L52)
+📍 [`src/core/ToolCatalogRegistry.ts:53`](src/core/ToolCatalogRegistry.ts#L53)
 
 A single tool entry in the catalog.
 
@@ -26507,7 +26491,7 @@ A single tool entry in the catalog.
 
 ### ConnectorCategoryInfo `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:118`](src/core/ToolCatalogRegistry.ts#L118)
+📍 [`src/core/ToolCatalogRegistry.ts:119`](src/core/ToolCatalogRegistry.ts#L119)
 
 Connector category metadata returned by discoverConnectorCategories().
 
@@ -27605,7 +27589,7 @@ reportFailure(error: Error): void;
 
 ### ParsedConnectorCategory `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:108`](src/core/ToolCatalogRegistry.ts#L108)
+📍 [`src/core/ToolCatalogRegistry.ts:109`](src/core/ToolCatalogRegistry.ts#L109)
 
 Parsed connector category: connector name + optional account alias.
 
@@ -28091,7 +28075,7 @@ Tool call detected and starting
 
 ### ToolCategoryDefinition `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:40`](src/core/ToolCatalogRegistry.ts#L40)
+📍 [`src/core/ToolCatalogRegistry.ts:41`](src/core/ToolCatalogRegistry.ts#L41)
 
 Definition of a tool category in the catalog.
 
@@ -28169,7 +28153,7 @@ Resolution order in connector tools:
 
 ### ToolEvidenceConfig `interface`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:14`](src/core/evidence/ToolEvidenceMiddleware.ts#L14)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:15`](src/core/evidence/ToolEvidenceMiddleware.ts#L15)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -28192,7 +28176,7 @@ Custom stores without a hint retain their own capacity policy unless this option
 
 ### ToolEvidenceDelivery `interface`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:13`](src/core/evidence/ToolEvidenceMiddleware.ts#L13)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:14`](src/core/evidence/ToolEvidenceMiddleware.ts#L14)
 
 Projection belongs only to the managed prompt view. Raw returns/events stay raw.
 
@@ -28209,7 +28193,7 @@ Projection belongs only to the managed prompt view. Raw returns/events stay raw.
 
 ### ToolEvidenceReceipt `interface`
 
-📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:6`](src/core/evidence/ToolEvidenceMiddleware.ts#L6)
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:7`](src/core/evidence/ToolEvidenceMiddleware.ts#L7)
 
 Metadata is diagnostic; storage/projection failures never change tool-effect status.
 
@@ -28610,7 +28594,7 @@ Used by the ToolPermissionManager.
 
 ### ToolRegistryEntry `interface`
 
-📍 [`src/core/ToolCatalogRegistry.ts:81`](src/core/ToolCatalogRegistry.ts#L81)
+📍 [`src/core/ToolCatalogRegistry.ts:82`](src/core/ToolCatalogRegistry.ts#L82)
 
 Entry format from the generated tool registry (registry.generated.ts).
 Used by initializeFromRegistry() and registerFromToolRegistry().
@@ -28627,6 +28611,32 @@ Used by initializeFromRegistry() and registerFromToolRegistry().
 | `tool` | `tool: ToolFunction;` | - |
 | `safeByDefault` | `safeByDefault: boolean;` | - |
 | `requiresConnector?` | `requiresConnector?: boolean;` | - |
+
+</details>
+
+---
+
+### ToolRegistryEntry `interface`
+
+📍 [`src/tools/registry.browser.generated.ts:25`](src/tools/registry.browser.generated.ts#L25)
+
+Metadata for a tool in the registry
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: string;` | Tool name (matches definition.function.name) |
+| `exportName` | `exportName: string;` | Export variable name |
+| `displayName` | `displayName: string;` | Human-readable display name |
+| `category` | `category: ToolCategory;` | Category for grouping |
+| `description` | `description: string;` | Brief description |
+| `tool` | `tool: ToolFunction;` | The actual tool function |
+| `safeByDefault` | `safeByDefault: boolean;` | Whether this tool is safe without explicit approval |
+| `implementationHash?` | `implementationHash?: string;` | SHA-256 fingerprint of the tool source and its OneRingAI runtime source. |
+| `requiresConnector?` | `requiresConnector?: boolean;` | Whether this tool requires a connector |
+| `connectorServiceTypes?` | `connectorServiceTypes?: string[];` | Supported connector service types (if requiresConnector) |
 
 </details>
 
@@ -29020,6 +29030,18 @@ type ToolCallOutputContent = InputTextContent | InputImageContent | InputFileCon
 
 ### ToolCategory `type`
 
+📍 [`src/tools/registry.browser.generated.ts:22`](src/tools/registry.browser.generated.ts#L22)
+
+Tool category for grouping
+
+```typescript
+type ToolCategory = 'filesystem' | 'shell' | 'web' | 'code' | 'json' | 'connector' | 'desktop' | 'custom-tools' | 'routines' | 'other'
+```
+
+---
+
+### ToolCategory `type`
+
 📍 [`src/tools/registry.generated.ts:52`](src/tools/registry.generated.ts#L52)
 
 Tool category for grouping
@@ -29032,7 +29054,7 @@ type ToolCategory = 'filesystem' | 'shell' | 'web' | 'code' | 'json' | 'connecto
 
 ### ToolCategoryScope `type`
 
-📍 [`src/core/ToolCatalogRegistry.ts:99`](src/core/ToolCatalogRegistry.ts#L99)
+📍 [`src/core/ToolCatalogRegistry.ts:100`](src/core/ToolCatalogRegistry.ts#L100)
 
 Scope for filtering which categories are visible/allowed.
 
@@ -29104,7 +29126,7 @@ export function createAddReactionTool(
 
 ### createAgentPackageOutcomeTools `function`
 
-📍 [`src/portable/OutcomeClient.ts:247`](src/portable/OutcomeClient.ts#L247)
+📍 [`src/portable/OutcomeClient.ts:248`](src/portable/OutcomeClient.ts#L248)
 
 ```typescript
 export async function createAgentPackageOutcomeTools(input: OutcomeAgentPackage, options: AgentPackageOutcomeToolOptions): Promise&lt;AgentPackageOutcomeTools&gt;
@@ -29546,7 +29568,7 @@ export function createGetUsersTool(
 
 ### createGitHubReadFileTool `function`
 
-📍 [`src/tools/github/readFile.ts:46`](src/tools/github/readFile.ts#L46)
+📍 [`src/tools/github/readFile.ts:47`](src/tools/github/readFile.ts#L47)
 
 Create a GitHub read_file tool
 
@@ -29923,7 +29945,7 @@ export function createRoutineTool(options: CreateRoutineToolOptions): ToolFuncti
 
 ### createSearchCodeTool `function`
 
-📍 [`src/tools/github/searchCode.ts:104`](src/tools/github/searchCode.ts#L104)
+📍 [`src/tools/github/searchCode.ts:105`](src/tools/github/searchCode.ts#L105)
 
 Create a GitHub search_code tool
 
@@ -30134,6 +30156,18 @@ export function generateWebAPITool(): ToolFunction&lt;APIRequestArgs, APIRequest
 
 ### getAllBuiltInTools `function`
 
+📍 [`src/tools/registry.browser.generated.ts:143`](src/tools/registry.browser.generated.ts#L143)
+
+Get all built-in tools as ToolFunction array
+
+```typescript
+export function getAllBuiltInTools(): ToolFunction[]
+```
+
+---
+
+### getAllBuiltInTools `function`
+
 📍 [`src/tools/registry.generated.ts:473`](src/tools/registry.generated.ts#L473)
 
 Get all built-in tools as ToolFunction array
@@ -30146,12 +30180,24 @@ export function getAllBuiltInTools(): ToolFunction[]
 
 ### getConnectorTools `function`
 
-📍 [`src/connectors/vendors/helpers.ts:513`](src/connectors/vendors/helpers.ts#L513)
+📍 [`src/connectors/vendors/helpers.ts:514`](src/connectors/vendors/helpers.ts#L514)
 
 Get all tools for a connector (delegates to ConnectorTools)
 
 ```typescript
 export function getConnectorTools(connectorName: string): ToolFunction[]
+```
+
+---
+
+### getToolByName `function`
+
+📍 [`src/tools/registry.browser.generated.ts:158`](src/tools/registry.browser.generated.ts#L158)
+
+Get tool by name
+
+```typescript
+export function getToolByName(name: string): ToolRegistryEntry | undefined
 ```
 
 ---
@@ -30186,12 +30232,36 @@ export function getToolCallDescription&lt;TArgs&gt;(
 
 ### getToolCategories `function`
 
+📍 [`src/tools/registry.browser.generated.ts:168`](src/tools/registry.browser.generated.ts#L168)
+
+Get all unique category names
+
+```typescript
+export function getToolCategories(): ToolCategory[]
+```
+
+---
+
+### getToolCategories `function`
+
 📍 [`src/tools/registry.generated.ts:498`](src/tools/registry.generated.ts#L498)
 
 Get all unique category names
 
 ```typescript
 export function getToolCategories(): ToolCategory[]
+```
+
+---
+
+### getToolRegistry `function`
+
+📍 [`src/tools/registry.browser.generated.ts:148`](src/tools/registry.browser.generated.ts#L148)
+
+Get full tool registry with metadata
+
+```typescript
+export function getToolRegistry(): ToolRegistryEntry[]
 ```
 
 ---
@@ -30210,12 +30280,36 @@ export function getToolRegistry(): ToolRegistryEntry[]
 
 ### getToolsByCategory `function`
 
+📍 [`src/tools/registry.browser.generated.ts:153`](src/tools/registry.browser.generated.ts#L153)
+
+Get tools by category
+
+```typescript
+export function getToolsByCategory(category: ToolCategory): ToolRegistryEntry[]
+```
+
+---
+
+### getToolsByCategory `function`
+
 📍 [`src/tools/registry.generated.ts:483`](src/tools/registry.generated.ts#L483)
 
 Get tools by category
 
 ```typescript
 export function getToolsByCategory(category: ToolCategory): ToolRegistryEntry[]
+```
+
+---
+
+### getToolsRequiringConnector `function`
+
+📍 [`src/tools/registry.browser.generated.ts:163`](src/tools/registry.browser.generated.ts#L163)
+
+Get tools that require connector configuration
+
+```typescript
+export function getToolsRequiringConnector(): ToolRegistryEntry[]
 ```
 
 ---
@@ -30372,7 +30466,7 @@ Real-time streaming of agent responses
 
 ### StreamHelpers `class`
 
-📍 [`src/capabilities/agents/StreamHelpers.ts:19`](src/capabilities/agents/StreamHelpers.ts#L19)
+📍 [`src/capabilities/agents/StreamHelpers.ts:20`](src/capabilities/agents/StreamHelpers.ts#L20)
 
 Helper class for consuming and processing streams
 
@@ -31266,7 +31360,7 @@ Error event
 
 ### IStreamingSpeechToTextProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:240`](src/domain/interfaces/IAudioProvider.ts#L240)
+📍 [`src/domain/interfaces/IAudioProvider.ts:241`](src/domain/interfaces/IAudioProvider.ts#L241)
 
 Opt-in extension implemented by providers with a live STT WebSocket API.
 
@@ -31298,7 +31392,7 @@ transcribeStream(options: STTStreamOptions): AsyncIterableIterator&lt;STTStreamE
 
 ### IStreamingTextToSpeechProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:91`](src/domain/interfaces/IAudioProvider.ts#L91)
+📍 [`src/domain/interfaces/IAudioProvider.ts:92`](src/domain/interfaces/IAudioProvider.ts#L92)
 
 Streaming Text-to-Speech provider interface (opt-in extension)
 Providers that support chunked transfer implement this alongside ITextToSpeechProvider.
@@ -37395,7 +37489,7 @@ async removeAccount(userId: string, accountId: string): Promise&lt;boolean&gt;
 
 ### ApplyRefreshStrategyOptions `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:118`](src/connectors/vendors/helpers.ts#L118)
+📍 [`src/connectors/vendors/helpers.ts:119`](src/connectors/vendors/helpers.ts#L119)
 
 Options for applying provider refresh requirements to an existing configuration.
 
@@ -37444,7 +37538,7 @@ Validated at registry-init time — missing on an auth-code template throws. |
 
 ### BuildAuthConfigOptions `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:181`](src/connectors/vendors/helpers.ts#L181)
+📍 [`src/connectors/vendors/helpers.ts:182`](src/connectors/vendors/helpers.ts#L182)
 
 Options for editing a same-method authorization-code configuration.
 
@@ -37774,7 +37868,7 @@ All implementations must encrypt tokens at rest
 
 ### VendorInfo `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:520`](src/connectors/vendors/helpers.ts#L520)
+📍 [`src/connectors/vendors/helpers.ts:521`](src/connectors/vendors/helpers.ts#L521)
 
 Get vendor template information for display
 
@@ -37968,7 +38062,7 @@ type TemplateCredentials = {
 
 ### applyRefreshStrategy `function`
 
-📍 [`src/connectors/vendors/helpers.ts:136`](src/connectors/vendors/helpers.ts#L136)
+📍 [`src/connectors/vendors/helpers.ts:137`](src/connectors/vendors/helpers.ts#L137)
 
 Apply only a provider's refresh requirements. Pure and idempotent: configured
 API scopes and unrelated parameters (including prompt) are preserved.
@@ -38044,7 +38138,7 @@ const response = await authenticatedFetch(
 
 ### buildAuthConfig `function`
 
-📍 [`src/connectors/vendors/helpers.ts:259`](src/connectors/vendors/helpers.ts#L259)
+📍 [`src/connectors/vendors/helpers.ts:260`](src/connectors/vendors/helpers.ts#L260)
 
 Build ConnectorAuth from a template and credentials. Creation uses template
 defaults. With existingAuth, preserve saved authorization-code settings and
@@ -38101,7 +38195,7 @@ const personalEmails = await personalFetch('/me/messages');
 
 ### createConnectorFromTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:452`](src/connectors/vendors/helpers.ts#L452)
+📍 [`src/connectors/vendors/helpers.ts:453`](src/connectors/vendors/helpers.ts#L453)
 
 Create a Connector from a vendor template
 
@@ -38130,7 +38224,7 @@ const connector = createConnectorFromTemplate(
 
 ### extractNonSecretCredentials `function`
 
-📍 [`src/connectors/vendors/helpers.ts:393`](src/connectors/vendors/helpers.ts#L393)
+📍 [`src/connectors/vendors/helpers.ts:394`](src/connectors/vendors/helpers.ts#L394)
 
 Extract non-secret credentials from a raw credentials dict.
 Used by ConnectorConfigStore.saveFromTemplate() to preserve
@@ -38172,7 +38266,7 @@ export function getAllVendorLogos(): Map&lt;string, VendorLogo&gt;
 
 ### getAllVendorTemplates `function`
 
-📍 [`src/connectors/vendors/helpers.ts:65`](src/connectors/vendors/helpers.ts#L65)
+📍 [`src/connectors/vendors/helpers.ts:66`](src/connectors/vendors/helpers.ts#L66)
 
 Get all vendor templates
 
@@ -38184,7 +38278,7 @@ export function getAllVendorTemplates(): VendorTemplate[]
 
 ### getCredentialsSetupURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:603`](src/connectors/vendors/helpers.ts#L603)
+📍 [`src/connectors/vendors/helpers.ts:604`](src/connectors/vendors/helpers.ts#L604)
 
 Get credentials setup URL for a vendor
 
@@ -38196,7 +38290,7 @@ export function getCredentialsSetupURL(vendorId: string): string | undefined
 
 ### getDocsURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:611`](src/connectors/vendors/helpers.ts#L611)
+📍 [`src/connectors/vendors/helpers.ts:612`](src/connectors/vendors/helpers.ts#L612)
 
 Get docs URL for a vendor
 
@@ -38208,7 +38302,7 @@ export function getDocsURL(vendorId: string): string | undefined
 
 ### getVendorAuthTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:77`](src/connectors/vendors/helpers.ts#L77)
+📍 [`src/connectors/vendors/helpers.ts:78`](src/connectors/vendors/helpers.ts#L78)
 
 Get auth template for a vendor
 
@@ -38235,7 +38329,7 @@ export function getVendorColor(vendorId: string): string | undefined
 
 ### getVendorInfo `function`
 
-📍 [`src/connectors/vendors/helpers.ts:540`](src/connectors/vendors/helpers.ts#L540)
+📍 [`src/connectors/vendors/helpers.ts:541`](src/connectors/vendors/helpers.ts#L541)
 
 Get vendor information suitable for display
 
@@ -38293,7 +38387,7 @@ export function getVendorLogoSvg(vendorId: string, color?: string): string | und
 
 ### getVendorTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:53`](src/connectors/vendors/helpers.ts#L53)
+📍 [`src/connectors/vendors/helpers.ts:54`](src/connectors/vendors/helpers.ts#L54)
 
 Get vendor template by ID
 
@@ -38317,7 +38411,7 @@ export function hasVendorLogo(vendorId: string): boolean
 
 ### listVendorIds `function`
 
-📍 [`src/connectors/vendors/helpers.ts:89`](src/connectors/vendors/helpers.ts#L89)
+📍 [`src/connectors/vendors/helpers.ts:90`](src/connectors/vendors/helpers.ts#L90)
 
 List all vendor IDs
 
@@ -38329,7 +38423,7 @@ export function listVendorIds(): string[]
 
 ### listVendors `function`
 
-📍 [`src/connectors/vendors/helpers.ts:565`](src/connectors/vendors/helpers.ts#L565)
+📍 [`src/connectors/vendors/helpers.ts:566`](src/connectors/vendors/helpers.ts#L566)
 
 List all vendors with basic info
 
@@ -38341,7 +38435,7 @@ export function listVendors(): VendorInfo[]
 
 ### listVendorsByAuthType `function`
 
-📍 [`src/connectors/vendors/helpers.ts:594`](src/connectors/vendors/helpers.ts#L594)
+📍 [`src/connectors/vendors/helpers.ts:595`](src/connectors/vendors/helpers.ts#L595)
 
 List vendors that support a specific auth type
 
@@ -38353,7 +38447,7 @@ export function listVendorsByAuthType(authType: 'api_key' | 'oauth'): VendorInfo
 
 ### listVendorsByCategory `function`
 
-📍 [`src/connectors/vendors/helpers.ts:587`](src/connectors/vendors/helpers.ts#L587)
+📍 [`src/connectors/vendors/helpers.ts:588`](src/connectors/vendors/helpers.ts#L588)
 
 List vendors by category
 
@@ -38575,7 +38669,7 @@ constructor(
 
 ### ConsoleMetrics `class`
 
-📍 [`src/infrastructure/observability/Metrics.ts:50`](src/infrastructure/observability/Metrics.ts#L50)
+📍 [`src/infrastructure/observability/Metrics.ts:51`](src/infrastructure/observability/Metrics.ts#L51)
 
 Console metrics collector (development/debugging)
 
@@ -38654,7 +38748,7 @@ histogram(metric: string, value: number, tags?: MetricTags): void
 
 ### FrameworkLogger `class`
 
-📍 [`src/infrastructure/observability/Logger.ts:158`](src/infrastructure/observability/Logger.ts#L158)
+📍 [`src/infrastructure/observability/Logger.ts:159`](src/infrastructure/observability/Logger.ts#L159)
 
 Framework logger
 
@@ -38810,7 +38904,7 @@ isLevelEnabled(level: LogLevel): boolean
 
 ### NoOpMetrics `class`
 
-📍 [`src/infrastructure/observability/Metrics.ts:40`](src/infrastructure/observability/Metrics.ts#L40)
+📍 [`src/infrastructure/observability/Metrics.ts:41`](src/infrastructure/observability/Metrics.ts#L41)
 
 No-op metrics collector (default - zero overhead)
 
@@ -39136,7 +39230,7 @@ Circuit breaker metrics
 
 ### LogEntry `interface`
 
-📍 [`src/infrastructure/observability/Logger.ts:148`](src/infrastructure/observability/Logger.ts#L148)
+📍 [`src/infrastructure/observability/Logger.ts:149`](src/infrastructure/observability/Logger.ts#L149)
 
 Log entry
 
@@ -39155,7 +39249,7 @@ Log entry
 
 ### LoggerConfig `interface`
 
-📍 [`src/infrastructure/observability/Logger.ts:128`](src/infrastructure/observability/Logger.ts#L128)
+📍 [`src/infrastructure/observability/Logger.ts:129`](src/infrastructure/observability/Logger.ts#L129)
 
 Logger configuration
 
@@ -39176,7 +39270,7 @@ Logger configuration
 
 ### MetricsCollector `interface`
 
-📍 [`src/infrastructure/observability/Metrics.ts:15`](src/infrastructure/observability/Metrics.ts#L15)
+📍 [`src/infrastructure/observability/Metrics.ts:16`](src/infrastructure/observability/Metrics.ts#L16)
 
 Metrics collector interface
 
@@ -39314,7 +39408,7 @@ type CircuitState = 'closed' | 'open' | 'half-open'
 
 ### LogLevel `type`
 
-📍 [`src/infrastructure/observability/Logger.ts:19`](src/infrastructure/observability/Logger.ts#L19)
+📍 [`src/infrastructure/observability/Logger.ts:20`](src/infrastructure/observability/Logger.ts#L20)
 
 Log level
 
@@ -39326,7 +39420,7 @@ type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent'
 
 ### MetricsCollectorType `type`
 
-📍 [`src/infrastructure/observability/Metrics.ts:187`](src/infrastructure/observability/Metrics.ts#L187)
+📍 [`src/infrastructure/observability/Metrics.ts:188`](src/infrastructure/observability/Metrics.ts#L188)
 
 Metrics collector type
 
@@ -39338,7 +39432,7 @@ type MetricsCollectorType = 'noop' | 'console' | 'inmemory'
 
 ### MetricTags `type`
 
-📍 [`src/infrastructure/observability/Metrics.ts:10`](src/infrastructure/observability/Metrics.ts#L10)
+📍 [`src/infrastructure/observability/Metrics.ts:11`](src/infrastructure/observability/Metrics.ts#L11)
 
 Metrics collection infrastructure
 
@@ -39403,7 +39497,7 @@ export function calculateBackoff(attempt: number, config: BackoffConfig = DEFAUL
 
 ### createMetricsCollector `function`
 
-📍 [`src/infrastructure/observability/Metrics.ts:192`](src/infrastructure/observability/Metrics.ts#L192)
+📍 [`src/infrastructure/observability/Metrics.ts:193`](src/infrastructure/observability/Metrics.ts#L193)
 
 Create metrics collector from type
 
@@ -39431,7 +39525,7 @@ export async function retryWithBackoff&lt;T&gt;(
 
 ### setMetricsCollector `function`
 
-📍 [`src/infrastructure/observability/Metrics.ts:216`](src/infrastructure/observability/Metrics.ts#L216)
+📍 [`src/infrastructure/observability/Metrics.ts:217`](src/infrastructure/observability/Metrics.ts#L217)
 
 Update global metrics collector
 
@@ -39672,7 +39766,7 @@ constructor(
 
 ### ErrorHandler `class`
 
-📍 [`src/core/ErrorHandler.ts:122`](src/core/ErrorHandler.ts#L122)
+📍 [`src/core/ErrorHandler.ts:123`](src/core/ErrorHandler.ts#L123)
 
 Centralized error handling for all agent types.
 
@@ -39839,7 +39933,7 @@ getConfig(): Readonly&lt;Required&lt;ErrorHandlerConfig&gt;&gt;
 
 ### EvidenceError `class`
 
-📍 [`src/core/evidence/validation.ts:5`](src/core/evidence/validation.ts#L5)
+📍 [`src/core/evidence/validation.ts:6`](src/core/evidence/validation.ts#L6)
 
 Messages contain no source payloads, credentials, or backend exception text.
 
@@ -39861,7 +39955,7 @@ constructor(readonly code: 'invalid' | 'capacity' | 'corrupt' | 'busy' | 'storag
 
 ### FactSupersededError `class`
 
-📍 [`src/memory/MemorySystem.ts:245`](src/memory/MemorySystem.ts#L245)
+📍 [`src/memory/MemorySystem.ts:246`](src/memory/MemorySystem.ts#L246)
 
 F1 — thrown by `restoreFact` when the target fact was superseded by a later
 non-archived fact. Un-archiving the predecessor without first handling the
@@ -39898,7 +39992,7 @@ constructor(factId: FactId, supersededBy: FactId)
 
 ### HelperOutputError `class`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:58`](src/core/model-execution/ModelExecutor.ts#L58)
+📍 [`src/core/model-execution/ModelExecutor.ts:57`](src/core/model-execution/ModelExecutor.ts#L57)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -40204,7 +40298,7 @@ constructor(
 
 ### ProfileGeneratorMissingError `class`
 
-📍 [`src/memory/MemorySystem.ts:204`](src/memory/MemorySystem.ts#L204)
+📍 [`src/memory/MemorySystem.ts:205`](src/memory/MemorySystem.ts#L205)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -40480,7 +40574,7 @@ constructor(
 
 ### ScopeInvariantError `class`
 
-📍 [`src/memory/MemorySystem.ts:197`](src/memory/MemorySystem.ts#L197)
+📍 [`src/memory/MemorySystem.ts:198`](src/memory/MemorySystem.ts#L198)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -40520,7 +40614,7 @@ constructor(message: string)
 
 ### SemanticSearchUnavailableError `class`
 
-📍 [`src/memory/MemorySystem.ts:211`](src/memory/MemorySystem.ts#L211)
+📍 [`src/memory/MemorySystem.ts:212`](src/memory/MemorySystem.ts#L212)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -40693,7 +40787,7 @@ Detailed budget information for context overflow diagnosis
 
 ### ErrorContext `interface`
 
-📍 [`src/core/ErrorHandler.ts:15`](src/core/ErrorHandler.ts#L15)
+📍 [`src/core/ErrorHandler.ts:16`](src/core/ErrorHandler.ts#L16)
 
 Context information for error handling
 
@@ -40714,7 +40808,7 @@ Context information for error handling
 
 ### ErrorHandlerConfig `interface`
 
-📍 [`src/core/ErrorHandler.ts:35`](src/core/ErrorHandler.ts#L35)
+📍 [`src/core/ErrorHandler.ts:36`](src/core/ErrorHandler.ts#L36)
 
 Configuration for ErrorHandler
 
@@ -40737,7 +40831,7 @@ Configuration for ErrorHandler
 
 ### ErrorHandlerEvents `interface`
 
-📍 [`src/core/ErrorHandler.ts:61`](src/core/ErrorHandler.ts#L61)
+📍 [`src/core/ErrorHandler.ts:62`](src/core/ErrorHandler.ts#L62)
 
 Events emitted by ErrorHandler
 
@@ -41375,7 +41469,7 @@ when the option is false or omitted. |
 
 ### EmbeddingOptions `interface`
 
-📍 [`src/domain/interfaces/IEmbeddingProvider.ts:14`](src/domain/interfaces/IEmbeddingProvider.ts#L14)
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:16`](src/domain/interfaces/IEmbeddingProvider.ts#L16)
 
 Options for generating embeddings
 
@@ -41398,7 +41492,7 @@ Options for generating embeddings
 
 ### EmbeddingResponse `interface`
 
-📍 [`src/domain/interfaces/IEmbeddingProvider.ts:35`](src/domain/interfaces/IEmbeddingProvider.ts#L35)
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:37`](src/domain/interfaces/IEmbeddingProvider.ts#L37)
 
 Response from an embedding request
 
@@ -42480,7 +42574,7 @@ Methods should check this before performing operations. |
 
 ### IEmbeddingProvider `interface`
 
-📍 [`src/domain/interfaces/IEmbeddingProvider.ts:50`](src/domain/interfaces/IEmbeddingProvider.ts#L50)
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:52`](src/domain/interfaces/IEmbeddingProvider.ts#L52)
 
 Embedding provider interface
 
@@ -43276,7 +43370,7 @@ destroy(): void;
 
 ### IMediaStorage `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:86`](src/domain/interfaces/IMediaStorage.ts#L86)
+📍 [`src/domain/interfaces/IMediaStorage.ts:87`](src/domain/interfaces/IMediaStorage.ts#L87)
 
 Storage interface for multimedia outputs
 
@@ -43292,11 +43386,11 @@ Implementations:
 Save media data to storage
 
 ```typescript
-save(data: Buffer, metadata: MediaStorageMetadata): Promise&lt;MediaStorageResult&gt;;
+save(data: MediaBytes, metadata: MediaStorageMetadata): Promise&lt;MediaStorageResult&gt;;
 ```
 
 **Parameters:**
-- `data`: `Buffer&lt;ArrayBufferLike&gt;`
+- `data`: `MediaBytes`
 - `metadata`: `MediaStorageMetadata`
 
 **Returns:** `Promise&lt;MediaStorageResult&gt;`
@@ -43306,13 +43400,13 @@ save(data: Buffer, metadata: MediaStorageMetadata): Promise&lt;MediaStorageResul
 Read media data from storage
 
 ```typescript
-read(location: string): Promise&lt;Buffer | null&gt;;
+read(location: string): Promise&lt;MediaBytes | null&gt;;
 ```
 
 **Parameters:**
 - `location`: `string`
 
-**Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt; | null&gt;`
+**Returns:** `Promise&lt;MediaBytes | null&gt;`
 
 #### `delete()`
 
@@ -43767,7 +43861,7 @@ has(id: string): boolean;
 
 ### ISpeechToTextProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:197`](src/domain/interfaces/IAudioProvider.ts#L197)
+📍 [`src/domain/interfaces/IAudioProvider.ts:198`](src/domain/interfaces/IAudioProvider.ts#L198)
 
 Speech-to-Text provider interface
 
@@ -43923,7 +44017,7 @@ listModels(): Promise&lt;string[]&gt;;
 
 ### ITextToSpeechProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:65`](src/domain/interfaces/IAudioProvider.ts#L65)
+📍 [`src/domain/interfaces/IAudioProvider.ts:66`](src/domain/interfaces/IAudioProvider.ts#L66)
 
 Text-to-Speech provider interface
 
@@ -44122,7 +44216,7 @@ getPath(userId: string | undefined): string;
 
 ### MediaStorageEntry `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:50`](src/domain/interfaces/IMediaStorage.ts#L50)
+📍 [`src/domain/interfaces/IMediaStorage.ts:51`](src/domain/interfaces/IMediaStorage.ts#L51)
 
 Entry returned by list()
 
@@ -44143,7 +44237,7 @@ Entry returned by list()
 
 ### MediaStorageListOptions `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:66`](src/domain/interfaces/IMediaStorage.ts#L66)
+📍 [`src/domain/interfaces/IMediaStorage.ts:67`](src/domain/interfaces/IMediaStorage.ts#L67)
 
 Options for listing media files
 
@@ -44162,7 +44256,7 @@ Options for listing media files
 
 ### MediaStorageMetadata `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:18`](src/domain/interfaces/IMediaStorage.ts#L18)
+📍 [`src/domain/interfaces/IMediaStorage.ts:19`](src/domain/interfaces/IMediaStorage.ts#L19)
 
 IMediaStorage - Storage interface for multimedia outputs (images, video, audio)
 
@@ -44191,7 +44285,7 @@ implementations are in infrastructure layer.
 
 ### MediaStorageResult `interface`
 
-📍 [`src/domain/interfaces/IMediaStorage.ts:38`](src/domain/interfaces/IMediaStorage.ts#L38)
+📍 [`src/domain/interfaces/IMediaStorage.ts:39`](src/domain/interfaces/IMediaStorage.ts#L39)
 
 Result of a save operation
 
@@ -44346,7 +44440,7 @@ cancel(): void;
 
 ### SegmentTimestamp `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:166`](src/domain/interfaces/IAudioProvider.ts#L166)
+📍 [`src/domain/interfaces/IAudioProvider.ts:167`](src/domain/interfaces/IAudioProvider.ts#L167)
 
 Segment-level timestamp
 
@@ -44615,7 +44709,7 @@ User information is stored per userId - each user has their own isolated data.
 
 ### WordTimestamp `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:153`](src/domain/interfaces/IAudioProvider.ts#L153)
+📍 [`src/domain/interfaces/IAudioProvider.ts:154`](src/domain/interfaces/IAudioProvider.ts#L154)
 
 Word-level timestamp
 
@@ -44666,7 +44760,7 @@ type ConnectorAccessContext = Record&lt;string, unknown&gt;
 
 ### EmbeddingContentPart `type`
 
-📍 [`src/domain/interfaces/IEmbeddingProvider.ts:7`](src/domain/interfaces/IEmbeddingProvider.ts#L7)
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:9`](src/domain/interfaces/IEmbeddingProvider.ts#L9)
 
 ```typescript
 type EmbeddingContentPart = | { type: 'text'; text: string }
@@ -45271,7 +45365,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:169`](src/core/context-nextgen/AgentContextNextGen.ts#L169)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:170`](src/core/context-nextgen/AgentContextNextGen.ts#L170)
 
 Next-generation context manager for AI agents.
 
@@ -45930,7 +46024,7 @@ destroy(): void
 
 ### AgentPackageOutcomeServer `class`
 
-📍 [`src/portable/OutcomeServer.ts:25`](src/portable/OutcomeServer.ts#L25)
+📍 [`src/portable/OutcomeServer.ts:26`](src/portable/OutcomeServer.ts#L26)
 
 Explicit authenticated facade over the ordinary Agent tool lifecycle. No HTTP server or credentials are supplied by a package.
 
@@ -52461,7 +52555,7 @@ outboundWebhookHandler(): (req: any, res: any) =&gt; void
 
 ### UserInfoPluginNextGen `class`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:323`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L323)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:324`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L324)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -55181,7 +55275,7 @@ Conversation message in history
 
 ### DeepSeekBalance `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:43`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L43)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:44`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L44)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55202,7 +55296,7 @@ Conversation message in history
 
 ### DeepSeekFimRequest `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:34`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L34)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:35`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L35)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55222,7 +55316,7 @@ Conversation message in history
 
 ### DeepSeekFimResponse `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:53`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L53)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:54`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts#L54)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -60776,7 +60870,7 @@ Identical to MeetingSlotSuggestion in both google and microsoft types.
 
 ### MeetingSlotSuggestion `interface`
 
-📍 [`src/tools/microsoft/types.ts:504`](src/tools/microsoft/types.ts#L504)
+📍 [`src/tools/microsoft/types.ts:505`](src/tools/microsoft/types.ts#L505)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -60940,7 +61034,7 @@ rawCollection(): {
 
 ### MicrosoftCreateMeetingResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:425`](src/tools/microsoft/types.ts#L425)
+📍 [`src/tools/microsoft/types.ts:426`](src/tools/microsoft/types.ts#L426)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -60959,7 +61053,7 @@ rawCollection(): {
 
 ### MicrosoftDraftEmailResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:413`](src/tools/microsoft/types.ts#L413)
+📍 [`src/tools/microsoft/types.ts:414`](src/tools/microsoft/types.ts#L414)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -60977,7 +61071,7 @@ rawCollection(): {
 
 ### MicrosoftEditMeetingResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:433`](src/tools/microsoft/types.ts#L433)
+📍 [`src/tools/microsoft/types.ts:434`](src/tools/microsoft/types.ts#L434)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -60995,7 +61089,7 @@ rawCollection(): {
 
 ### MicrosoftFindSlotsResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:497`](src/tools/microsoft/types.ts#L497)
+📍 [`src/tools/microsoft/types.ts:498`](src/tools/microsoft/types.ts#L498)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -61013,7 +61107,7 @@ rawCollection(): {
 
 ### MicrosoftGetTranscriptResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:440`](src/tools/microsoft/types.ts#L440)
+📍 [`src/tools/microsoft/types.ts:441`](src/tools/microsoft/types.ts#L441)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -61031,7 +61125,7 @@ rawCollection(): {
 
 ### MicrosoftListFilesResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:642`](src/tools/microsoft/types.ts#L642)
+📍 [`src/tools/microsoft/types.ts:643`](src/tools/microsoft/types.ts#L643)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -61060,7 +61154,7 @@ rawCollection(): {
 
 ### MicrosoftReadFileResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:632`](src/tools/microsoft/types.ts#L632)
+📍 [`src/tools/microsoft/types.ts:633`](src/tools/microsoft/types.ts#L633)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -61081,7 +61175,7 @@ rawCollection(): {
 
 ### MicrosoftSearchFilesResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:660`](src/tools/microsoft/types.ts#L660)
+📍 [`src/tools/microsoft/types.ts:661`](src/tools/microsoft/types.ts#L661)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -61110,7 +61204,7 @@ rawCollection(): {
 
 ### MicrosoftSendEmailResult `interface`
 
-📍 [`src/tools/microsoft/types.ts:420`](src/tools/microsoft/types.ts#L420)
+📍 [`src/tools/microsoft/types.ts:421`](src/tools/microsoft/types.ts#L421)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -64408,7 +64502,7 @@ Serialized approval state for session persistence
 
 ### SerializedUserInfoState `interface`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:55`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L55)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:56`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L56)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -66222,7 +66316,7 @@ the winning candidate is the type-capped value, not the raw score. |
 
 ### UserInfoPluginConfig `interface`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:44`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L44)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:45`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts#L45)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -69056,7 +69150,7 @@ export function emitRestraintEvent(
 
 ### encodeSharingUrl `function`
 
-📍 [`src/tools/microsoft/types.ts:724`](src/tools/microsoft/types.ts#L724)
+📍 [`src/tools/microsoft/types.ts:725`](src/tools/microsoft/types.ts#L725)
 
 Encode a sharing URL into the Graph API sharing token format.
 
@@ -69332,7 +69426,7 @@ export async function findIdentifierClusters(
 
 ### formatAttendees `function`
 
-📍 [`src/tools/microsoft/types.ts:324`](src/tools/microsoft/types.ts#L324)
+📍 [`src/tools/microsoft/types.ts:325`](src/tools/microsoft/types.ts#L325)
 
 Convert an array of email addresses (any format) to Microsoft Graph attendee format.
 Normalizes input first, so it's safe to pass LLM output directly.
@@ -69382,7 +69476,7 @@ export function formatPluginDisplayName(name: string): string
 
 ### formatRecipients `function`
 
-📍 [`src/tools/microsoft/types.ts:316`](src/tools/microsoft/types.ts#L316)
+📍 [`src/tools/microsoft/types.ts:317`](src/tools/microsoft/types.ts#L317)
 
 Convert an array of email addresses (any format) to Microsoft Graph recipient format.
 Normalizes input first, so it's safe to pass LLM output directly.
@@ -69668,7 +69762,7 @@ export function getTranscriptionCapabilities(query: TranscriptionCapabilityQuery
 
 ### getUserPathPrefix `function`
 
-📍 [`src/tools/microsoft/types.ts:84`](src/tools/microsoft/types.ts#L84)
+📍 [`src/tools/microsoft/types.ts:85`](src/tools/microsoft/types.ts#L85)
 
 Get the user path prefix for Microsoft Graph API requests.
 
@@ -69721,7 +69815,7 @@ export async function hydrateAgentPackage(
 
 ### hydrateAgentPackageWithOutcomes `function`
 
-📍 [`src/portable/OutcomeClient.ts:250`](src/portable/OutcomeClient.ts#L250)
+📍 [`src/portable/OutcomeClient.ts:251`](src/portable/OutcomeClient.ts#L251)
 
 ```typescript
 export async function hydrateAgentPackageWithOutcomes(input: OutcomeAgentPackage, options: HydrateAgentPackageWithOutcomesOptions): Promise&lt;OutcomeHydratedAgent&gt;
@@ -69750,7 +69844,7 @@ export function identifierValuesEqual(
 
 ### isAppPermissionAuth `function`
 
-📍 [`src/tools/microsoft/types.ts:45`](src/tools/microsoft/types.ts#L45)
+📍 [`src/tools/microsoft/types.ts:46`](src/tools/microsoft/types.ts#L46)
 
 Check whether a connector uses app-level (non-delegated) authentication.
 App-level connectors access resources on behalf of the application, not a
@@ -69843,7 +69937,7 @@ export function isStoreHandler(plugin: IContextPluginNextGen): plugin is IContex
 
 ### isTeamsMeetingUrl `function`
 
-📍 [`src/tools/microsoft/types.ts:342`](src/tools/microsoft/types.ts#L342)
+📍 [`src/tools/microsoft/types.ts:343`](src/tools/microsoft/types.ts#L343)
 
 Check if a meeting ID input is a Teams join URL.
 
@@ -69976,7 +70070,7 @@ export function mergeTextPieces(pieces: DocumentPiece[]): string
 
 ### microsoftFetch `function`
 
-📍 [`src/tools/microsoft/types.ts:217`](src/tools/microsoft/types.ts#L217)
+📍 [`src/tools/microsoft/types.ts:218`](src/tools/microsoft/types.ts#L218)
 
 Make an authenticated Microsoft Graph API request through the connector.
 
@@ -70008,7 +70102,7 @@ export function mulawToPcm(mulaw: Buffer): Buffer
 
 ### normalizeEmails `function`
 
-📍 [`src/tools/google/types.ts:279`](src/tools/google/types.ts#L279)
+📍 [`src/tools/google/types.ts:280`](src/tools/google/types.ts#L280)
 
 Normalize an email array from any format the LLM might send into plain strings.
 Same logic as Microsoft tools for consistency.
@@ -70021,7 +70115,7 @@ export function normalizeEmails(input: unknown[]): string[]
 
 ### normalizeEmails `function`
 
-📍 [`src/tools/microsoft/types.ts:292`](src/tools/microsoft/types.ts#L292)
+📍 [`src/tools/microsoft/types.ts:293`](src/tools/microsoft/types.ts#L293)
 
 Normalize an email array from any format the LLM might send into plain strings.
 
@@ -70517,7 +70611,7 @@ export function resolveMaxContextTokens(
 
 ### resolveMeetingId `function`
 
-📍 [`src/tools/microsoft/types.ts:368`](src/tools/microsoft/types.ts#L368)
+📍 [`src/tools/microsoft/types.ts:369`](src/tools/microsoft/types.ts#L369)
 
 Resolve a meeting input (ID or Teams URL) to a Graph API online meeting ID.
 

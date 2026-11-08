@@ -25,6 +25,7 @@ const ROOT = join(__dirname, '..');
 const SRC_DIR = join(ROOT, 'src');
 const TOOLS_DIR = join(ROOT, 'src/tools');
 const OUTPUT_FILE = join(TOOLS_DIR, 'registry.generated.ts');
+const BROWSER_OUTPUT_FILE = join(TOOLS_DIR, 'registry.browser.generated.ts');
 
 type ToolCategory = 'filesystem' | 'shell' | 'web' | 'code' | 'json' | 'connector' | 'desktop' | 'custom-tools' | 'routines' | 'other';
 
@@ -39,6 +40,7 @@ interface ToolMetadata {
   connectorServiceTypes?: string[];
   safeByDefault: boolean;
   implementationHash: string;
+  browserCompatible: boolean;
 }
 
 // Map directory names to categories
@@ -241,6 +243,7 @@ async function extractToolFromSource(
     description,
     importPath: `./${dir}/${file.replace('.ts', '.js')}`,
     requiresConnector: CONNECTOR_REQUIREMENTS[name] !== undefined,
+    browserCompatible: content.includes('@browserCompatible'),
     connectorServiceTypes: CONNECTOR_REQUIREMENTS[name],
     safeByDefault: SAFE_TOOLS.has(name),
     implementationHash: `sha256:${createHash('sha256')
@@ -291,7 +294,12 @@ async function generateRegistry(): Promise<void> {
     return a.name.localeCompare(b.name);
   });
 
-  // Generate imports
+  await writeRegistry(tools, OUTPUT_FILE);
+  await writeRegistry(tools.filter(tool => tool.browserCompatible), BROWSER_OUTPUT_FILE);
+}
+
+async function writeRegistry(tools: ToolMetadata[], outputFile: string): Promise<void> {
+  // Both projections share definitions, metadata, hashes and rendering.
   const imports = tools
     .map((t) => `import { ${t.exportName} } from '${t.importPath}';`)
     .join('\n');
@@ -392,8 +400,8 @@ export function getToolCategories(): ToolCategory[] {
 }
 `;
 
-  await writeFile(OUTPUT_FILE, output);
-  console.log(`\n✓ Generated ${OUTPUT_FILE}`);
+  await writeFile(outputFile, output);
+  console.log(`\n✓ Generated ${outputFile}`);
   console.log(`  Total tools: ${tools.length}`);
   console.log(`  Categories: ${[...new Set(tools.map((t) => t.category))].join(', ')}`);
 }

@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkConsumerAudit } from './release/audit-policy.mjs';
+import { verifyBuild } from './release/bundle-provenance.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const work = await mkdtemp(path.join(tmpdir(), 'oneringai-release-'));
@@ -35,7 +36,12 @@ try {
   await writeFile(path.join(consumer, 'package.json'), JSON.stringify({ name: 'oneringai-release-probe', private: true, type: 'module', version: '1.0.0' }));
   // Exercise ordinary install scripts and optional dependencies as a user would.
   await command(npm, ['install', path.join(work, pack.filename), '--omit=dev', '--no-audit', '--no-fund', '--cache', cache], consumer);
-  for (const file of ['README.md', 'USER_GUIDE.md', 'AGENTS.md', 'API_REFERENCE.md', 'docs/VERSION_2_GUIDE.md', 'docs/RELEASE_READINESS_V2.md', 'docs/DEPENDENCY_SECURITY.md', 'docs/evaluations/V2_RELEASE_VALIDATION_2026_11_02.json']) {
+  const provenance = await verifyBuild(path.join(consumer, 'node_modules/oneringai/dist'));
+  report.bundledDependencies = provenance.packages.map(({ name, version }) => ({ name, version }));
+  await copyFile(path.join(root, 'scripts/release/mcp-redirect-probe.mjs'), path.join(consumer, 'mcp-redirect-probe.mjs'));
+  const redirects = await command(process.env.ONERINGAI_CONSUMER_NODE || process.execPath, ['mcp-redirect-probe.mjs'], consumer);
+  report.mcpRedirects = JSON.parse(redirects.trim().split('\n').at(-1));
+  for (const file of ['README.md', 'USER_GUIDE.md', 'AGENTS.md', 'API_REFERENCE.md', 'docs/VERSION_2_GUIDE.md', 'docs/RELEASE_READINESS_V2.md', 'docs/DEPENDENCY_SECURITY.md', 'docs/evaluations/V2_RELEASE_VALIDATION_2026_11_02.json', 'docs/BROWSER_AGENTS.md', 'docs/evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json']) {
     const [source, installed] = await Promise.all([readFile(path.join(root, file)), readFile(path.join(consumer, 'node_modules/oneringai', file))]);
     if (!source.equals(installed)) throw new Error(`Packed documentation differs from source: ${file}`);
   }

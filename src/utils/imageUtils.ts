@@ -1,3 +1,4 @@
+import { encodeBase64, decodeBase64 } from '../infrastructure/runtime/primitives.js';
 /**
  * Image utilities for processing images
  */
@@ -96,8 +97,10 @@ export async function fetchImageAsBase64(
     }
 
     // Combine chunks into a single buffer
-    const buffer = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)));
-    const base64Data = buffer.toString('base64');
+    const buffer = new Uint8Array(totalSize);
+    let offset = 0;
+    for (const chunk of chunks) { buffer.set(chunk, offset); offset += chunk.length; }
+    const base64Data = encodeBase64(buffer);
 
     // Detect MIME type from content-type header or buffer magic numbers
     let mimeType = response.headers.get('content-type') || 'image/png';
@@ -126,8 +129,8 @@ export async function fetchImageAsBase64(
 /**
  * Detect image format from buffer magic numbers
  */
-function detectImageFormatFromBuffer(buffer: Buffer): string {
-  const magic = buffer.slice(0, 4).toString('hex');
+function detectImageFormatFromBuffer(buffer: Uint8Array): string {
+  const magic = Array.from(buffer.subarray(0, 4), value => value.toString(16).padStart(2, '0')).join('');
 
   if (magic.startsWith('89504e47')) return 'image/png';
   if (magic.startsWith('ffd8ff')) return 'image/jpeg';
@@ -141,8 +144,8 @@ function detectImageFormatFromBuffer(buffer: Buffer): string {
  * Detect image format from base64 data
  */
 export function detectImageFormat(base64Data: string): string {
-  const buffer = Buffer.from(base64Data, 'base64');
-  const magic = buffer.slice(0, 4).toString('hex');
+  const buffer = decodeBase64(base64Data);
+  const magic = Array.from(buffer.subarray(0, 4), value => value.toString(16).padStart(2, '0')).join('');
 
   if (magic.startsWith('89504e47')) return 'image/png';
   if (magic.startsWith('ffd8ff')) return 'image/jpeg';

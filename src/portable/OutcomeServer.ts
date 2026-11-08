@@ -1,4 +1,5 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { byteLength } from '../infrastructure/runtime/primitives.js';
+import { createHash, randomUUID } from '../infrastructure/runtime/primitives.js';
 import type { Agent } from '../core/Agent.js';
 import type { ToolFunction, ToolExecutionOptions } from '../domain/entities/Tool.js';
 import type { EvidenceReference, EvidenceRecord } from '../domain/interfaces/IEvidenceStorage.js';
@@ -157,7 +158,7 @@ export class AgentPackageOutcomeServer<TContext = unknown> {
     await this.authorize({ ...access, toolName: body.receipt.toolName, effect: body.receipt.effect }, host);
     validateSource(record, { ...body.receipt, toolFingerprint: '', toolName: body.receipt.toolName!, argumentsFingerprint: body.receipt.argumentsFingerprint! });
     const chunk = await this.options.storage.read(request.reference, { offset: request.offset, limit: Math.min(request.limit ?? this.limits.maxReadChars, this.limits.maxReadChars) });
-    await this.authorize({ ...access, toolName: body.receipt.toolName, effect: body.receipt.effect }, host); const content = json(record); return { protocol, packageId: request.packageId, chunk, ...(chunk ? { contentSha256: createHash('sha256').update(content).digest('hex'), contentBytes: Buffer.byteLength(content) } : {}) };
+    await this.authorize({ ...access, toolName: body.receipt.toolName, effect: body.receipt.effect }, host); const content = json(record); return { protocol, packageId: request.packageId, chunk, ...(chunk ? { contentSha256: createHash('sha256').update(content).digest('hex'), contentBytes: byteLength(content) } : {}) };
   }
   /** Host-only exact retained record. No action is resubmitted. */
   readRetainedSource(requestId: string): EvidenceRecord | undefined { const record = this.operations.get(requestId)?.retained; return record ? copyOutcomeData(record, 64_000_000) : undefined; }

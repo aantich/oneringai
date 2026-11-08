@@ -1,3 +1,4 @@
+import { byteLength } from '../infrastructure/runtime/primitives.js';
 /**
  * MemorySystem — the facade. All business logic lives here; adapters stay thin.
  *
@@ -6204,7 +6205,7 @@ function buildDocumentMetadata(
   // standard keys — keeps the storage-boundary contract symmetric with the
   // rest of MemorySystem.
   const extras = coerceMetadataDates(input.metadata) ?? {};
-  const byteSize = Buffer.byteLength(input.body ?? '', 'utf8');
+  const byteSize = byteLength(input.body ?? '', 'utf8');
   const standard: Record<string, unknown> = {
     body: input.body,
     byteSize,

@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash } from '../../infrastructure/runtime/primitives.js';
 import { AIError, InvalidConfigError } from '../../domain/errors/AIErrors.js';
 import type { ToolExecutionOutcome } from '../../domain/entities/Tool.js';
 import { json } from '../evidence/validation.js';

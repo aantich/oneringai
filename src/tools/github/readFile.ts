@@ -1,3 +1,4 @@
+import { decodeBase64, decodeUTF8 } from '../../infrastructure/runtime/primitives.js';
 import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * GitHub Read File Tool
@@ -145,7 +146,7 @@ NOTE: Files larger than 1MB are fetched via the Git Blob API. Very large files (
 
         if (contentResp.content && contentResp.encoding === 'base64') {
           // Standard case: file content is inline as base64
-          fileContent = Buffer.from(contentResp.content, 'base64').toString('utf-8');
+          fileContent = decodeUTF8(decodeBase64(contentResp.content));
         } else if (contentResp.git_url) {
           // Large file (>1MB): fall back to Blob API
           const blob = await githubFetch<GitHubBlobResponse>(
@@ -153,7 +154,7 @@ NOTE: Files larger than 1MB are fetched via the Git Blob API. Very large files (
             contentResp.git_url,
             { userId: effectiveUserId, accountId: effectiveAccountId }
           );
-          fileContent = Buffer.from(blob.content, 'base64').toString('utf-8');
+          fileContent = decodeUTF8(decodeBase64(blob.content));
           fileSize = blob.size;
         } else {
           return connectorFailure(connector, {

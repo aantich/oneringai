@@ -22,7 +22,7 @@
 import type { IContextPluginNextGen, IStoreHandler, StoreEntrySchema, StoreGetResult, StoreSetResult, StoreDeleteResult, StoreListResult, StoreActionResult, ITokenEstimator } from '../types.js';
 import type { ToolFunction, ToolContext } from '../../../domain/entities/Tool.js';
 import type { IPersistentInstructionsStorage, InstructionEntry } from '../../../domain/interfaces/IPersistentInstructionsStorage.js';
-import { FilePersistentInstructionsStorage } from '../../../infrastructure/storage/FilePersistentInstructionsStorage.js';
+import { defaultInstructionsStorage } from '../../../infrastructure/runtime/storageDefaults.js';
 import { simpleTokenEstimator } from '../BasePluginNextGen.js';
 import { StorageRegistry } from '../../StorageRegistry.js';
 
@@ -112,7 +112,7 @@ export class PersistentInstructionsPluginNextGen implements IContextPluginNextGe
     const registryFactory = StorageRegistry.get('persistentInstructions');
     this.storage = config.storage
       ?? registryFactory?.(config.agentId, StorageRegistry.getContext())
-      ?? new FilePersistentInstructionsStorage({ agentId: config.agentId });
+      ?? defaultInstructionsStorage(config.agentId);
   }
 
   // ============================================================================

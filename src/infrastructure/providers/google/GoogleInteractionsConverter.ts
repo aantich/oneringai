@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from '../../runtime/primitives.js';
 import type { Interactions } from '@google/genai';
 import type { TextGenerateOptions, ReasoningEffort } from '../../../domain/interfaces/ITextProvider.js';
 import type { InputItem } from '../../../domain/entities/Message.js';

@@ -29,6 +29,7 @@
 
 import type { ToolFunction } from '../domain/entities/Tool.js';
 import { logger } from '../infrastructure/observability/Logger.js';
+import { loadConnectorToolsModule, loadBuiltInToolRegistry } from './catalogHost.js';
 
 // ============================================================================
 // Types
@@ -214,7 +215,7 @@ export class ToolCatalogRegistry {
   static getConnectorToolsModule(): { ConnectorTools: any } | null {
     if (this._connectorToolsModule === null) {
       try {
-        this._connectorToolsModule = require('../../tools/connector/ConnectorTools.js');
+        this._connectorToolsModule = loadConnectorToolsModule();
       } catch {
         this._connectorToolsModule = false;
       }
@@ -689,7 +690,7 @@ export class ToolCatalogRegistry {
       // Try to dynamically require the generated registry
       // This works in CommonJS and in Node.js ESM with --experimental-require-module
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const mod = require('../../tools/registry.generated.js');
+      const mod = loadBuiltInToolRegistry();
       const registry = mod?.toolRegistry ?? mod?.default?.toolRegistry;
       if (Array.isArray(registry)) {
         this.registerFromToolRegistry(registry);

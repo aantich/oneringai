@@ -1,3 +1,4 @@
+import { decodeBase64, decodeUTF8 } from '../../infrastructure/runtime/primitives.js';
 import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * GitHub Search Code Tool
@@ -339,7 +340,7 @@ async function treeBasedSearch(
           `/repos/${owner}/${repo}/git/blobs/${entry.sha}`,
           { userId, accountId }
         );
-        const content = Buffer.from(blob.content, 'base64').toString('utf-8');
+        const content = decodeUTF8(decodeBase64(blob.content));
         return { path: entry.path, content };
       })
     );

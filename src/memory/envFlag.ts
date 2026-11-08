@@ -1,3 +1,4 @@
+import { env } from '../infrastructure/runtime/environment.js';
 /**
  * Process-env boolean flag with one-shot caching. Used by the memory layer's
  * warning subsystems (`ONERINGAI_SUPPRESS_CAP_WARNINGS`,
@@ -15,7 +16,7 @@ export function makeEnvFlag(name: string): EnvFlag {
   return {
     isSet(): boolean {
       if (cached !== undefined) return cached;
-      cached = process.env[name] === '1';
+      cached = env(name) === '1';
       return cached;
     },
     reset(): void {

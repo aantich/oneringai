@@ -37,7 +37,7 @@ import { ResultNormalizerPlugin } from './tool-execution/plugins/ResultNormalize
 import type { IToolExecutionPipeline } from './tool-execution/types.js';
 import type { PipelineOutcome, ToolExecutionOptions, ToolExecutionOutcome, ToolExecutionReport } from './tool-execution/outcomes.js';
 import { createExecutionSignal, withAbort } from './tool-execution/cancellation.js';
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../infrastructure/runtime/primitives.js';
 import { captureConnectorScope } from './tool-execution/connectorScope.js';
 import { attachOutcomeCapture, captureOutcomeExecutor } from './tool-execution/outcomeInvocation.js';
 import { connectorExecutionHint, prepareConnectorInvocation } from './connector-execution/profile.js';

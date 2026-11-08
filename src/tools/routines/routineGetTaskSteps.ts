@@ -1,3 +1,4 @@
+/** @browserCompatible Complete implementation; existing configured storage is required where applicable. */
 /**
  * routine_get_task_steps - Retrieves step-level detail for a specific task within an execution.
  */

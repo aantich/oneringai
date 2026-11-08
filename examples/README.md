@@ -16,6 +16,29 @@ model, and enabled tools before running them with production credentials.
 
 ## Setup
 
+### Same Agent in Node, a page and a Worker
+
+The browser target in 2.0.0-beta.2 uses the same `oneringai` imports and Agent
+API as Node. Build first, then `npm run example:browser-node` runs
+[the shared scenario](browser-node/shared.ts) with a local scripted HTTP model.
+Expected output includes `Total EUR 42`, both custom plugins restored, streaming,
+a validated helper result and four model calls. No provider keys are needed.
+
+For browser execution, install development browser binaries with
+`npx playwright install chromium firefox webkit`, then run `npm run test:browser`.
+The runner hosts the same scenario under strict CSP in each engine's page and
+dedicated Worker, plus recovery/accounting/collection and synthetic large-context
+checks. It closes browser/Worker/gateway resources. `npm run test:browser:types`
+checks page/Worker declarations; `npm run test:browser:package` checks an extracted
+tarball offline. Set `ONERINGAI_NODE22` to a Node 22 executable to include it in
+the package runtime matrix. See [browser setup and limits](../docs/BROWSER_AGENTS.md).
+
+The [demo session backend](browser-node/memory-sessions.ts) is memory-only.
+Factories and contributors must be recreated before checkpoint loading.
+These examples do not deploy a gateway or provide durable browser storage.
+
+### Other examples
+
 ```bash
 npm install
 cp .env.example .env

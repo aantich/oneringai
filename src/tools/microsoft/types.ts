@@ -1,3 +1,4 @@
+import { encodeUTF8, encodeBase64 } from '../../infrastructure/runtime/primitives.js';
 /**
  * Microsoft Graph Tools - Shared Types and Helpers
  *
@@ -722,8 +723,7 @@ export const SUPPORTED_EXTENSIONS = new Set([
  * @see https://learn.microsoft.com/en-us/graph/api/shares-get
  */
 export function encodeSharingUrl(webUrl: string): string {
-  const base64 = Buffer.from(webUrl, 'utf-8')
-    .toString('base64')
+  const base64 = encodeBase64(encodeUTF8(webUrl))
     .replace(/=+$/, '')
     .replace(/\//g, '_')
     .replace(/\+/g, '-');

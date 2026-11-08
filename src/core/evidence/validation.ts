@@ -1,4 +1,5 @@
-import { createHash } from 'node:crypto';
+import { byteLength } from '../../infrastructure/runtime/primitives.js';
+import { createHash } from '../../infrastructure/runtime/primitives.js';
 import type { EvidenceRecord, EvidenceReference, EvidenceScope } from '../../domain/interfaces/IEvidenceStorage.js';
 
 /** Messages contain no source payloads, credentials, or backend exception text. */
@@ -12,7 +13,7 @@ export function integer(value: number, minimum = 1): number {
   if (!Number.isSafeInteger(value) || value < minimum) throw new EvidenceError('invalid');
   return value;
 }
-export function hash(value: string | Buffer): string { return createHash('sha256').update(value).digest('hex'); }
+export function hash(value: string | Uint8Array): string { return createHash('sha256').update(value).digest('hex'); }
 export function validateScope(scope: EvidenceScope): Readonly<EvidenceScope> {
   if (!scope || typeof scope.ownerId !== 'string' || !scope.ownerId || scope.ownerId.length > 512 || typeof scope.namespace !== 'string' || !scope.namespace || scope.namespace.length > 512
     || (scope.tenantId !== undefined && (typeof scope.tenantId !== 'string' || !scope.tenantId || scope.tenantId.length > 512))) throw new EvidenceError('invalid');
@@ -27,7 +28,7 @@ export function json(value: unknown, maxBytes = Infinity): string {
   const seen = new Set<object>();
   const visit = (count = 1): void => { work -= count; if (work < 0) throw new EvidenceError('capacity'); };
   const append = (text: string): void => {
-    const bytes = Buffer.byteLength(text);
+    const bytes = byteLength(text);
     if (bytes > remaining) throw new EvidenceError('capacity');
     remaining -= bytes;
     parts.push(text);

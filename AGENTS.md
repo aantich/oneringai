@@ -1,5 +1,10 @@
 # OneRingAI Agent Guide
 
+Persistent user instruction (2026-11-08): develop OneRingAI v2 directly on `main`.
+Do not create new branches or switch to another branch unless the user explicitly
+instructs you to do so. Preserve existing work. Merging, deleting, committing, and
+pushing require their own applicable authorization; this rule grants none.
+
 Consumer C5's explicitly selected collections-v1 API is documented in
 [whole collection pages](docs/CONNECTOR_COLLECTION_PAGES.md). Use source/account
 registration and actual selected identity filters before run/session loading.
@@ -28,6 +33,10 @@ the documentation links near the end instead of guessing an API.
 
 - Package: `oneringai`
 - Runtime: Node.js 22.13+ or 24+
+- Agent runtime also supports modern secure browser pages and dedicated Workers
+  since 2.0.0-beta.2, using the **same Agent API and root imports**. Read
+  [Browser Agents](docs/BROWSER_AGENTS.md) for TypeScript conditions, supplied
+  storage/auth, compatible tools, lifecycle and published-version boundaries.
 - Language: strict TypeScript
 - Package format: ESM with ESM and CJS build outputs
 - Public API: import from `oneringai` unless a documented subpath is
@@ -689,7 +698,7 @@ providers explicitly rather than silently treating skipped tests as validation.
 
 ---
 
-Documentation version: 2.0.0-beta.1 | Runtime: Node.js 22.13+ or 24+ | Architecture: Connector-first +
+Documentation version: 2.0.0-beta.2 | Runtime: Node.js 22.13+ or 24+ | Architecture: Connector-first +
 NextGen context
 
 ## Experimental context strategies

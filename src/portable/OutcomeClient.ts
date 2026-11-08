@@ -1,5 +1,6 @@
-import { createHash, randomUUID } from 'node:crypto';
-import { isDeepStrictEqual } from 'node:util';
+import { byteLength } from '../infrastructure/runtime/primitives.js';
+import { createHash, randomUUID } from '../infrastructure/runtime/primitives.js';
+import { isDeepStrictEqual } from '../infrastructure/runtime/primitives.js';
 import type { Agent } from '../core/Agent.js';
 import { createOutcomeTool } from '../core/createOutcomeTool.js';
 import { containAsyncRejection } from '../core/evidence/validation.js';
@@ -136,7 +137,7 @@ class OutcomeSession implements RemoteOutcomeSession, RemoteToolOwner {
       parts.push(chunk.text); if (chunk.nextOffset === undefined) break; offset = chunk.nextOffset;
     }
     const text = parts.join('');
-    if (Buffer.byteLength(text) !== bytes || createHash('sha256').update(text).digest('hex') !== digest) throw new Error('Remote source integrity failed');
+    if (byteLength(text) !== bytes || createHash('sha256').update(text).digest('hex') !== digest) throw new Error('Remote source integrity failed');
     const record = JSON.parse(text) as EvidenceRecord, body = validateSource(record, op.metadata);
     op.payload = { value: body.payload.result }; op.report.receipt = { ...body.receipt, source: reference }; op.report.state = body.receipt.state;
   }

@@ -1,9 +1,10 @@
+import { env } from '../../runtime/environment.js';
 /**
  * Google Gemini text provider (using new unified SDK)
  */
 
 import { GoogleGenAI, type BatchJob, type Interactions } from '@google/genai';
-import { modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
+import { modelTransportFetch, modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
 import { BaseTextProvider } from '../base/BaseTextProvider.js';
 import { TextGenerateOptions, ModelCapabilities } from '../../../domain/interfaces/ITextProvider.js';
 import { LLMResponse } from '../../../domain/entities/Response.js';
@@ -44,6 +45,7 @@ export class GoogleTextProvider extends BaseTextProvider {
   };
 
   private client: GoogleGenAI;
+  private readonly clientOptions: NonNullable<ConstructorParameters<typeof GoogleGenAI>[0]>;
   private converter: GoogleConverter;
   private streamConverter: GoogleStreamConverter;
   private interactionsConverter: GoogleInteractionsConverter;
@@ -53,11 +55,12 @@ export class GoogleTextProvider extends BaseTextProvider {
     super(config);
 
     // New SDK uses object config
-    this.client = new GoogleGenAI({
+    this.clientOptions = {
       apiKey: this.getApiKey(),
       // Pass custom baseURL for proxy support (e.g. when routing through EW proxy)
       httpOptions: { ...(config.baseURL ? { baseUrl: config.baseURL } : {}), fetch: modelExecutionFetch },
-    });
+    };
+    this.client = new GoogleGenAI(this.clientOptions);
     registerModelTransport(this);
     this.converter = new GoogleConverter();
     this.streamConverter = new GoogleStreamConverter();
@@ -70,10 +73,16 @@ export class GoogleTextProvider extends BaseTextProvider {
     this.streamConverter.setToolCallMappingStorage(this.converter.getToolCallMappingStorage());
   }
 
+  private clientFor(signal?: AbortSignal): GoogleGenAI {
+    const fetch = modelTransportFetch(signal);
+    return fetch ? new GoogleGenAI({ ...this.clientOptions, httpOptions: { ...this.clientOptions.httpOptions, fetch } }) : this.client;
+  }
+
   /**
    * Generate response using Google Gemini API
    */
   async generate(options: TextGenerateOptions): Promise<LLMResponse> {
+    const client = this.clientFor(options.signal);
     options = this.applyContextLimitGuardrail(options);
     options = await this.resolveAdvancedCredentials(options);
     return this.executeWithCircuitBreaker(async () => {
@@ -81,7 +90,7 @@ export class GoogleTextProvider extends BaseTextProvider {
         if (this.usesInteractions(options)) {
           const request = await this.interactionsConverter.convertRequest(options);
           this.logger.debug({ model: options.model }, 'generate: calling Google Interactions API');
-          const result = await this.client.interactions.create(request as any, ...modelRequestOptions(options));
+          const result = await client.interactions.create(request as any, ...modelRequestOptions(options));
           return this.interactionsConverter.convertResponse(result, options.model);
         }
 
@@ -89,7 +98,7 @@ export class GoogleTextProvider extends BaseTextProvider {
         const googleRequest = await this.converter.convertRequest(options);
 
         // Debug logging
-        if (process.env.DEBUG_GOOGLE) {
+        if (env('DEBUG_GOOGLE')) {
           console.error('[DEBUG] Google Request:', JSON.stringify({
             model: options.model,
             tools: googleRequest.tools,
@@ -107,7 +116,7 @@ export class GoogleTextProvider extends BaseTextProvider {
 
         // Call Google API using new SDK structure
         // Note: contents goes at top level, generation config properties go directly in config
-        const result = await this.client.models.generateContent({
+        const result = await client.models.generateContent({
           model: options.model,
           contents: googleRequest.contents,
           config: {
@@ -124,7 +133,7 @@ export class GoogleTextProvider extends BaseTextProvider {
         );
 
         // Debug logging for response
-        if (process.env.DEBUG_GOOGLE) {
+        if (env('DEBUG_GOOGLE')) {
           console.error('[DEBUG] Google Response:', JSON.stringify({
             candidates: result.candidates?.map((c: any) => ({
               finishReason: c.finishReason,
@@ -161,6 +170,7 @@ export class GoogleTextProvider extends BaseTextProvider {
    * Stream response using Google Gemini API
    */
   async *streamGenerate(options: TextGenerateOptions): AsyncIterableIterator<StreamEvent> {
+    const client = this.clientFor(options.signal);
     options = this.applyContextLimitGuardrail(options);
     options = await this.resolveAdvancedCredentials(options);
     this.ensureObservabilityInitialized();
@@ -168,7 +178,7 @@ export class GoogleTextProvider extends BaseTextProvider {
       if (this.usesInteractions(options)) {
         const request = await this.interactionsConverter.convertRequest(options);
         this.logger.debug({ model: options.model }, 'streamGenerate: calling Google Interactions API');
-        const stream = await this.client.interactions.create({ ...request, stream: true } as any, ...modelRequestOptions(options));
+        const stream = await client.interactions.create({ ...request, stream: true } as any, ...modelRequestOptions(options));
         yield* this.interactionsConverter.convertStream(
           stream as unknown as AsyncIterable<Interactions.InteractionSSEEvent>,
           options.model,
@@ -186,7 +196,7 @@ export class GoogleTextProvider extends BaseTextProvider {
         'streamGenerate: calling Google API',
       );
       const streamStartTime = Date.now();
-      const stream = await this.client.models.generateContentStream({
+      const stream = await client.models.generateContentStream({
         model: options.model,
         contents: googleRequest.contents,
         config: {

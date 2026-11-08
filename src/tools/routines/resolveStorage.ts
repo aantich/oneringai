@@ -9,7 +9,7 @@
 
 import type { IRoutineDefinitionStorage } from '../../domain/interfaces/IRoutineDefinitionStorage.js';
 import type { ToolContext } from '../../domain/interfaces/IToolContext.js';
-import { FileRoutineDefinitionStorage } from '../../infrastructure/storage/FileRoutineDefinitionStorage.js';
+import { defaultRoutineStorage } from '../../infrastructure/runtime/storageDefaults.js';
 import { StorageRegistry } from '../../core/StorageRegistry.js';
 import type { StorageContext } from '../../core/StorageRegistry.js';
 
@@ -43,5 +43,5 @@ export function resolveRoutineDefinitionStorage(
   }
 
   // 3. Default
-  return new FileRoutineDefinitionStorage();
+  return defaultRoutineStorage();
 }

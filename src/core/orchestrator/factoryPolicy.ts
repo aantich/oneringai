@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../infrastructure/runtime/primitives.js';
 import { Agent, type RunOptions } from '../Agent.js';
 import type { ToolContext, ToolResult } from '../../domain/entities/Tool.js';
 import { ToolCallState } from '../../domain/entities/Tool.js';

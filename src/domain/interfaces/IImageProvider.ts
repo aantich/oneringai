@@ -2,6 +2,7 @@
  * Image generation provider interface
  */
 
+import type { MediaBytes as Buffer } from '#oneringai-media-bytes';
 import { IProvider } from './IProvider.js';
 
 export interface ImageGenerateOptions {

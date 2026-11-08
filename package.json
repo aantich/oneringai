@@ -1,6 +1,6 @@
 {
   "name": "oneringai",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0-beta.2",
   "description": "Unified TypeScript AI agent library with multi-vendor models, tools, memory, media, and pluggable OneRingAI/Codex agent runtimes",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,21 +8,41 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "browser": {
+        "types": "./dist/browser/index.d.ts",
+        "import": "./dist/browser/index.js",
+        "default": "./dist/browser/index.js"
+      },
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./agents": {
+      "browser": {
+        "types": "./dist/browser/agents.d.ts",
+        "import": "./dist/browser/agents.js",
+        "default": "./dist/browser/agents.js"
+      },
       "types": "./dist/capabilities/agents/index.d.ts",
       "import": "./dist/capabilities/agents/index.js",
       "require": "./dist/capabilities/agents/index.cjs"
     },
     "./types": {
+      "browser": {
+        "types": "./dist/browser/types.d.ts",
+        "import": "./dist/browser/types.js",
+        "default": "./dist/browser/types.js"
+      },
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.js",
       "require": "./dist/types/index.cjs"
     },
     "./shared": {
+      "browser": {
+        "types": "./dist/browser/shared.d.ts",
+        "import": "./dist/browser/shared.js",
+        "default": "./dist/browser/shared.js"
+      },
       "types": "./dist/shared/index.d.ts",
       "import": "./dist/shared/index.js",
       "require": "./dist/shared/index.cjs"
@@ -105,6 +125,13 @@
     "USER_GUIDE.md",
     "API_REFERENCE.md",
     "docs/VERSION_2_GUIDE.md",
+    "docs/BROWSER_AGENTS.md",
+    "docs/designs/AGENT_BROWSER_NODE_IMPLEMENTATION_PLAN.md",
+    "docs/designs/AGENT_BROWSER_NODE_DELIVERY.md",
+    "docs/evaluations/BROWSER_NODE_VALIDATION_2026_11_08.json",
+    "docs/evaluations/BETA_READINESS_FIXES_2026_11_08.json",
+    "docs/evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json",
+    "examples/browser-node",
     "docs/CONTEXT_PREPARATION.md",
     "docs/evaluations/STAGE_01_LIVE_VALIDATION.json",
     "docs/evaluations/STAGE_01_CORRECTIONS_VALIDATION.json",
@@ -402,10 +429,10 @@
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
     "generate:vendors": "tsx scripts/generate-vendor-registry.ts",
-    "generate": "npm run generate:tools && npm run generate:vendors",
+    "generate": "npm run generate:browser-schema && npm run generate:tools && npm run generate:vendors && npm run generate:browser-exports",
     "clean:dist": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "build:verify-exports": "node scripts/verify-package-exports.mjs",
-    "build": "npm run generate && npm run clean:dist && tsup && npm run build:verify-exports",
+    "build": "npm run generate && npm run clean:dist && tsup && node scripts/release/bundle-provenance.mjs --seal && npm run build:verify-exports",
     "build:all": "npm run build && npm run --prefix apps/amos build && npm run --prefix apps/hosea build && npm run --prefix apps/convert build",
     "dev": "npm run generate && npm run clean:dist && tsup --watch",
     "test": "vitest run",
@@ -530,11 +557,18 @@
     "example:agent-runtime-run-options": "node --import tsx examples/agent-runtime-run-options.ts",
     "docs:check": "node scripts/check-documentation.mjs",
     "release:consumer": "node scripts/verify-release-consumer.mjs",
-    "release:check": "npm run build && npm run typecheck && npm run lint && npm run test:unit -- --maxWorkers=4 && npm run examples:check && npm run test:agentic:compat && npm run examples:offline && npm run docs && npm run docs:full && npm run docs:check && npm run release:consumer",
+    "release:bundled": "node scripts/release/check-bundled-dependencies.mjs",
+    "release:check": "npm run build && npm run release:bundled && npm run typecheck && npm run lint && npm run test:unit -- --maxWorkers=4 && npm run examples:check && npm run test:agentic:compat && npm run examples:offline && npm run docs && npm run docs:full && npm run docs:check && npm run release:consumer",
     "example:routine-stores": "node --import tsx examples/routine-store-bridge.ts",
     "examples:offline": "node scripts/check-offline-examples.mjs",
     "example:plugin-authority": "node --import tsx examples/plugin-instructions-and-data.ts",
-    "example:custom-context-plugin": "node --import tsx examples/custom-context-plugin.ts"
+    "example:custom-context-plugin": "node --import tsx examples/custom-context-plugin.ts",
+    "generate:browser-schema": "node scripts/generate-browser-schema.mjs",
+    "generate:browser-exports": "node scripts/generate-browser-exports.mjs",
+    "test:browser:types": "tsc --noEmit -p tests/fixtures/browser-consumer/tsconfig.page.json && tsc --noEmit -p tests/fixtures/browser-consumer/tsconfig.worker.json",
+    "test:browser": "node --import tsx scripts/test-browser-agent.mjs",
+    "test:browser:package": "node scripts/test-browser-package.mjs",
+    "example:browser-node": "node --import tsx examples/browser-node/node.ts"
   },
   "keywords": [
     "ai",
@@ -587,18 +621,25 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
     "@google/genai": "^2.27.0",
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "@mozilla/readability": "^0.6.0",
+    "@noble/ciphers": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "@types/ws": "^8.18.1",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
+    "assert": "2.1.0",
     "cheerio": "^1.1.2",
     "clipboardy": "^5.0.2",
     "dotenv": "^17.2.3",
     "eventemitter3": "^5.0.1",
+    "fast-uri": "^3.1.9",
     "exceljs": "^4.4.0",
     "glob": "^14.0.3",
     "jose": "^6.1.3",
     "jsdom": "^29.1.1",
+    "json-schema-traverse": "1.0.0",
+    "jsonschema": "1.5.0",
     "officeparser": "8.0.0",
     "openai": "^7.30.0",
     "pngjs": "^7.0.0",
@@ -606,9 +647,9 @@
     "simple-icons": "^16.7.0",
     "turndown": "^7.2.2",
     "unpdf": "^1.9.1",
+    "util": "0.12.5",
     "ws": "^8.21.3",
-    "zod": "^4.3.6",
-    "@types/ws": "^8.18.1"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.312",
@@ -622,6 +663,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^8.56.0",
+    "playwright": "1.65.0",
     "ts-morph": "^27.0.2",
     "tsup": "^8.0.1",
     "tsx": "^4.21.0",
@@ -629,10 +671,10 @@
     "vitest": "^3.2.7"
   },
   "peerDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.312",
     "@nut-tree-fork/nut-js": ">=4.0.0",
     "@openai/codex-sdk": "^0.149.0",
-    "mongodb": ">=5.0.0",
-    "@anthropic-ai/claude-agent-sdk": "^0.3.312"
+    "mongodb": ">=5.0.0"
   },
   "peerDependenciesMeta": {
     "@openai/codex-sdk": {
@@ -649,7 +691,7 @@
     }
   },
   "overrides": {
-    "@hono/node-server": "^2.1.1",
+    "@hono/node-server": "^2.1.3",
     "body-parser": "^2.3.0",
     "brace-expansion@<2": "1.1.18",
     "brace-expansion@>=2 <3": "2.1.4",
@@ -659,8 +701,8 @@
     },
     "express-rate-limit": "^8.7.0",
     "esbuild": "^0.28.1",
-    "fast-uri": "^3.1.5",
-    "hono": "^4.13.5",
+    "fast-uri": "^3.1.9",
+    "hono": "^4.13.11",
     "ip-address": "^10.7.0",
     "js-yaml": "^4.3.1",
     "pdfjs-dist": "^6.3.289",

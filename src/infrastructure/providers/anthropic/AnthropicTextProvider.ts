@@ -1,9 +1,10 @@
+import { browserSDKOptions } from '../../runtime/environment.js';
 /**
  * Anthropic (Claude) text provider
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { modelExecutionFetch, modelRequestOptions, registerModelTransport, withoutModelTracking, markFailedModelUsage } from '../../../core/model-execution/ModelTask.js';
+import { modelTransportClient, modelExecutionFetch, modelRequestOptions, registerModelTransport, withoutModelTracking, markFailedModelUsage } from '../../../core/model-execution/ModelTask.js';
 import { ANTHROPIC_COMPACTION_BETA, assertNativeCompactionOptions, nativeCompactionUsage } from '../shared/nativeCompaction.js';
 import type { ITextCompactionProvider, TextCompactionResponse } from '../../../domain/interfaces/ITextProvider.js';
 import { BaseTextProvider } from '../base/BaseTextProvider.js';
@@ -91,7 +92,7 @@ export class AnthropicTextProvider extends BaseTextProvider {
       vendorOptions: { ...options.vendorOptions, compaction: { type: 'summarize' } } });
     // Large valid thinking budgets require streaming transport in the SDK.
     // Keep it internal: callers still receive one complete native result.
-    const stream = this.client.beta.messages.stream(request as Anthropic.Beta.MessageCreateParamsNonStreaming,
+    const stream = modelTransportClient(this.client, options.signal).beta.messages.stream(request as Anthropic.Beta.MessageCreateParamsNonStreaming,
       ...modelRequestOptions(options));
     let response: Anthropic.Beta.BetaMessage;
     try { response = await stream.finalMessage(); }
@@ -141,6 +142,7 @@ export class AnthropicTextProvider extends BaseTextProvider {
       baseURL: this.getBaseURL(),
       maxRetries: this.getMaxRetries(),
       fetch: modelExecutionFetch,
+      ...browserSDKOptions,
     });
     registerModelTransport(this);
     this.converter = new AnthropicConverter();
@@ -162,6 +164,7 @@ export class AnthropicTextProvider extends BaseTextProvider {
    * guardrail. Streaming transport avoids it without changing any caller.
    */
   async generate(options: TextGenerateOptions): Promise<LLMResponse> {
+    const client = modelTransportClient(this.client, options.signal);
     options = this.applyContextLimitGuardrail(options);
     options = await this.resolveAdvancedCredentials(options);
     return this.executeWithCircuitBreaker(async () => {
@@ -189,8 +192,8 @@ export class AnthropicTextProvider extends BaseTextProvider {
         const aggregate = this.emptyAnthropicUsage();
         for (let continuation = 0; continuation <= MAX_SERVER_TOOL_CONTINUATIONS; continuation++) {
           const stream = usesBeta
-            ? this.client.beta.messages.stream(request, ...modelRequestOptions(options))
-            : this.client.messages.stream(request, ...modelRequestOptions(options));
+            ? client.beta.messages.stream(request, ...modelRequestOptions(options))
+            : client.messages.stream(request, ...modelRequestOptions(options));
           streamRef = stream;
           anthropicResponse = (await stream.finalMessage()) as unknown as Anthropic.Message;
           for (const block of anthropicResponse.content) {
@@ -239,6 +242,7 @@ export class AnthropicTextProvider extends BaseTextProvider {
    * Stream response using Anthropic Messages API
    */
   async *streamGenerate(options: TextGenerateOptions): AsyncIterableIterator<StreamEvent> {
+    const client = modelTransportClient(this.client, options.signal);
     options = this.applyContextLimitGuardrail(options);
     options = await this.resolveAdvancedCredentials(options);
     // streamGenerate doesn't go through executeWithCircuitBreaker, so logger
@@ -269,8 +273,8 @@ export class AnthropicTextProvider extends BaseTextProvider {
         // Standard and beta Messages expose equivalent streaming operations,
         // but the SDK models them as incompatible overload unions.
         const messagesApi: any = usesBeta
-          ? this.client.beta.messages
-          : this.client.messages;
+          ? client.beta.messages
+          : client.messages;
         const hasStreamHelper =
           Boolean(options.native_tools?.length) && typeof messagesApi.stream === 'function';
         const stream = hasStreamHelper

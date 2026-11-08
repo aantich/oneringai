@@ -6,7 +6,7 @@
  * LLMResponse structure is the same.
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID } from '../../runtime/primitives.js';
 import { LLMResponse } from '../../../domain/entities/Response.js';
 import { OutputItem, MessageRole } from '../../../domain/entities/Message.js';
 import { Content, ContentType } from '../../../domain/entities/Content.js';

@@ -1,3 +1,4 @@
+import { byteLength } from '../../infrastructure/runtime/primitives.js';
 import { bindRemoteContext, hasRemoteEvidenceOwners, validateRemoteEvidenceRecord } from '../tool-execution/remoteObservation.js';
 import { ContextAssembler, contextFingerprint, observeAssemblyUsage } from './assembly.js';
 import type { AssemblySnapshot, ContextContributor, ContextSelectionManifest } from './assembly.js';
@@ -8,7 +9,7 @@ import { compactConversationTransaction } from './strategies/conversation-compac
 import type { EvidenceReference, EvidenceScope } from '../../domain/interfaces/IEvidenceStorage.js';
 import { EvidencePluginNextGen, parseEvidenceSnapshot } from './plugins/EvidencePluginNextGen.js';
 import type { EvidencePluginConfig } from './plugins/EvidencePluginNextGen.js';
-import { InMemoryEvidenceStorage } from '../../infrastructure/storage/EvidenceStorage.js';
+import { InMemoryEvidenceStorage } from '../../infrastructure/storage/InMemoryEvidenceStorage.js';
 import { evidenceProjection, evidenceProvenance } from '../evidence/ToolEvidenceMiddleware.js';
 import { PRESET_REQUIRED_PLUGINS, type PresetPluginRequirements, type RequiredPresetPlugins } from './presetRequirements.js';
 /**
@@ -41,8 +42,8 @@ import { PRESET_REQUIRED_PLUGINS, type PresetPluginRequirements, type RequiredPr
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { randomUUID } from 'node:crypto';
-import { isDeepStrictEqual } from 'node:util';
+import { randomUUID } from '../../infrastructure/runtime/primitives.js';
+import { isDeepStrictEqual } from '../../infrastructure/runtime/primitives.js';
 import { ToolManager } from '../ToolManager.js';
 import { orchestratorConstruction, initializeOrchestratorContext, isOrchestratorConstruction } from '../orchestrator/construction.js';
 import { logger } from '../../infrastructure/observability/Logger.js';
@@ -1762,7 +1763,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       if (ids.has(reference.id)) throw new AIError('Duplicate native source reference', 'CONTEXT_COMPACTION_INVALID');
       ids.add(reference.id);
     }
-    if (snapshot.state !== undefined && Buffer.byteLength(JSON.stringify(snapshot.state), 'utf8') > 65536) throw new AIError('Native replay metadata exceeds its bound', 'CONTEXT_COMPACTION_INVALID');
+    if (snapshot.state !== undefined && byteLength(JSON.stringify(snapshot.state), 'utf8') > 65536) throw new AIError('Native replay metadata exceeds its bound', 'CONTEXT_COMPACTION_INVALID');
     return driver;
   }
 

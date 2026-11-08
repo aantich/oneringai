@@ -1,3 +1,4 @@
+/** @browserCompatible Complete implementation; existing configured storage is required where applicable. */
 /**
  * routine_delete - Permanently deletes a routine definition by ID.
  *

@@ -1,0 +1,984 @@
+{
+  "reviewedAt": "2026-11-08T15:29:58.000546+00:00",
+  "branch": "main",
+  "head": "f0cb9cd743c669a0f8e37431ce1930b9bc8d8e6e",
+  "candidate": "uncommitted working tree; package manifest remains 2.0.0-beta.1",
+  "readiness": "hold release: bundled dependency security defect and browser schema compatibility defect remain",
+  "implementationChangesMadeDuringReview": false,
+  "publicationPerformed": false,
+  "liveModelCalls": 0,
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "title": "Release build embeds an outdated MCP client despite a passing clean-consumer audit",
+      "locations": [
+        {
+          "file": "tsup.config.ts",
+          "line": 53
+        },
+        {
+          "file": "package.json",
+          "line": 621
+        },
+        {
+          "file": "src/core/mcp/MCPClient.ts",
+          "line": 547
+        }
+      ],
+      "observedBuildSdkVersion": "1.30.0",
+      "patchedSdkFloor": "1.32.0",
+      "advisory": "https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-6prh-2h8m-c8cw",
+      "effect": "Public MCPRegistry HTTP client follows a cross-origin 307 and forwards a synthetic secret custom header and initialization body. SDK is embedded by noExternal; auditing freshly installed dependency packages does not audit that embedded copy.",
+      "reproduction": {
+        "source": "http://127.0.0.1:53855",
+        "target": "http://127.0.0.1:53854",
+        "crossOrigin": true,
+        "captured": [
+          {
+            "header": "synthetic-release-fixture",
+            "body": "{\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-11-25\",\"capabilities\":{},\"clientInfo\":{\"name\":\"oneringai\",\"version\":\"0.2.0\"}},\"jsonrpc\":\"2.0\",\"id\":0}"
+          }
+        ],
+        "error": "MCPConnectionError: Failed to connect to MCP server 'offline-redirect-probe'",
+        "leakedSyntheticHeader": true
+      },
+      "requiredWork": "Use a patched compatible MCP SDK for the build, raise the dependency floor, rebuild, and validate bundled dependency provenance plus an actual packaged MCP redirect regression. Assess remaining exact-build advisories for shipped paths."
+    },
+    {
+      "id": "R2",
+      "priority": "P2",
+      "title": "Referenced schema subtrees outside ordinary schema keywords skip nested admission and normalization",
+      "locations": [
+        {
+          "file": "src/infrastructure/runtime/schemaCompiler.browser.ts",
+          "line": 29
+        },
+        {
+          "file": "src/infrastructure/runtime/schemaCompiler.browser.ts",
+          "line": 97
+        }
+      ],
+      "minimalValidSchema": {
+        "$ref": "#/default",
+        "default": {
+          "type": "object",
+          "properties": {
+            "currency": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "required": [
+            "currency"
+          ]
+        }
+      },
+      "value": {
+        "currency": null
+      },
+      "effect": "Node accepts the valid value; browser page/Worker reject it after bounded repair. A nested missing reference is rejected before dispatch on Node but after a model call in the browser. Both primary schema and optional local validationSchema are affected.",
+      "requiredWork": "Index and process every actually referenced schema subtree and descendants with the correct lexical scope, reusing the existing admission/normalization path; leave unreferenced annotation data unchanged. Add primary/local validation and before-dispatch regressions."
+    },
+    {
+      "id": "R3",
+      "priority": "P3",
+      "title": "Empty schema IDs incorrectly create duplicate-ID cache entries",
+      "locations": [
+        {
+          "file": "src/infrastructure/runtime/schemaCompiler.browser.ts",
+          "line": 195
+        }
+      ],
+      "schemas": [
+        {
+          "$id": "",
+          "type": "string"
+        },
+        {
+          "$id": "",
+          "type": "number"
+        }
+      ],
+      "effect": "Native compiler accepts both schemas in one compiler. Browser compiler rejects the second. The same applies to $id=\"#\". Latent in the current public helper path, which compiles one root per local compiler.",
+      "requiredWork": "Match native AJV identity handling for empty or fragment-only IDs without changing ordinary duplicate-ID rejection or weak identity caching."
+    }
+  ],
+  "checks": {
+    "releaseCheck": {
+      "status": "pass",
+      "unitTests": 9460,
+      "unitFiles": 433,
+      "offlineExamples": 30,
+      "includes": [
+        "build",
+        "typecheck",
+        "lint",
+        "examples types",
+        "Stage 00 built consumer compatibility",
+        "public/full API generation",
+        "documentation checks",
+        "real clean npm consumer install and audit"
+      ]
+    },
+    "cleanConsumerNode24": {
+      "status": "pass",
+      "node": "v24.20.0",
+      "startedAt": "2026-11-08T15:18:44.459Z",
+      "work": "/var/folders/w4/0_95kdj51l35cqyg07_w5v5r0000gn/T/oneringai-release-NTh4pR",
+      "package": "oneringai@2.0.0-beta.1",
+      "integrity": "sha512-Q3igcXo0I6RSBIRhYBQUzkPoX8FPsrEkyEffdmzAib4PdgDCypO3rLo5U2sSDooO2G11kzV8QvFbeVfHCBuFdg==",
+      "files": 554,
+      "documentationMatchesSource": true,
+      "probe": {
+        "node": "v24.20.0",
+        "sdkModules": [],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+      "audit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      },
+      "optionalSdkVersions": {
+        "@openai/codex-sdk": "0.149.1",
+        "@anthropic-ai/claude-agent-sdk": "0.3.319"
+      },
+      "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+      "optionalSdkProbe": {
+        "node": "v24.20.0",
+        "sdkModules": [
+          "@openai/codex-sdk",
+          "@anthropic-ai/claude-agent-sdk"
+        ],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "optionalSdkAudit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      },
+      "finishedAt": "2026-11-08T15:19:16.358Z"
+    },
+    "cleanConsumerNode22": {
+      "status": "pass",
+      "node": "v24.20.0",
+      "startedAt": "2026-11-08T15:22:59.671Z",
+      "work": "/var/folders/w4/0_95kdj51l35cqyg07_w5v5r0000gn/T/oneringai-release-RIxIXQ",
+      "package": "oneringai@2.0.0-beta.1",
+      "integrity": "sha512-Q3igcXo0I6RSBIRhYBQUzkPoX8FPsrEkyEffdmzAib4PdgDCypO3rLo5U2sSDooO2G11kzV8QvFbeVfHCBuFdg==",
+      "files": 554,
+      "documentationMatchesSource": true,
+      "probe": {
+        "node": "v22.13.1",
+        "sdkModules": [],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+      "audit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      },
+      "optionalSdkVersions": {
+        "@openai/codex-sdk": "0.149.1",
+        "@anthropic-ai/claude-agent-sdk": "0.3.319"
+      },
+      "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+      "optionalSdkProbe": {
+        "node": "v22.13.1",
+        "sdkModules": [
+          "@openai/codex-sdk",
+          "@anthropic-ai/claude-agent-sdk"
+        ],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "optionalSdkAudit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      },
+      "finishedAt": "2026-11-08T15:23:34.445Z"
+    },
+    "browser": {
+      "passed": true,
+      "hosts": [
+        {
+          "engine": "chromium",
+          "version": "158.0.8127.18",
+          "page": true,
+          "worker": true,
+          "pageErrors": [],
+          "cspViolations": []
+        },
+        {
+          "engine": "firefox",
+          "version": "159.0",
+          "page": true,
+          "worker": true,
+          "pageErrors": [],
+          "cspViolations": []
+        },
+        {
+          "engine": "webkit",
+          "version": "27.2",
+          "page": true,
+          "worker": true,
+          "pageErrors": [],
+          "cspViolations": []
+        }
+      ]
+    },
+    "actualProviderAdapterProbes": {
+      "node": [
+        {
+          "vendor": "anthropic",
+          "model": "claude-sonnet-4-6",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "google",
+          "model": "gemini-2.5-flash",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "deepseek",
+          "model": "deepseek-v4-flash",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "grok",
+          "model": "grok-4-1-fast-reasoning",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "groq",
+          "model": "gpt-4o-mini",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        }
+      ],
+      "page": [
+        {
+          "vendor": "anthropic",
+          "model": "claude-sonnet-4-6",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "google",
+          "model": "gemini-2.5-flash",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "deepseek",
+          "model": "deepseek-v4-flash",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "grok",
+          "model": "grok-4-1-fast-reasoning",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "groq",
+          "model": "gpt-4o-mini",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        }
+      ],
+      "worker": [
+        {
+          "vendor": "anthropic",
+          "model": "claude-sonnet-4-6",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "google",
+          "model": "gemini-2.5-flash",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "deepseek",
+          "model": "deepseek-v4-flash",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "grok",
+          "model": "grok-4-1-fast-reasoning",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        },
+        {
+          "vendor": "groq",
+          "model": "gpt-4o-mini",
+          "output": "verified",
+          "stream": "verified",
+          "calls": 2,
+          "unknownUsage": 0
+        }
+      ],
+      "requests": [
+        {
+          "path": "/anthropic/v1/v1/messages",
+          "stream": true,
+          "model": "claude-sonnet-4-6"
+        },
+        {
+          "path": "/anthropic/v1/v1/messages",
+          "stream": true,
+          "model": "claude-sonnet-4-6"
+        },
+        {
+          "path": "/google/v1/v1beta/models/gemini-2.5-flash:generateContent"
+        },
+        {
+          "path": "/google/v1/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse"
+        },
+        {
+          "path": "/deepseek/v1/responses",
+          "model": "deepseek-v4-flash"
+        },
+        {
+          "path": "/deepseek/v1/responses",
+          "stream": true,
+          "model": "deepseek-v4-flash"
+        },
+        {
+          "path": "/grok/v1/responses",
+          "model": "grok-4-1-fast-reasoning"
+        },
+        {
+          "path": "/grok/v1/responses",
+          "stream": true,
+          "model": "grok-4-1-fast-reasoning"
+        },
+        {
+          "path": "/generic/v1/responses",
+          "model": "gpt-4o-mini"
+        },
+        {
+          "path": "/generic/v1/responses",
+          "stream": true,
+          "model": "gpt-4o-mini"
+        },
+        {
+          "path": "/anthropic/v1/v1/messages",
+          "stream": true,
+          "model": "claude-sonnet-4-6"
+        },
+        {
+          "path": "/anthropic/v1/v1/messages",
+          "stream": true,
+          "model": "claude-sonnet-4-6"
+        },
+        {
+          "path": "/google/v1/v1beta/models/gemini-2.5-flash:generateContent"
+        },
+        {
+          "path": "/google/v1/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse"
+        },
+        {
+          "path": "/deepseek/v1/responses",
+          "model": "deepseek-v4-flash"
+        },
+        {
+          "path": "/deepseek/v1/responses",
+          "stream": true,
+          "model": "deepseek-v4-flash"
+        },
+        {
+          "path": "/grok/v1/responses",
+          "model": "grok-4-1-fast-reasoning"
+        },
+        {
+          "path": "/grok/v1/responses",
+          "stream": true,
+          "model": "grok-4-1-fast-reasoning"
+        },
+        {
+          "path": "/generic/v1/responses",
+          "model": "gpt-4o-mini"
+        },
+        {
+          "path": "/generic/v1/responses",
+          "stream": true,
+          "model": "gpt-4o-mini"
+        },
+        {
+          "path": "/anthropic/v1/v1/messages",
+          "stream": true,
+          "model": "claude-sonnet-4-6"
+        },
+        {
+          "path": "/anthropic/v1/v1/messages",
+          "stream": true,
+          "model": "claude-sonnet-4-6"
+        },
+        {
+          "path": "/google/v1/v1beta/models/gemini-2.5-flash:generateContent"
+        },
+        {
+          "path": "/google/v1/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse"
+        },
+        {
+          "path": "/deepseek/v1/responses",
+          "model": "deepseek-v4-flash"
+        },
+        {
+          "path": "/deepseek/v1/responses",
+          "stream": true,
+          "model": "deepseek-v4-flash"
+        },
+        {
+          "path": "/grok/v1/responses",
+          "model": "grok-4-1-fast-reasoning"
+        },
+        {
+          "path": "/grok/v1/responses",
+          "stream": true,
+          "model": "grok-4-1-fast-reasoning"
+        },
+        {
+          "path": "/generic/v1/responses",
+          "model": "gpt-4o-mini"
+        },
+        {
+          "path": "/generic/v1/responses",
+          "stream": true,
+          "model": "gpt-4o-mini"
+        }
+      ],
+      "browser": "158.0.8127.18"
+    },
+    "schemaDifferentialExtension": {
+      "schemaProfileCases": 462,
+      "valuesPerCase": 38,
+      "admissionMismatches": 3,
+      "note": "Focused nullable and public-API checks additionally reproduce R2; the existing 134-case qualification suite does not cover annotation reference descendants."
+    },
+    "publicSchemaReproduction": {
+      "node": {
+        "results": [
+          {
+            "label": "nullable-schema",
+            "status": "success",
+            "value": {
+              "currency": null
+            }
+          },
+          {
+            "label": "nullable-validationSchema",
+            "status": "success",
+            "value": {
+              "currency": null
+            }
+          },
+          {
+            "label": "unresolved-schema",
+            "status": "failed",
+            "error": "InvalidConfigError: Invalid helper JSON schema: can't resolve reference #/missing from id #"
+          },
+          {
+            "label": "unresolved-validationSchema",
+            "status": "failed",
+            "error": "InvalidConfigError: Invalid helper JSON schema: can't resolve reference #/missing from id #"
+          }
+        ],
+        "calls": 2
+      },
+      "page": {
+        "results": [
+          {
+            "label": "nullable-schema",
+            "status": "failed",
+            "error": "HelperOutputError: Helper output failed schema validation after bounded repair: data does not match allOf schema <#/default> with 1 error[s]:, data/currency is not of a type(s) string"
+          },
+          {
+            "label": "nullable-validationSchema",
+            "status": "failed",
+            "error": "HelperOutputError: Helper output failed schema validation after bounded repair: data does not match allOf schema <#/default> with 1 error[s]:, data/currency is not of a type(s) string"
+          },
+          {
+            "label": "unresolved-schema",
+            "status": "failed",
+            "error": "SchemaError: no such schema #/missing located in <https://oneringai.invalid/schema>"
+          },
+          {
+            "label": "unresolved-validationSchema",
+            "status": "failed",
+            "error": "SchemaError: no such schema #/missing located in <https://oneringai.invalid/schema>"
+          }
+        ],
+        "calls": 6
+      },
+      "worker": {
+        "results": [
+          {
+            "label": "nullable-schema",
+            "status": "failed",
+            "error": "HelperOutputError: Helper output failed schema validation after bounded repair: data does not match allOf schema <#/default> with 1 error[s]:, data/currency is not of a type(s) string"
+          },
+          {
+            "label": "nullable-validationSchema",
+            "status": "failed",
+            "error": "HelperOutputError: Helper output failed schema validation after bounded repair: data does not match allOf schema <#/default> with 1 error[s]:, data/currency is not of a type(s) string"
+          },
+          {
+            "label": "unresolved-schema",
+            "status": "failed",
+            "error": "SchemaError: no such schema #/missing located in <https://oneringai.invalid/schema>"
+          },
+          {
+            "label": "unresolved-validationSchema",
+            "status": "failed",
+            "error": "SchemaError: no such schema #/missing located in <https://oneringai.invalid/schema>"
+          }
+        ],
+        "calls": 6
+      },
+      "browser": "158.0.8127.18"
+    },
+    "maintainerProductionAudit": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 4,
+        "high": 7,
+        "critical": 1,
+        "total": 12
+      },
+      "note": "Exact lockfile/build dependency tree, not a claim that every advisory is embedded in the tarball. Clean-consumer audits pass with three reviewed UUID-related moderate entries; R1 independently proves an embedded MCP exposure.",
+      "packageFindings": [
+        {
+          "name": "@hono/node-server",
+          "severity": "moderate",
+          "nodes": [
+            "node_modules/@hono/node-server"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-rmxm-3fg6-px4f"
+          ]
+        },
+        {
+          "name": "@modelcontextprotocol/sdk",
+          "severity": "high",
+          "nodes": [
+            "node_modules/@modelcontextprotocol/sdk"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-6qxp-vccf-f47h",
+            "https://github.com/advisories/GHSA-22jm-h49p-29qw",
+            "https://github.com/advisories/GHSA-46jr-4wx8-v453",
+            "https://github.com/advisories/GHSA-rvq5-wwqv-78pq",
+            "https://github.com/advisories/GHSA-f897-62hf-6gxq",
+            "https://github.com/advisories/GHSA-6prh-2h8m-c8cw"
+          ]
+        },
+        {
+          "name": "body-parser",
+          "severity": "high",
+          "nodes": [
+            "node_modules/body-parser"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-27r3-jxmh-p828"
+          ]
+        },
+        {
+          "name": "brace-expansion",
+          "severity": "high",
+          "nodes": [
+            "node_modules/brace-expansion",
+            "node_modules/glob/node_modules/brace-expansion",
+            "node_modules/readdir-glob/node_modules/brace-expansion"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr",
+            "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr",
+            "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr",
+            "https://github.com/advisories/GHSA-qhr7-859c-m2p7",
+            "https://github.com/advisories/GHSA-qhr7-859c-m2p7",
+            "https://github.com/advisories/GHSA-qhr7-859c-m2p7",
+            "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p",
+            "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p",
+            "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p"
+          ]
+        },
+        {
+          "name": "fast-uri",
+          "severity": "high",
+          "nodes": [
+            "node_modules/fast-uri"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-qw65-cvwx-89v3",
+            "https://github.com/advisories/GHSA-58mr-gqgx-xq4g",
+            "https://github.com/advisories/GHSA-hrr3-gc8f-f4qj",
+            "https://github.com/advisories/GHSA-w74x-v6f9-j3xg",
+            "https://github.com/advisories/GHSA-xhq7-xmqj-769h",
+            "https://github.com/advisories/GHSA-wjr9-j795-jxcr",
+            "https://github.com/advisories/GHSA-333x-w4r6-6crp"
+          ]
+        },
+        {
+          "name": "hono",
+          "severity": "moderate",
+          "nodes": [
+            "node_modules/hono"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-hxh3-vqpv-xpqv",
+            "https://github.com/advisories/GHSA-5r4p-p66f-jhc7"
+          ]
+        },
+        {
+          "name": "ip-address",
+          "severity": "moderate",
+          "nodes": [
+            "node_modules/ip-address"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-j6r3-76f7-8jcv",
+            "https://github.com/advisories/GHSA-h3mg-xc3c-68pw",
+            "https://github.com/advisories/GHSA-rxp7-6hxx-x8q5"
+          ]
+        },
+        {
+          "name": "proxy-addr",
+          "severity": "critical",
+          "nodes": [
+            "node_modules/proxy-addr"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-jqcg-44mw-7w3h"
+          ]
+        },
+        {
+          "name": "qs",
+          "severity": "moderate",
+          "nodes": [
+            "node_modules/qs"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-6pq8-jhm2-2vcw"
+          ]
+        },
+        {
+          "name": "source-map-js",
+          "severity": "high",
+          "nodes": [
+            "node_modules/source-map-js"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-68fv-2mgg-jv7q"
+          ]
+        },
+        {
+          "name": "undici",
+          "severity": "high",
+          "nodes": [
+            "node_modules/undici"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-3wwx-pv8p-q78v",
+            "https://github.com/advisories/GHSA-pmjh-fq2x-6v4x",
+            "https://github.com/advisories/GHSA-r53p-7pc4-xj5r",
+            "https://github.com/advisories/GHSA-rfgv-xxqx-mfg5",
+            "https://github.com/advisories/GHSA-3xpg-4rpp-hhhm",
+            "https://github.com/advisories/GHSA-2jfj-6hjv-fm6j",
+            "https://github.com/advisories/GHSA-2gqq-gqf2-x968",
+            "https://github.com/advisories/GHSA-w293-vg96-wgc3",
+            "https://github.com/advisories/GHSA-8436-99hf-9mmv",
+            "https://github.com/advisories/GHSA-rx4f-c7p8-82vq",
+            "https://github.com/advisories/GHSA-4qv8-2p9j-2685",
+            "https://github.com/advisories/GHSA-f72v-6w45-q472",
+            "https://github.com/advisories/GHSA-xjj6-f33q-929c",
+            "https://github.com/advisories/GHSA-4w7w-5xrc-9h26",
+            "https://github.com/advisories/GHSA-2m5v-pch6-74hx",
+            "https://github.com/advisories/GHSA-qrxm-fqhp-jwvm",
+            "https://github.com/advisories/GHSA-9fm3-97px-rjf6",
+            "https://github.com/advisories/GHSA-55wc-3pg8-jfw6"
+          ]
+        },
+        {
+          "name": "zod",
+          "severity": "high",
+          "nodes": [
+            "node_modules/zod"
+          ],
+          "advisories": [
+            "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
+          ]
+        }
+      ]
+    },
+    "amos": {
+      "build": "pass",
+      "typecheck": "pass",
+      "unitTestsIncluded": 214,
+      "unitFiles": 25,
+      "offlineExamples": [
+        {
+          "file": "agent-runtime-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "composition-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "context-budget-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "context-selection-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "context-strategies-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "evidence-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "loop-policy-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "model-helpers-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "native-compaction-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "outcome-aware-tools-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "presets-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "routing-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "task-state-offline.ts",
+          "status": 0
+        },
+        {
+          "file": "tool-outcomes-offline.ts",
+          "status": 0
+        }
+      ],
+      "compiledClosedStdin": {
+        "exitCode": 0,
+        "gracefulShutdown": true,
+        "noClosedInterfaceError": true
+      }
+    }
+  },
+  "releasePreparationStillRequired": {
+    "registry": {
+      "version": "2.0.0-beta.1",
+      "dist-tags": {
+        "latest": "2.0.0-beta.1",
+        "next": "2.0.0-beta.1"
+      }
+    },
+    "tagGuard": "Release tag v2.0.0-beta.1 points to 318c84b53329a808af1ad5949dc2d51edefdffc5, but HEAD is f0cb9cd743c669a0f8e37431ce1930b9bc8d8e6e.",
+    "steps": [
+      "Resolve release findings and rerun affected checks",
+      "Select the next available prerelease version and update availability/changelog metadata",
+      "Commit/tag the reviewed candidate under the separate user authorization required by AGENTS.md",
+      "Recheck candidate/packed artifact integrity and publish only when explicitly authorized"
+    ]
+  },
+  "scopeLimits": [
+    "All model traffic used offline/local scripted transports; no live provider quality, billing or external CORS verification",
+    "Node and browser artifacts remain unreleased",
+    "No new branch, commit, tag, push, or npm publication performed"
+  ],
+  "recordScope": "Historical pre-fix review; findings and reproductions below preserve observations from that review.",
+  "resolution": {
+    "status": "R1–R3 fixed in subsequent main-source corrections; offline release gates pass",
+    "evidence": "BETA_READINESS_FIXES_2026_11_08.json",
+    "publicationPerformed": false
+  },
+  "followupBeta2": {
+    "evidence": "BETA2_RELEASE_VALIDATION_2026_11_08.json",
+    "scope": "Earlier observations/results below are historical. Final review corrections, beta.2 validation and publication are tracked separately."
+  }
+}

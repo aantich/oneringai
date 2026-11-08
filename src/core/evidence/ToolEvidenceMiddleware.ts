@@ -1,3 +1,4 @@
+import { byteLength } from '../../infrastructure/runtime/primitives.js';
 import type { ToolContext, ToolFunction, ToolExecutionOutcome } from '../../domain/entities/Tool.js';
 import type { EvidenceReference, EvidenceRecord, EvidenceScope, IEvidenceStorage } from '../../domain/interfaces/IEvidenceStorage.js';
 import { EvidenceError, integer, json, validateReference, containAsyncRejection, hash } from './validation.js';
@@ -79,7 +80,7 @@ export class ToolEvidenceMiddleware {
   /** @internal The acknowledged envelope contains this raw return plus its observations. */
   _bindRemoteProjection(value: ToolEvidenceDelivery, raw: unknown): ToolEvidenceDelivery {
     const provenance = evidenceProvenance(value); if (!provenance || !value.projection || !provenance.hasResult) return value;
-    try { const serialized = json(raw, this.serializationLimit); return this.delivery({ ...value }, provenance, { sha256: hash(serialized), bytes: Buffer.byteLength(serialized) }); }
+    try { const serialized = json(raw, this.serializationLimit); return this.delivery({ ...value }, provenance, { sha256: hash(serialized), bytes: byteLength(serialized) }); }
     catch { return this.delivery({ status: 'projection_failed', effect: value.effect, reference: value.reference, errorCode: 'projection' }, provenance); }
   }
   private readonly threshold: number;
@@ -125,7 +126,7 @@ export class ToolEvidenceMiddleware {
       if (context.userId !== undefined && context.userId !== this.storage.scope.ownerId) throw new EvidenceError('invalid');
       const clean = (value: unknown, kind: 'arguments' | 'result'): unknown => {
         const serialized = json(value, this.serializationLimit);
-        if (kind === 'result') projectionSource = { sha256: hash(serialized), bytes: Buffer.byteLength(serialized) };
+        if (kind === 'result') projectionSource = { sha256: hash(serialized), bytes: byteLength(serialized) };
         const safe = redactKeys(serialized);
         // Reapply key policy after the host hook; neither mutable caller inputs nor hooks own the persisted copy.
         const transformed = this.redact ? this.redact(safe, kind) : safe;
@@ -165,7 +166,7 @@ export class ToolEvidenceMiddleware {
     } catch (error) {
       return deliver({ status: 'storage_failed', effect, errorCode: error instanceof EvidenceError ? error.code : 'storage' });
     }
-    if (!result || !tool.output?.summarize || Buffer.byteLength(json(redacted, this.serializationLimit)) < this.threshold || late || outcome.cancellation !== 'none') {
+    if (!result || !tool.output?.summarize || byteLength(json(redacted, this.serializationLimit)) < this.threshold || late || outcome.cancellation !== 'none') {
       return deliver({ status: 'stored', effect, reference });
     }
     try {

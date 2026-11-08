@@ -1,0 +1,6472 @@
+[
+  {
+    "name": "AccessControlled",
+    "typeOnly": true,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "AccessInput",
+    "typeOnly": true,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "AccessLevel",
+    "typeOnly": true,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "ACLEntry",
+    "typeOnly": true,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "addJitter",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/BackoffStrategy.ts"
+  },
+  {
+    "name": "AdvancedTextCapabilities",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "AfterToolContext",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "Agent",
+    "typeOnly": false,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "AGENT_BEHAVIOR_RULE_PREDICATE",
+    "typeOnly": false,
+    "source": "src/tools/memory/setAgentRule.ts"
+  },
+  {
+    "name": "AGENT_DEFINITION_FORMAT_VERSION",
+    "typeOnly": false,
+    "source": "src/domain/interfaces/IAgentDefinitionStorage.ts"
+  },
+  {
+    "name": "AGENT_IDENTIFIER_KIND",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/MemoryPluginNextGen.ts"
+  },
+  {
+    "name": "AGENT_PACKAGE_OUTCOME_PROTOCOL",
+    "typeOnly": false,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "AGENT_PACKAGE_PROTOCOL_VERSION",
+    "typeOnly": false,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "AgentCapabilityInspection",
+    "typeOnly": true,
+    "source": "src/core/presets.ts"
+  },
+  {
+    "name": "AgentConfig",
+    "typeOnly": true,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "AgentConstructionRequest",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/factoryTypes.ts"
+  },
+  {
+    "name": "AgentContextCompactionOptions",
+    "typeOnly": true,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "AgentContextNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/AgentContextNextGen.ts"
+  },
+  {
+    "name": "AgentContextNextGenConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "AgentContextRolloverOptions",
+    "typeOnly": true,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "AgentDefinitionListOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAgentDefinitionStorage.ts"
+  },
+  {
+    "name": "AgentDefinitionMetadata",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAgentDefinitionStorage.ts"
+  },
+  {
+    "name": "AgentDefinitionSummary",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAgentDefinitionStorage.ts"
+  },
+  {
+    "name": "AgentEventListener",
+    "typeOnly": true,
+    "source": "src/core/AgentRegistry.ts"
+  },
+  {
+    "name": "AgentEventName",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AgentEvents",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AgentFilter",
+    "typeOnly": true,
+    "source": "src/core/AgentRegistry.ts"
+  },
+  {
+    "name": "AgenticLoopEventName",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AgenticLoopEvents",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AgentInfo",
+    "typeOnly": true,
+    "source": "src/core/AgentRegistry.ts"
+  },
+  {
+    "name": "AgentInspection",
+    "typeOnly": true,
+    "source": "src/core/AgentRegistry.ts"
+  },
+  {
+    "name": "AgentLoopCheckContext",
+    "typeOnly": true,
+    "source": "src/core/agent-loop/types.ts"
+  },
+  {
+    "name": "AgentLoopCompletionResult",
+    "typeOnly": true,
+    "source": "src/core/agent-loop/types.ts"
+  },
+  {
+    "name": "AgentLoopDiagnostics",
+    "typeOnly": true,
+    "source": "src/domain/entities/AgentLoop.ts"
+  },
+  {
+    "name": "AgentLoopObservation",
+    "typeOnly": true,
+    "source": "src/domain/entities/AgentLoop.ts"
+  },
+  {
+    "name": "AgentLoopPolicy",
+    "typeOnly": true,
+    "source": "src/core/agent-loop/types.ts"
+  },
+  {
+    "name": "AgentLoopReason",
+    "typeOnly": true,
+    "source": "src/domain/entities/AgentLoop.ts"
+  },
+  {
+    "name": "AgentMetrics",
+    "typeOnly": true,
+    "source": "src/domain/entities/AgentState.ts"
+  },
+  {
+    "name": "AgentPackageCompatibilityError",
+    "typeOnly": false,
+    "source": "src/portable/AgentPackage.ts"
+  },
+  {
+    "name": "AgentPackageConnectorResolution",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "AgentPackageContextFactory",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "AgentPackageContextFactoryInput",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "AgentPackageOutcomeProtocol",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "AgentPackageOutcomeServer",
+    "typeOnly": false,
+    "source": "src/portable/OutcomeServer.ts"
+  },
+  {
+    "name": "AgentPackageOutcomeServerOptions",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "AgentPackageOutcomeToolOptions",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "AgentPackageOutcomeTools",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "AgentPackageProtocolVersion",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "AgentPackageToolServer",
+    "typeOnly": false,
+    "source": "src/portable/AgentPackage.ts"
+  },
+  {
+    "name": "AgentPermissionsConfig",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "AgentPolicyConfig",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "AgentPresetConfig",
+    "typeOnly": true,
+    "source": "src/core/presets.ts"
+  },
+  {
+    "name": "AgentPresetName",
+    "typeOnly": true,
+    "source": "src/core/presets.ts"
+  },
+  {
+    "name": "AgentRegistry",
+    "typeOnly": false,
+    "source": "src/core/AgentRegistry.ts"
+  },
+  {
+    "name": "AgentRegistryEvents",
+    "typeOnly": true,
+    "source": "src/core/AgentRegistry.ts"
+  },
+  {
+    "name": "AgentRegistryStats",
+    "typeOnly": true,
+    "source": "src/core/AgentRegistry.ts"
+  },
+  {
+    "name": "AgentResponse",
+    "typeOnly": true,
+    "source": "src/domain/entities/Response.ts"
+  },
+  {
+    "name": "AgentRuntimeConfigSnapshot",
+    "typeOnly": true,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "AgentSessionConfig",
+    "typeOnly": true,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "AgentState",
+    "typeOnly": true,
+    "source": "src/domain/entities/AgentState.ts"
+  },
+  {
+    "name": "AgentStatus",
+    "typeOnly": true,
+    "source": "src/domain/entities/AgentState.ts"
+  },
+  {
+    "name": "AgentTypeConfig",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/createOrchestrator.ts"
+  },
+  {
+    "name": "AIError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "AIResolutionProvenance",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "allVendorTemplates",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/templates/index.ts"
+  },
+  {
+    "name": "Anchor",
+    "typeOnly": true,
+    "source": "src/memory/integration/AnchorRegistry.ts"
+  },
+  {
+    "name": "AnchorRegistry",
+    "typeOnly": true,
+    "source": "src/memory/integration/AnchorRegistry.ts"
+  },
+  {
+    "name": "APIKeyConnectorAuth",
+    "typeOnly": true,
+    "source": "src/domain/entities/Connector.ts"
+  },
+  {
+    "name": "APIKeyProviderConnectorAuth",
+    "typeOnly": true,
+    "source": "src/domain/entities/Connector.ts"
+  },
+  {
+    "name": "ApplyPatchCallOutputItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "applyRefreshStrategy",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "ApplyRefreshStrategyOptions",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "applyRestrainedExtractionContract",
+    "typeOnly": false,
+    "source": "src/memory/integration/RestrainedExtractionContract.ts"
+  },
+  {
+    "name": "APPROVAL_STATE_VERSION",
+    "typeOnly": false,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "ApprovalCacheEntry",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "ApprovalDecision",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "ApprovalRequestContext",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "ApprovalResult",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "ApproveToolContext",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "AspectRatio",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "assertAgentPackageCompatible",
+    "typeOnly": false,
+    "source": "src/portable/AgentPackage.ts"
+  },
+  {
+    "name": "assertCanAccess",
+    "typeOnly": false,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "assertNotDestroyed",
+    "typeOnly": false,
+    "source": "src/domain/interfaces/IDisposable.ts"
+  },
+  {
+    "name": "assessModelParameters",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "AsyncToolConfig",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "AudioChunkErrorEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "AudioChunkReadyEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "AudioFormat",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "AudioStreamCompleteEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "AuditEntry",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/ExecutionContext.ts"
+  },
+  {
+    "name": "AuthIdentity",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "AuthTemplate",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/types.ts"
+  },
+  {
+    "name": "AuthTemplateField",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/types.ts"
+  },
+  {
+    "name": "BackoffConfig",
+    "typeOnly": true,
+    "source": "src/infrastructure/resilience/BackoffStrategy.ts"
+  },
+  {
+    "name": "backoffSequence",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/BackoffStrategy.ts"
+  },
+  {
+    "name": "BackoffStrategyType",
+    "typeOnly": true,
+    "source": "src/infrastructure/resilience/BackoffStrategy.ts"
+  },
+  {
+    "name": "backoffWait",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/BackoffStrategy.ts"
+  },
+  {
+    "name": "BasePluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/BasePluginNextGen.ts"
+  },
+  {
+    "name": "BatchHandle",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "BatchProcessingState",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "BatchSubmitOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "BatchTextRequest",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "BatchTextResult",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "BeforeExecuteResult",
+    "typeOnly": true,
+    "source": "src/core/tool-execution/types.ts"
+  },
+  {
+    "name": "BeforeToolContext",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "buildAuthConfig",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "BuildAuthConfigOptions",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "buildEagernessProfile",
+    "typeOnly": false,
+    "source": "src/memory/integration/EagernessProfile.ts"
+  },
+  {
+    "name": "buildIdentityString",
+    "typeOnly": false,
+    "source": "src/memory/resolution/EntityResolver.ts"
+  },
+  {
+    "name": "buildOrchestrationTools",
+    "typeOnly": false,
+    "source": "src/core/orchestrator/tools.ts"
+  },
+  {
+    "name": "buildWorkspaceDelta",
+    "typeOnly": false,
+    "source": "src/core/orchestrator/tools.ts"
+  },
+  {
+    "name": "BuiltInTool",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "calculateBackoff",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/BackoffStrategy.ts"
+  },
+  {
+    "name": "calculateCost",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "calculateEmbeddingCost",
+    "typeOnly": false,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "calculateEntrySize",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "calculateImageCost",
+    "typeOnly": false,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "calculateSTTCost",
+    "typeOnly": false,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "calculateTTSCost",
+    "typeOnly": false,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "calculateVideoCost",
+    "typeOnly": false,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "CalendarAttendee",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/adapters/CalendarSignalAdapter.ts"
+  },
+  {
+    "name": "CalendarSignal",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/adapters/CalendarSignalAdapter.ts"
+  },
+  {
+    "name": "CalendarSignalAdapter",
+    "typeOnly": false,
+    "source": "src/memory/integration/signals/adapters/CalendarSignalAdapter.ts"
+  },
+  {
+    "name": "CalendarSignalAdapterOptions",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/adapters/CalendarSignalAdapter.ts"
+  },
+  {
+    "name": "canAccess",
+    "typeOnly": false,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "canByPrincipals",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "canonicalIdentifier",
+    "typeOnly": false,
+    "source": "src/memory/identifiers.ts"
+  },
+  {
+    "name": "CanonicalIdentifierOptions",
+    "typeOnly": true,
+    "source": "src/memory/identifiers.ts"
+  },
+  {
+    "name": "canTaskExecute",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "CapabilityProvenance",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "CASE_INSENSITIVE_IDENTIFIER_KINDS",
+    "typeOnly": false,
+    "source": "src/memory/identifiers.ts"
+  },
+  {
+    "name": "CatalogRegistryEntry",
+    "typeOnly": true,
+    "source": "src/core/ToolCatalogRegistry.ts"
+  },
+  {
+    "name": "CatalogToolEntry",
+    "typeOnly": true,
+    "source": "src/core/ToolCatalogRegistry.ts"
+  },
+  {
+    "name": "ChangeEvent",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "CharacterRef",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "ChildObservation",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/factoryTypes.ts"
+  },
+  {
+    "name": "CircuitBreaker",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/CircuitBreaker.ts"
+  },
+  {
+    "name": "CircuitBreakerConfig",
+    "typeOnly": true,
+    "source": "src/infrastructure/resilience/CircuitBreaker.ts"
+  },
+  {
+    "name": "CircuitBreakerEvents",
+    "typeOnly": true,
+    "source": "src/infrastructure/resilience/CircuitBreaker.ts"
+  },
+  {
+    "name": "CircuitBreakerMetrics",
+    "typeOnly": true,
+    "source": "src/infrastructure/resilience/CircuitBreaker.ts"
+  },
+  {
+    "name": "CircuitOpenError",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/CircuitBreaker.ts"
+  },
+  {
+    "name": "CircuitState",
+    "typeOnly": true,
+    "source": "src/infrastructure/resilience/CircuitBreaker.ts"
+  },
+  {
+    "name": "clusterContentComposer",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "coerceFactTemporalFields",
+    "typeOnly": false,
+    "source": "src/memory/dateCoercion.ts"
+  },
+  {
+    "name": "coerceMetadataDates",
+    "typeOnly": false,
+    "source": "src/memory/dateCoercion.ts"
+  },
+  {
+    "name": "CompactionContext",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "CompactionEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "CompactionItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "CompactionResult",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "CompactionTriggerItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "ComposeContext",
+    "typeOnly": true,
+    "source": "src/memory/composers/types.ts"
+  },
+  {
+    "name": "ComputerCallOutputItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "ConfigurationUpdateItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "Connector",
+    "typeOnly": false,
+    "source": "src/core/Connector.ts"
+  },
+  {
+    "name": "CONNECTOR_CONFIG_VERSION",
+    "typeOnly": false,
+    "source": "src/domain/interfaces/IConnectorConfigStorage.ts"
+  },
+  {
+    "name": "ConnectorAcceptedResource",
+    "typeOnly": true,
+    "source": "src/tools/connector/enhancedInvocation.ts"
+  },
+  {
+    "name": "ConnectorAccessContext",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IConnectorAccessPolicy.ts"
+  },
+  {
+    "name": "ConnectorAuth",
+    "typeOnly": true,
+    "source": "src/domain/entities/Connector.ts"
+  },
+  {
+    "name": "ConnectorCategoryInfo",
+    "typeOnly": true,
+    "source": "src/core/ToolCatalogRegistry.ts"
+  },
+  {
+    "name": "ConnectorConfig",
+    "typeOnly": true,
+    "source": "src/domain/entities/Connector.ts"
+  },
+  {
+    "name": "ConnectorConfigResult",
+    "typeOnly": true,
+    "source": "src/domain/entities/Connector.ts"
+  },
+  {
+    "name": "ConnectorExtractor",
+    "typeOnly": false,
+    "source": "src/memory/integration/signals/ConnectorExtractor.ts"
+  },
+  {
+    "name": "ConnectorExtractorConfig",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/ConnectorExtractor.ts"
+  },
+  {
+    "name": "ConnectorFetchOptions",
+    "typeOnly": true,
+    "source": "src/core/Connector.ts"
+  },
+  {
+    "name": "ConnectorNotFoundError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ConnectorPage",
+    "typeOnly": true,
+    "source": "src/tools/connector/pages/types.ts"
+  },
+  {
+    "name": "ConnectorProfileGenerator",
+    "typeOnly": false,
+    "source": "src/memory/integration/ConnectorProfileGenerator.ts"
+  },
+  {
+    "name": "ConnectorProfileGeneratorConfig",
+    "typeOnly": true,
+    "source": "src/memory/integration/ConnectorProfileGenerator.ts"
+  },
+  {
+    "name": "ConnectorToolEntry",
+    "typeOnly": true,
+    "source": "src/tools/ToolRegistry.ts"
+  },
+  {
+    "name": "ConnectorTools",
+    "typeOnly": false,
+    "source": "src/tools/connector/ConnectorTools.ts"
+  },
+  {
+    "name": "ConnectorToolsOptions",
+    "typeOnly": true,
+    "source": "src/tools/connector/ConnectorTools.ts"
+  },
+  {
+    "name": "ConsoleMetrics",
+    "typeOnly": false,
+    "source": "src/infrastructure/observability/Metrics.ts"
+  },
+  {
+    "name": "ConsolidationResult",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "Content",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "ContentType",
+    "typeOnly": false,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "CONTEXT_SESSION_FORMAT_VERSION",
+    "typeOnly": false,
+    "source": "src/domain/interfaces/IContextStorage.ts"
+  },
+  {
+    "name": "ContextAssemblyConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/assembly.ts"
+  },
+  {
+    "name": "ContextBlock",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/assembly.ts"
+  },
+  {
+    "name": "ContextBudget",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ContextCompactionReport",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/compaction/types.ts"
+  },
+  {
+    "name": "ContextCompactionStrategy",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/strategies/ContextCompactionStrategy.ts"
+  },
+  {
+    "name": "ContextCompactionStrategyConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/compaction/types.ts"
+  },
+  {
+    "name": "ContextCompactionTarget",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/compaction/types.ts"
+  },
+  {
+    "name": "ContextContributionRequest",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/assembly.ts"
+  },
+  {
+    "name": "ContextContributor",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/assembly.ts"
+  },
+  {
+    "name": "ContextEvents",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ContextFeatures",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ContextHintsConfig",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/SignalIngestor.ts"
+  },
+  {
+    "name": "ContextManagerConfig",
+    "typeOnly": true,
+    "source": "src/core/context/types.ts"
+  },
+  {
+    "name": "ContextOptions",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "ContextOverflowBudget",
+    "typeOnly": true,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ContextOverflowError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ContextPreparation",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ContextPrepareOptions",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ContextRolloverOptions",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ContextRolloverResult",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ContextRolloverSummarizer",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ContextRolloverSummaryInput",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ContextSelectionEntry",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/assembly.ts"
+  },
+  {
+    "name": "ContextSelectionManifest",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/assembly.ts"
+  },
+  {
+    "name": "ContextSessionMetadata",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IContextStorage.ts"
+  },
+  {
+    "name": "ContextSessionSummary",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IContextStorage.ts"
+  },
+  {
+    "name": "ContextStorageListOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IContextStorage.ts"
+  },
+  {
+    "name": "ContextSummaryEntry",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/conversation-compaction.ts"
+  },
+  {
+    "name": "ContextSummaryGenerator",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/conversation-compaction.ts"
+  },
+  {
+    "name": "ContextSummaryRequest",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/conversation-compaction.ts"
+  },
+  {
+    "name": "ContextTier",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "ControlFlowResult",
+    "typeOnly": true,
+    "source": "src/core/routineControlFlow.ts"
+  },
+  {
+    "name": "ControlFlowSource",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "ConversationCompactionOptions",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/conversation-compaction.ts"
+  },
+  {
+    "name": "ConversationCompactionReport",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/conversation-compaction.ts"
+  },
+  {
+    "name": "ConversationMessage",
+    "typeOnly": true,
+    "source": "src/domain/entities/AgentState.ts"
+  },
+  {
+    "name": "CorrelationListOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ICorrelationStorage.ts"
+  },
+  {
+    "name": "CorrelationSummary",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ICorrelationStorage.ts"
+  },
+  {
+    "name": "createAddReactionTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/addReaction.ts"
+  },
+  {
+    "name": "createAgentPackageOutcomeTools",
+    "typeOnly": false,
+    "source": "src/portable/OutcomeClient.ts"
+  },
+  {
+    "name": "createAgentPreset",
+    "typeOnly": false,
+    "source": "src/core/presets.ts"
+  },
+  {
+    "name": "createAgentStorage",
+    "typeOnly": false,
+    "source": "src/infrastructure/storage/InMemoryStorage.ts"
+  },
+  {
+    "name": "CreateCharacterOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "createConnectorFromTemplate",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "CreateConnectorOptions",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/types.ts"
+  },
+  {
+    "name": "createCreatePRTool",
+    "typeOnly": false,
+    "source": "src/tools/github/createPR.ts"
+  },
+  {
+    "name": "createDelegationState",
+    "typeOnly": false,
+    "source": "src/core/orchestrator/tools.ts"
+  },
+  {
+    "name": "createExecutionRecorder",
+    "typeOnly": false,
+    "source": "src/core/createExecutionRecorder.ts"
+  },
+  {
+    "name": "createFindEntityTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/findEntity.ts"
+  },
+  {
+    "name": "createForgetTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/forget.ts"
+  },
+  {
+    "name": "createGetChannelInfoTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/getChannelInfo.ts"
+  },
+  {
+    "name": "createGetMentionsTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/getMentions.ts"
+  },
+  {
+    "name": "createGetMessagesTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/getMessages.ts"
+  },
+  {
+    "name": "createGetPRTool",
+    "typeOnly": false,
+    "source": "src/tools/github/getPR.ts"
+  },
+  {
+    "name": "createGetThreadTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/getThread.ts"
+  },
+  {
+    "name": "createGetUsersTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/getUsers.ts"
+  },
+  {
+    "name": "createGitHubReadFileTool",
+    "typeOnly": false,
+    "source": "src/tools/github/readFile.ts"
+  },
+  {
+    "name": "createGraphTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/graph.ts"
+  },
+  {
+    "name": "createInContextMemoryContributor",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/assembly.ts"
+  },
+  {
+    "name": "createLinkTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/link.ts"
+  },
+  {
+    "name": "createListBranchesTool",
+    "typeOnly": false,
+    "source": "src/tools/github/listBranches.ts"
+  },
+  {
+    "name": "createListChannelsTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/listChannels.ts"
+  },
+  {
+    "name": "createListFactsTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/listFacts.ts"
+  },
+  {
+    "name": "createMemoryReadTools",
+    "typeOnly": false,
+    "source": "src/tools/memory/index.ts"
+  },
+  {
+    "name": "createMemoryTools",
+    "typeOnly": false,
+    "source": "src/tools/memory/index.ts"
+  },
+  {
+    "name": "createMemoryWriteTools",
+    "typeOnly": false,
+    "source": "src/tools/memory/index.ts"
+  },
+  {
+    "name": "createMetricsCollector",
+    "typeOnly": false,
+    "source": "src/infrastructure/observability/Metrics.ts"
+  },
+  {
+    "name": "createOrchestrator",
+    "typeOnly": false,
+    "source": "src/core/orchestrator/createOrchestrator.ts"
+  },
+  {
+    "name": "createOrchestratorWithFactory",
+    "typeOnly": false,
+    "source": "src/core/orchestrator/createOrchestrator.ts"
+  },
+  {
+    "name": "createOutcomeTool",
+    "typeOnly": false,
+    "source": "src/core/createOutcomeTool.ts"
+  },
+  {
+    "name": "createPlan",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "createPortableToolImplementationFingerprint",
+    "typeOnly": false,
+    "source": "src/portable/AgentPackage.ts"
+  },
+  {
+    "name": "createPostMessageTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/postMessage.ts"
+  },
+  {
+    "name": "createPRCommentsTool",
+    "typeOnly": false,
+    "source": "src/tools/github/prComments.ts"
+  },
+  {
+    "name": "createPRFilesTool",
+    "typeOnly": false,
+    "source": "src/tools/github/prFiles.ts"
+  },
+  {
+    "name": "createProvider",
+    "typeOnly": false,
+    "source": "src/core/createProvider.ts"
+  },
+  {
+    "name": "createRecallTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/recall.ts"
+  },
+  {
+    "name": "createRememberTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/remember.ts"
+  },
+  {
+    "name": "createRemoteTool",
+    "typeOnly": false,
+    "source": "src/portable/AgentPackage.ts"
+  },
+  {
+    "name": "createResolvedLocalTool",
+    "typeOnly": false,
+    "source": "src/portable/AgentPackage.ts"
+  },
+  {
+    "name": "createRestoreTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/restore.ts"
+  },
+  {
+    "name": "createRoutineDefinition",
+    "typeOnly": false,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "createRoutineExecution",
+    "typeOnly": false,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "createRoutineExecutionRecord",
+    "typeOnly": false,
+    "source": "src/domain/entities/RoutineExecutionRecord.ts"
+  },
+  {
+    "name": "createRoutineRunner",
+    "typeOnly": false,
+    "source": "src/core/routines/createRoutineRunner.ts"
+  },
+  {
+    "name": "createRoutineTool",
+    "typeOnly": false,
+    "source": "src/core/createRoutineTool.ts"
+  },
+  {
+    "name": "CreateRoutineToolOptions",
+    "typeOnly": true,
+    "source": "src/core/createRoutineTool.ts"
+  },
+  {
+    "name": "createSearchCodeTool",
+    "typeOnly": false,
+    "source": "src/tools/github/searchCode.ts"
+  },
+  {
+    "name": "createSearchFilesTool",
+    "typeOnly": false,
+    "source": "src/tools/github/searchFiles.ts"
+  },
+  {
+    "name": "createSearchMessagesTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/searchMessages.ts"
+  },
+  {
+    "name": "createSearchTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/search.ts"
+  },
+  {
+    "name": "createSetAgentRuleTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/setAgentRule.ts"
+  },
+  {
+    "name": "createSetChannelTopicTool",
+    "typeOnly": false,
+    "source": "src/tools/slack/setChannelTopic.ts"
+  },
+  {
+    "name": "createTask",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "createTaskSnapshots",
+    "typeOnly": false,
+    "source": "src/domain/entities/RoutineExecutionRecord.ts"
+  },
+  {
+    "name": "createUpsertEntityTool",
+    "typeOnly": false,
+    "source": "src/tools/memory/upsertEntity.ts"
+  },
+  {
+    "name": "CUSTOM_TOOL_DEFINITION_VERSION",
+    "typeOnly": false,
+    "source": "src/domain/entities/CustomToolDefinition.ts"
+  },
+  {
+    "name": "CustomToolCallOutputItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "CustomToolDefinition",
+    "typeOnly": true,
+    "source": "src/domain/entities/CustomToolDefinition.ts"
+  },
+  {
+    "name": "CustomToolListOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ICustomToolStorage.ts"
+  },
+  {
+    "name": "CustomToolMetadata",
+    "typeOnly": true,
+    "source": "src/domain/entities/CustomToolDefinition.ts"
+  },
+  {
+    "name": "CustomToolResultContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "CustomToolSummary",
+    "typeOnly": true,
+    "source": "src/domain/entities/CustomToolDefinition.ts"
+  },
+  {
+    "name": "CustomToolTestCase",
+    "typeOnly": true,
+    "source": "src/domain/entities/CustomToolDefinition.ts"
+  },
+  {
+    "name": "CustomToolUseContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "DataHandlingPolicy",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "DedupDecision",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "DEFAULT_ALLOWLIST",
+    "typeOnly": false,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "DEFAULT_BACKOFF_CONFIG",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/BackoffStrategy.ts"
+  },
+  {
+    "name": "DEFAULT_BASE_DELAY_MS",
+    "typeOnly": false,
+    "source": "src/core/Connector.ts"
+  },
+  {
+    "name": "DEFAULT_CIRCUIT_BREAKER_CONFIG",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/CircuitBreaker.ts"
+  },
+  {
+    "name": "DEFAULT_CONFIG",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "DEFAULT_CONNECTOR_TIMEOUT",
+    "typeOnly": false,
+    "source": "src/core/Connector.ts"
+  },
+  {
+    "name": "DEFAULT_ENTITY_COMPOSERS",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "DEFAULT_EXTRACTABLE_ENTITY_TYPES",
+    "typeOnly": false,
+    "source": "src/memory/integration/defaultExtractionPrompt.ts"
+  },
+  {
+    "name": "DEFAULT_EXTRACTION_PROMPT_VERSION",
+    "typeOnly": false,
+    "source": "src/memory/integration/defaultExtractionPrompt.ts"
+  },
+  {
+    "name": "DEFAULT_FEATURES",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "DEFAULT_GROUP_LEVEL",
+    "typeOnly": false,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "DEFAULT_HISTORY_MANAGER_CONFIG",
+    "typeOnly": false,
+    "source": "src/domain/interfaces/IHistoryManager.ts"
+  },
+  {
+    "name": "DEFAULT_MAX_DELAY_MS",
+    "typeOnly": false,
+    "source": "src/core/Connector.ts"
+  },
+  {
+    "name": "DEFAULT_MAX_RETRIES",
+    "typeOnly": false,
+    "source": "src/core/Connector.ts"
+  },
+  {
+    "name": "DEFAULT_MEMORY_CONFIG",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "DEFAULT_PERMISSION_CONFIG",
+    "typeOnly": false,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "DEFAULT_RATE_LIMITER_CONFIG",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/RateLimiter.ts"
+  },
+  {
+    "name": "DEFAULT_RETRYABLE_STATUSES",
+    "typeOnly": false,
+    "source": "src/core/Connector.ts"
+  },
+  {
+    "name": "DEFAULT_WEIGHTS",
+    "typeOnly": false,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "DEFAULT_WORLD_LEVEL",
+    "typeOnly": false,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "DefaultAllowlistedTool",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "DefaultCompactionStrategy",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts"
+  },
+  {
+    "name": "DefaultCompactionStrategyConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts"
+  },
+  {
+    "name": "defaultDescribeCall",
+    "typeOnly": false,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "defaultExtractionPrompt",
+    "typeOnly": false,
+    "source": "src/memory/integration/defaultExtractionPrompt.ts"
+  },
+  {
+    "name": "defaultFactContentComposer",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "defaultProfilePrompt",
+    "typeOnly": false,
+    "source": "src/memory/integration/defaultPrompt.ts"
+  },
+  {
+    "name": "defaultSkepticPrompt",
+    "typeOnly": false,
+    "source": "src/memory/integration/SkepticPass.ts"
+  },
+  {
+    "name": "DelegationDefaults",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/createOrchestrator.ts"
+  },
+  {
+    "name": "DelegationReclaimConfig",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/tools.ts"
+  },
+  {
+    "name": "DelegationState",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/tools.ts"
+  },
+  {
+    "name": "DependencyCycleError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "detectDependencyCycle",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "detectServiceFromURL",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "DeterministicStep",
+    "typeOnly": true,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "diffEntityMetadata",
+    "typeOnly": false,
+    "source": "src/memory/metadataDiff.ts"
+  },
+  {
+    "name": "DirectCallOptions",
+    "typeOnly": true,
+    "source": "src/core/BaseAgent.ts"
+  },
+  {
+    "name": "documentContentComposer",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "DuplicateCluster",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "EAGERNESS_PRESETS",
+    "typeOnly": false,
+    "source": "src/memory/integration/EagernessProfile.ts"
+  },
+  {
+    "name": "EagernessLevel",
+    "typeOnly": true,
+    "source": "src/memory/integration/EagernessProfile.ts"
+  },
+  {
+    "name": "EagernessPreset",
+    "typeOnly": true,
+    "source": "src/memory/integration/EagernessProfile.ts"
+  },
+  {
+    "name": "EagernessProfile",
+    "typeOnly": true,
+    "source": "src/memory/integration/EagernessProfile.ts"
+  },
+  {
+    "name": "EagernessStage",
+    "typeOnly": true,
+    "source": "src/memory/integration/EagernessProfile.ts"
+  },
+  {
+    "name": "effectivePermissions",
+    "typeOnly": false,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "EmailAddress",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/adapters/EmailSignalAdapter.ts"
+  },
+  {
+    "name": "EmailSignal",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/adapters/EmailSignalAdapter.ts"
+  },
+  {
+    "name": "EmailSignalAdapter",
+    "typeOnly": false,
+    "source": "src/memory/integration/signals/adapters/EmailSignalAdapter.ts"
+  },
+  {
+    "name": "EmailSignalAdapterOptions",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/adapters/EmailSignalAdapter.ts"
+  },
+  {
+    "name": "EMBEDDING_MODEL_REGISTRY",
+    "typeOnly": false,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "EMBEDDING_MODELS",
+    "typeOnly": false,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "EmbeddingContentPart",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEmbeddingProvider.ts"
+  },
+  {
+    "name": "EmbeddingCostOptions",
+    "typeOnly": true,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "EmbeddingModelCapabilities",
+    "typeOnly": true,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "EmbeddingModelPricing",
+    "typeOnly": true,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "EmbeddingOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEmbeddingProvider.ts"
+  },
+  {
+    "name": "EmbeddingQueueConfig",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "EmbeddingResponse",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEmbeddingProvider.ts"
+  },
+  {
+    "name": "emitRestraintEvent",
+    "typeOnly": false,
+    "source": "src/memory/integration/RestraintEvent.ts"
+  },
+  {
+    "name": "EndpointCapabilitySupport",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "EnhancedConnectorAttempt",
+    "typeOnly": true,
+    "source": "src/tools/connector/enhancedProfiles.ts"
+  },
+  {
+    "name": "EnhancedConnectorOptions",
+    "typeOnly": true,
+    "source": "src/tools/connector/enhancedProfiles.ts"
+  },
+  {
+    "name": "ENTITY_RECONCILIATION_PROMPT_VERSION",
+    "typeOnly": false,
+    "source": "src/memory/integration/entityReconciliationPrompt.ts"
+  },
+  {
+    "name": "EntityCandidate",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "EntityContentComposer",
+    "typeOnly": true,
+    "source": "src/memory/composers/types.ts"
+  },
+  {
+    "name": "EntityEmbeddingField",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "EntityId",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "EntityListFilter",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "entityReconciliationPrompt",
+    "typeOnly": false,
+    "source": "src/memory/integration/entityReconciliationPrompt.ts"
+  },
+  {
+    "name": "EntityReconciliationPromptContext",
+    "typeOnly": true,
+    "source": "src/memory/integration/entityReconciliationPrompt.ts"
+  },
+  {
+    "name": "EntityResolutionConfig",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "EntityResolver",
+    "typeOnly": false,
+    "source": "src/memory/resolution/EntityResolver.ts"
+  },
+  {
+    "name": "EntitySearchOptions",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "EntitySemanticSearchFilter",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "EntityView",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "ErrorContext",
+    "typeOnly": true,
+    "source": "src/core/ErrorHandler.ts"
+  },
+  {
+    "name": "ErrorEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ErrorHandler",
+    "typeOnly": false,
+    "source": "src/core/ErrorHandler.ts"
+  },
+  {
+    "name": "ErrorHandlerConfig",
+    "typeOnly": true,
+    "source": "src/core/ErrorHandler.ts"
+  },
+  {
+    "name": "ErrorHandlerEvents",
+    "typeOnly": true,
+    "source": "src/core/ErrorHandler.ts"
+  },
+  {
+    "name": "evaluateCondition",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "eventContentComposer",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "EvidenceChunk",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEvidenceStorage.ts"
+  },
+  {
+    "name": "EvidenceDurability",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEvidenceStorage.ts"
+  },
+  {
+    "name": "EvidenceEntry",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEvidenceStorage.ts"
+  },
+  {
+    "name": "EvidenceError",
+    "typeOnly": false,
+    "source": "src/core/evidence/validation.ts"
+  },
+  {
+    "name": "EvidencePluginConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/EvidencePluginNextGen.ts"
+  },
+  {
+    "name": "EvidencePluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/EvidencePluginNextGen.ts"
+  },
+  {
+    "name": "EvidenceReadOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEvidenceStorage.ts"
+  },
+  {
+    "name": "EvidenceRecord",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEvidenceStorage.ts"
+  },
+  {
+    "name": "EvidenceReference",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEvidenceStorage.ts"
+  },
+  {
+    "name": "EvidenceScope",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEvidenceStorage.ts"
+  },
+  {
+    "name": "EvidenceStorageOptions",
+    "typeOnly": true,
+    "source": "src/infrastructure/storage/EvidenceStorageBase.ts"
+  },
+  {
+    "name": "executeRoutine",
+    "typeOnly": false,
+    "source": "src/core/routineRunner.ts"
+  },
+  {
+    "name": "ExecuteRoutineOptions",
+    "typeOnly": true,
+    "source": "src/core/routineRunner.ts"
+  },
+  {
+    "name": "ExecutionBinding",
+    "typeOnly": true,
+    "source": "src/core/execution/composition.ts"
+  },
+  {
+    "name": "ExecutionConfig",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "ExecutionContext",
+    "typeOnly": false,
+    "source": "src/capabilities/agents/ExecutionContext.ts"
+  },
+  {
+    "name": "ExecutionMetrics",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/ExecutionContext.ts"
+  },
+  {
+    "name": "ExecutionRecorder",
+    "typeOnly": true,
+    "source": "src/core/createExecutionRecorder.ts"
+  },
+  {
+    "name": "ExecutionRecorderOptions",
+    "typeOnly": true,
+    "source": "src/core/createExecutionRecorder.ts"
+  },
+  {
+    "name": "exportAgentPackage",
+    "typeOnly": false,
+    "source": "src/portable/AgentPackage.ts"
+  },
+  {
+    "name": "ExportAgentPackageOptions",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "ExternalDependency",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "ExternalExecutionOptions",
+    "typeOnly": true,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "ExternalExecutionResult",
+    "typeOnly": true,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "ExternalToolCall",
+    "typeOnly": true,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "ExtractedSignal",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/types.ts"
+  },
+  {
+    "name": "ExtractionFactSpec",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "ExtractionMention",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "ExtractionOutput",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "ExtractionPromptContext",
+    "typeOnly": true,
+    "source": "src/memory/integration/defaultExtractionPrompt.ts"
+  },
+  {
+    "name": "ExtractionResolver",
+    "typeOnly": false,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "ExtractionResolverOptions",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "extractNonSecretCredentials",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "FactContentComposer",
+    "typeOnly": true,
+    "source": "src/memory/composers/types.ts"
+  },
+  {
+    "name": "FactFilter",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "FactId",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "FactKind",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "FactOrderBy",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "FactQueryOptions",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "FactSupersededError",
+    "typeOnly": false,
+    "source": "src/memory/MemorySystem.ts"
+  },
+  {
+    "name": "FileSearchOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "FindCandidatesOptions",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "FindClustersOptions",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "findDuplicateCandidates",
+    "typeOnly": false,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "findDuplicateClusters",
+    "typeOnly": false,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "findIdentifierClusters",
+    "typeOnly": false,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "FindIdentifierClustersOptions",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "formatPluginDisplayName",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/snapshot.ts"
+  },
+  {
+    "name": "formatSlackMessage",
+    "typeOnly": false,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "forPlan",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "forTasks",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "FrameworkLogger",
+    "typeOnly": false,
+    "source": "src/infrastructure/observability/Logger.ts"
+  },
+  {
+    "name": "FreeformToolDefinition",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "fromLibraryPermissions",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "fromNimbleAudit",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "fromSlackTimestamp",
+    "typeOnly": false,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "FunctionCallOutputItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "FunctionToolDefinition",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "GenericAPICallArgs",
+    "typeOnly": true,
+    "source": "src/tools/connector/ConnectorTools.ts"
+  },
+  {
+    "name": "GenericAPICallResult",
+    "typeOnly": true,
+    "source": "src/tools/connector/ConnectorTools.ts"
+  },
+  {
+    "name": "genericTraverse",
+    "typeOnly": false,
+    "source": "src/memory/GenericTraversal.ts"
+  },
+  {
+    "name": "getActiveEmbeddingModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "getActiveImageModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "getActiveModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "getActiveSTTModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "getActiveTTSModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "getActiveVideoModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "getAllBuiltInTools",
+    "typeOnly": false,
+    "source": "src/tools/registry.browser.generated.ts"
+  },
+  {
+    "name": "getAllServiceIds",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "getAllVendorLogos",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "getAllVendorTemplates",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "getAuthenticatedUserId",
+    "typeOnly": false,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "getConnectorTools",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "getCredentialsSetupURL",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "getDeprecatedEmbeddingModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "getDeprecatedImageModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "getDeprecatedModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "getDeprecatedSTTModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "getDeprecatedTTSModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "getDeprecatedVideoModels",
+    "typeOnly": false,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "getDocsURL",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "getEagernessPreset",
+    "typeOnly": false,
+    "source": "src/memory/integration/EagernessProfile.ts"
+  },
+  {
+    "name": "getEmbeddingModelInfo",
+    "typeOnly": false,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "getEmbeddingModelsByVendor",
+    "typeOnly": false,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "getEmbeddingModelsWithFeature",
+    "typeOnly": false,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "getImageModelInfo",
+    "typeOnly": false,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "getImageModelsByVendor",
+    "typeOnly": false,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "getImageModelsWithFeature",
+    "typeOnly": false,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "getModelInfo",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "getModelsByVendor",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "getNextExecutableTasks",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "getRealtimeModelCapabilities",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "getRoutineProgress",
+    "typeOnly": false,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "getServiceDefinition",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "getServiceInfo",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "getServicesByCategory",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "getSTTModelInfo",
+    "typeOnly": false,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "getSTTModelsByVendor",
+    "typeOnly": false,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "getSTTModelsWithFeature",
+    "typeOnly": false,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "getTaskDependencies",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "getToolByName",
+    "typeOnly": false,
+    "source": "src/tools/registry.browser.generated.ts"
+  },
+  {
+    "name": "getToolCallDescription",
+    "typeOnly": false,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "getToolCategories",
+    "typeOnly": false,
+    "source": "src/tools/registry.browser.generated.ts"
+  },
+  {
+    "name": "getToolRegistry",
+    "typeOnly": false,
+    "source": "src/tools/registry.browser.generated.ts"
+  },
+  {
+    "name": "getToolsByCategory",
+    "typeOnly": false,
+    "source": "src/tools/registry.browser.generated.ts"
+  },
+  {
+    "name": "getToolsRequiringConnector",
+    "typeOnly": false,
+    "source": "src/tools/registry.browser.generated.ts"
+  },
+  {
+    "name": "getTranscriptionCapabilities",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "getTTSModelInfo",
+    "typeOnly": false,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "getTTSModelsByVendor",
+    "typeOnly": false,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "getTTSModelsWithFeature",
+    "typeOnly": false,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "getVendorAuthTemplate",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "getVendorColor",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "getVendorDefaultBaseURL",
+    "typeOnly": false,
+    "source": "src/core/createProvider.ts"
+  },
+  {
+    "name": "getVendorInfo",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "getVendorLogo",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "getVendorLogoCdnUrl",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "getVendorLogoSvg",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "getVendorPresentation",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/vendorPresentation.ts"
+  },
+  {
+    "name": "getVendorTemplate",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "getVideoModelInfo",
+    "typeOnly": false,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "getVideoModelsByVendor",
+    "typeOnly": false,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "getVideoModelsWithAudio",
+    "typeOnly": false,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "getVideoModelsWithFeature",
+    "typeOnly": false,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "GitHubBranchEntry",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubCreatePRResult",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubGetPRResult",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubListBranchesResult",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubPRCommentEntry",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubPRCommentsResult",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubPRFilesResult",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubReadFileResult",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubRepository",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubSearchCodeResult",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "GitHubSearchFilesResult",
+    "typeOnly": true,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "globalErrorHandler",
+    "typeOnly": false,
+    "source": "src/core/ErrorHandler.ts"
+  },
+  {
+    "name": "GROUP_IDENTIFIER_KIND",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/MemoryPluginNextGen.ts"
+  },
+  {
+    "name": "hasVendorLogo",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "HelperCallOptions",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "HelperInputContext",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "HelperModelConfig",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "HelperOutputError",
+    "typeOnly": false,
+    "source": "src/core/model-execution/ModelExecutor.ts"
+  },
+  {
+    "name": "HelperResult",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "HelperRole",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "HistoryEntry",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryJournal.ts"
+  },
+  {
+    "name": "HistoryEntryType",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryJournal.ts"
+  },
+  {
+    "name": "HistoryManagerEvents",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryManager.ts"
+  },
+  {
+    "name": "HistoryMessage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryManager.ts"
+  },
+  {
+    "name": "HistoryMode",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/ExecutionContext.ts"
+  },
+  {
+    "name": "HistoryReadOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryJournal.ts"
+  },
+  {
+    "name": "Hook",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "HookConfig",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "HookManager",
+    "typeOnly": false,
+    "source": "src/capabilities/agents/HookManager.ts"
+  },
+  {
+    "name": "HookName",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "HTTPTransportConfig",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPConfig.ts"
+  },
+  {
+    "name": "hydrateAgentPackage",
+    "typeOnly": false,
+    "source": "src/portable/AgentPackage.ts"
+  },
+  {
+    "name": "HydrateAgentPackageOptions",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "hydrateAgentPackageWithOutcomes",
+    "typeOnly": false,
+    "source": "src/portable/OutcomeClient.ts"
+  },
+  {
+    "name": "HydrateAgentPackageWithOutcomesOptions",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "IAgentDefinitionStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAgentDefinitionStorage.ts"
+  },
+  {
+    "name": "IAgentStateStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAgentStateStorage.ts"
+  },
+  {
+    "name": "IAgentStorage",
+    "typeOnly": true,
+    "source": "src/infrastructure/storage/InMemoryStorage.ts"
+  },
+  {
+    "name": "IAsyncDisposable",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IDisposable.ts"
+  },
+  {
+    "name": "IAsyncTextBatchProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "IBaseModelDescription",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "ICompactionStrategy",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "IConnectorAccessPolicy",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IConnectorAccessPolicy.ts"
+  },
+  {
+    "name": "IConnectorConfigStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IConnectorConfigStorage.ts"
+  },
+  {
+    "name": "IConnectorRegistry",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IConnectorRegistry.ts"
+  },
+  {
+    "name": "IContextCompactor",
+    "typeOnly": true,
+    "source": "src/core/context/types.ts"
+  },
+  {
+    "name": "IContextComponent",
+    "typeOnly": true,
+    "source": "src/core/context/types.ts"
+  },
+  {
+    "name": "IContextPluginNextGen",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "IContextSnapshot",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/snapshot.ts"
+  },
+  {
+    "name": "IContextStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IContextStorage.ts"
+  },
+  {
+    "name": "IContextStrategy",
+    "typeOnly": true,
+    "source": "src/core/context/types.ts"
+  },
+  {
+    "name": "ICorrelationStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ICorrelationStorage.ts"
+  },
+  {
+    "name": "ICustomToolStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ICustomToolStorage.ts"
+  },
+  {
+    "name": "Identifier",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "IdentifierCluster",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "IdentifierRecoveryFn",
+    "typeOnly": true,
+    "source": "src/memory/identifierMigration.ts"
+  },
+  {
+    "name": "identifierValuesEqual",
+    "typeOnly": false,
+    "source": "src/memory/identifiers.ts"
+  },
+  {
+    "name": "IDisposable",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IDisposable.ts"
+  },
+  {
+    "name": "IEmbedder",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "IEmbeddingModelDescription",
+    "typeOnly": true,
+    "source": "src/domain/entities/EmbeddingModel.ts"
+  },
+  {
+    "name": "IEmbeddingProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEmbeddingProvider.ts"
+  },
+  {
+    "name": "IEntity",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "IEvidenceStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IEvidenceStorage.ts"
+  },
+  {
+    "name": "IExtractor",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/types.ts"
+  },
+  {
+    "name": "IFact",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "IHistoryJournal",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryJournal.ts"
+  },
+  {
+    "name": "IHistoryManager",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryManager.ts"
+  },
+  {
+    "name": "IHistoryManagerConfig",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryManager.ts"
+  },
+  {
+    "name": "IHistoryStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryManager.ts"
+  },
+  {
+    "name": "IImageModelDescription",
+    "typeOnly": true,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "IImageProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IImageProvider.ts"
+  },
+  {
+    "name": "ILLMDescription",
+    "typeOnly": true,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "IMAGE_MODEL_REGISTRY",
+    "typeOnly": false,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "IMAGE_MODELS",
+    "typeOnly": false,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "ImageEditOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IImageProvider.ts"
+  },
+  {
+    "name": "ImageGenerateOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IImageProvider.ts"
+  },
+  {
+    "name": "ImageModelCapabilities",
+    "typeOnly": true,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "ImageModelPricing",
+    "typeOnly": true,
+    "source": "src/domain/entities/ImageModel.ts"
+  },
+  {
+    "name": "ImageResponse",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IImageProvider.ts"
+  },
+  {
+    "name": "ImageVariationOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IImageProvider.ts"
+  },
+  {
+    "name": "IMCPClient",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMCPClient.ts"
+  },
+  {
+    "name": "IMediaOutputHandler",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMediaStorage.ts"
+  },
+  {
+    "name": "IMediaStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMediaStorage.ts"
+  },
+  {
+    "name": "IMemoryStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMemoryStorage.ts"
+  },
+  {
+    "name": "IMemoryStore",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "InContextEntry",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.ts"
+  },
+  {
+    "name": "InContextMemoryConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.ts"
+  },
+  {
+    "name": "InContextMemoryPluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.ts"
+  },
+  {
+    "name": "InContextPriority",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.ts"
+  },
+  {
+    "name": "IngestExtractedInput",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/SignalIngestor.ts"
+  },
+  {
+    "name": "IngestionError",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "IngestionResolvedEntity",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "IngestionResult",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "IngestSignalInput",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/SignalIngestor.ts"
+  },
+  {
+    "name": "IngestTextInput",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/SignalIngestor.ts"
+  },
+  {
+    "name": "InMemoryAdapter",
+    "typeOnly": false,
+    "source": "src/memory/adapters/inmemory/InMemoryAdapter.ts"
+  },
+  {
+    "name": "InMemoryAdapterOptions",
+    "typeOnly": true,
+    "source": "src/memory/adapters/inmemory/InMemoryAdapter.ts"
+  },
+  {
+    "name": "InMemoryAgentStateStorage",
+    "typeOnly": false,
+    "source": "src/infrastructure/storage/InMemoryStorage.ts"
+  },
+  {
+    "name": "InMemoryEvidenceStorage",
+    "typeOnly": false,
+    "source": "src/infrastructure/storage/InMemoryEvidenceStorage.browser.ts"
+  },
+  {
+    "name": "InMemoryHistoryStorage",
+    "typeOnly": false,
+    "source": "src/infrastructure/storage/InMemoryHistoryStorage.ts"
+  },
+  {
+    "name": "InMemoryMetrics",
+    "typeOnly": false,
+    "source": "src/infrastructure/observability/Metrics.ts"
+  },
+  {
+    "name": "InMemoryPlanStorage",
+    "typeOnly": false,
+    "source": "src/infrastructure/storage/InMemoryStorage.ts"
+  },
+  {
+    "name": "InMemoryStorage",
+    "typeOnly": false,
+    "source": "src/infrastructure/storage/InMemoryStorage.ts"
+  },
+  {
+    "name": "InputImageContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "InputItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "InputTextContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "InstructionEntry",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IPersistentInstructionsStorage.ts"
+  },
+  {
+    "name": "InvalidConfigError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "InvalidTaskTransitionError",
+    "typeOnly": false,
+    "source": "src/memory/MemorySystem.ts"
+  },
+  {
+    "name": "InvalidToolArgumentsError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "IPermissionPolicy",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "IPersistentInstructionsStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IPersistentInstructionsStorage.ts"
+  },
+  {
+    "name": "IPlanStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IPlanStorage.ts"
+  },
+  {
+    "name": "IPluginSnapshot",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/snapshot.ts"
+  },
+  {
+    "name": "IProfileGenerator",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "IProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IProvider.ts"
+  },
+  {
+    "name": "IRoutineDefinitionStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IRoutineDefinitionStorage.ts"
+  },
+  {
+    "name": "IRoutineExecutionStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IRoutineExecutionStorage.ts"
+  },
+  {
+    "name": "IRuleEngine",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "isAudioChunkError",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "isAudioChunkReady",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "isAudioStreamComplete",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "IScheduler",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IScheduler.ts"
+  },
+  {
+    "name": "isCompaction",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "IScopedMemoryView",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "isErrorEvent",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "isKnownService",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "ISourceLinks",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "isOutputTextDelta",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ISpeechToTextProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "isReasoningDelta",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "isReasoningDone",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "isResponseComplete",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "isSimpleScope",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "isStoreHandler",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "isStreamEvent",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "isTaskAwareScope",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "isTaskBlocked",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "isTerminalMemoryStatus",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "isTerminalStatus",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "isToolCallArgumentsDelta",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "isToolCallArgumentsDone",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "isToolCallStart",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "IStoreHandler",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "IStreamingSpeechToTextProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "IStreamingTextToSpeechProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "ISTTModelDescription",
+    "typeOnly": true,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "isVendor",
+    "typeOnly": false,
+    "source": "src/core/Vendor.ts"
+  },
+  {
+    "name": "IterationCompleteEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ITextCompactionProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ITextProvider.ts"
+  },
+  {
+    "name": "ITextProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ITextProvider.ts"
+  },
+  {
+    "name": "ITextToSpeechProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "ITokenEstimator",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "ITokenStorage",
+    "typeOnly": true,
+    "source": "src/connectors/oauth/domain/ITokenStorage.ts"
+  },
+  {
+    "name": "IToolExecutionPipeline",
+    "typeOnly": true,
+    "source": "src/core/tool-execution/types.ts"
+  },
+  {
+    "name": "IToolExecutionPlugin",
+    "typeOnly": true,
+    "source": "src/core/tool-execution/types.ts"
+  },
+  {
+    "name": "IToolExecutor",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IToolExecutor.ts"
+  },
+  {
+    "name": "IToolSnapshot",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/snapshot.ts"
+  },
+  {
+    "name": "ITTSModelDescription",
+    "typeOnly": true,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "IUserInfoStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IUserInfoStorage.ts"
+  },
+  {
+    "name": "IUserPermissionRulesStorage",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IUserPermissionRulesStorage.ts"
+  },
+  {
+    "name": "IVideoModelDescription",
+    "typeOnly": true,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "IVideoProvider",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "IViewContextComponent",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/snapshot.ts"
+  },
+  {
+    "name": "IViewContextData",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/snapshot.ts"
+  },
+  {
+    "name": "IVoiceInfo",
+    "typeOnly": true,
+    "source": "src/domain/entities/SharedVoices.ts"
+  },
+  {
+    "name": "JSONSchema",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "JWTConnectorAuth",
+    "typeOnly": true,
+    "source": "src/domain/entities/Connector.ts"
+  },
+  {
+    "name": "KnownContextFeatures",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "KnownPluginConfigs",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "levelGrants",
+    "typeOnly": false,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "ListOptions",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "listVendorIds",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "listVendors",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "listVendorsByAuthType",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "listVendorsByCategory",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "listVendorsWithLogos",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "LLM_MODELS",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "LLMResponse",
+    "typeOnly": true,
+    "source": "src/domain/entities/Response.ts"
+  },
+  {
+    "name": "LocalToolResolver",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "LogEntry",
+    "typeOnly": true,
+    "source": "src/infrastructure/observability/Logger.ts"
+  },
+  {
+    "name": "logger",
+    "typeOnly": false,
+    "source": "src/infrastructure/observability/Logger.ts"
+  },
+  {
+    "name": "LoggerConfig",
+    "typeOnly": true,
+    "source": "src/infrastructure/observability/Logger.ts"
+  },
+  {
+    "name": "LoggingPlugin",
+    "typeOnly": false,
+    "source": "src/core/tool-execution/plugins/LoggingPlugin.ts"
+  },
+  {
+    "name": "LoggingPluginOptions",
+    "typeOnly": true,
+    "source": "src/core/tool-execution/plugins/LoggingPlugin.ts"
+  },
+  {
+    "name": "LogLevel",
+    "typeOnly": true,
+    "source": "src/infrastructure/observability/Logger.ts"
+  },
+  {
+    "name": "LongContextTokenPricing",
+    "typeOnly": true,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "looksLikeIsoDate",
+    "typeOnly": false,
+    "source": "src/memory/dateCoercion.ts"
+  },
+  {
+    "name": "MaterializedPrincipals",
+    "typeOnly": true,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "materializePrincipals",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "maybeCoerceToDate",
+    "typeOnly": false,
+    "source": "src/memory/dateCoercion.ts"
+  },
+  {
+    "name": "MCPClientConnectionState",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMCPClient.ts"
+  },
+  {
+    "name": "MCPClientState",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPTypes.ts"
+  },
+  {
+    "name": "MCPConfiguration",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPConfig.ts"
+  },
+  {
+    "name": "MCPConnectionError",
+    "typeOnly": false,
+    "source": "src/domain/errors/MCPError.ts"
+  },
+  {
+    "name": "MCPError",
+    "typeOnly": false,
+    "source": "src/domain/errors/MCPError.ts"
+  },
+  {
+    "name": "MCPPrompt",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPTypes.ts"
+  },
+  {
+    "name": "MCPPromptResult",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPTypes.ts"
+  },
+  {
+    "name": "MCPProtocolError",
+    "typeOnly": false,
+    "source": "src/domain/errors/MCPError.ts"
+  },
+  {
+    "name": "MCPResource",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPTypes.ts"
+  },
+  {
+    "name": "MCPResourceContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPTypes.ts"
+  },
+  {
+    "name": "MCPResourceError",
+    "typeOnly": false,
+    "source": "src/domain/errors/MCPError.ts"
+  },
+  {
+    "name": "MCPServerCapabilities",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPTypes.ts"
+  },
+  {
+    "name": "MCPServerConfig",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPConfig.ts"
+  },
+  {
+    "name": "MCPTimeoutError",
+    "typeOnly": false,
+    "source": "src/domain/errors/MCPError.ts"
+  },
+  {
+    "name": "MCPTool",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPTypes.ts"
+  },
+  {
+    "name": "MCPToolError",
+    "typeOnly": false,
+    "source": "src/domain/errors/MCPError.ts"
+  },
+  {
+    "name": "MCPToolResult",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPTypes.ts"
+  },
+  {
+    "name": "MCPTransportType",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPConfig.ts"
+  },
+  {
+    "name": "MediaOutputMetadata",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMediaStorage.ts"
+  },
+  {
+    "name": "MediaOutputResult",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMediaStorage.ts"
+  },
+  {
+    "name": "MediaStorageEntry",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMediaStorage.ts"
+  },
+  {
+    "name": "MediaStorageListOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMediaStorage.ts"
+  },
+  {
+    "name": "MediaStorageMetadata",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMediaStorage.ts"
+  },
+  {
+    "name": "MediaStorageResult",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IMediaStorage.ts"
+  },
+  {
+    "name": "MEMORY_PRIORITY_VALUES",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "MemoryEntry",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "MemoryEntryInput",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "MemoryIdentifier",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "MemoryIndex",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "MemoryIndexEntry",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "MemoryPluginConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/MemoryPluginNextGen.ts"
+  },
+  {
+    "name": "MemoryPluginInjectionConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/MemoryPluginNextGen.ts"
+  },
+  {
+    "name": "MemoryPluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/MemoryPluginNextGen.ts"
+  },
+  {
+    "name": "MemoryPriority",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "MemoryPromptContext",
+    "typeOnly": true,
+    "source": "src/memory/integration/defaultPrompt.ts"
+  },
+  {
+    "name": "MemoryScope",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "MemorySystem",
+    "typeOnly": false,
+    "source": "src/memory/MemorySystem.ts"
+  },
+  {
+    "name": "MemorySystemConfig",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "MemoryWritePluginConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/MemoryWritePluginNextGen.ts"
+  },
+  {
+    "name": "MemoryWritePluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/MemoryWritePluginNextGen.ts"
+  },
+  {
+    "name": "Message",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "MessageRole",
+    "typeOnly": false,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "MetadataChange",
+    "typeOnly": true,
+    "source": "src/memory/metadataDiff.ts"
+  },
+  {
+    "name": "metrics",
+    "typeOnly": false,
+    "source": "src/infrastructure/observability/Metrics.ts"
+  },
+  {
+    "name": "MetricsCollector",
+    "typeOnly": true,
+    "source": "src/infrastructure/observability/Metrics.ts"
+  },
+  {
+    "name": "MetricsCollectorType",
+    "typeOnly": true,
+    "source": "src/infrastructure/observability/Metrics.ts"
+  },
+  {
+    "name": "MetricTags",
+    "typeOnly": true,
+    "source": "src/infrastructure/observability/Metrics.ts"
+  },
+  {
+    "name": "MODEL_REGISTRY",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "MODEL_REGISTRY_SCHEMA_VERSION",
+    "typeOnly": false,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "ModelAttemptRecord",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelAvailability",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "ModelBudgetExceededError",
+    "typeOnly": false,
+    "source": "src/core/model-execution/ModelTask.ts"
+  },
+  {
+    "name": "ModelCallDescriptor",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelCapabilities",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ITextProvider.ts"
+  },
+  {
+    "name": "ModelEndpoint",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "ModelExecutionConfig",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelInvocationRecord",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelLifecycleStatus",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "ModelNotSupportedError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ModelParameterAssessment",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ModelParameterDecision",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ModelParameterEndpoint",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ModelParameterPolicy",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ModelParameterQuery",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/parameters.ts"
+  },
+  {
+    "name": "ModelPriceBound",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelRouteCandidate",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelRouteConfig",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelRoutingConfig",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelRoutingContext",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelRoutingDecision",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelRoutingDiagnostics",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelRoutingHints",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelRoutingRunOptions",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelTask",
+    "typeOnly": false,
+    "source": "src/core/model-execution/ModelTask.ts"
+  },
+  {
+    "name": "ModelTaskLimits",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModelTaskSnapshot",
+    "typeOnly": true,
+    "source": "src/core/model-execution/types.ts"
+  },
+  {
+    "name": "ModifyingHook",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "NativeContinuationBinding",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/INativeContinuation.ts"
+  },
+  {
+    "name": "NativeContinuationSnapshot",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/INativeContinuation.ts"
+  },
+  {
+    "name": "NativeHistoryCompactionConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/compaction/types.ts"
+  },
+  {
+    "name": "NativeToolCapability",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "NativeToolEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Response.ts"
+  },
+  {
+    "name": "NativeToolRequest",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "Neighborhood",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "NewEntity",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "NewFact",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "NewFactSummary",
+    "typeOnly": true,
+    "source": "src/memory/integration/signalReconciliationPrompt.ts"
+  },
+  {
+    "name": "NewTaskSummary",
+    "typeOnly": true,
+    "source": "src/memory/integration/signalReconciliationPrompt.ts"
+  },
+  {
+    "name": "NextGenEvictionStrategy",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.ts"
+  },
+  {
+    "name": "NoOpMetrics",
+    "typeOnly": false,
+    "source": "src/infrastructure/observability/Metrics.ts"
+  },
+  {
+    "name": "normalizeIdentifierValue",
+    "typeOnly": false,
+    "source": "src/memory/identifiers.ts"
+  },
+  {
+    "name": "normalizeSurface",
+    "typeOnly": false,
+    "source": "src/memory/resolution/fuzzy.ts"
+  },
+  {
+    "name": "OAuthCallbackResult",
+    "typeOnly": true,
+    "source": "src/connectors/oauth/types.ts"
+  },
+  {
+    "name": "OAuthConfig",
+    "typeOnly": true,
+    "source": "src/connectors/oauth/types.ts"
+  },
+  {
+    "name": "OAuthConnectorAuth",
+    "typeOnly": true,
+    "source": "src/domain/entities/Connector.ts"
+  },
+  {
+    "name": "OAuthFlow",
+    "typeOnly": true,
+    "source": "src/connectors/oauth/types.ts"
+  },
+  {
+    "name": "ObservationMaskingStrategy",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/strategies/ObservationMaskingStrategy.ts"
+  },
+  {
+    "name": "ObservationMaskingStrategyConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/conversation-compaction.ts"
+  },
+  {
+    "name": "OperationOutcome",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "OptimisticConcurrencyError",
+    "typeOnly": false,
+    "source": "src/memory/adapters/inmemory/InMemoryAdapter.ts"
+  },
+  {
+    "name": "OptionField",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/types.ts"
+  },
+  {
+    "name": "OrchestratedAgentConfig",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/factoryTypes.ts"
+  },
+  {
+    "name": "OrchestrationToolsContext",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/tools.ts"
+  },
+  {
+    "name": "OrchestratorConfig",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/createOrchestrator.ts"
+  },
+  {
+    "name": "OrchestratorFactoryOptions",
+    "typeOnly": true,
+    "source": "src/core/orchestrator/factoryTypes.ts"
+  },
+  {
+    "name": "OrderedStreamOutputEntry",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamState.ts"
+  },
+  {
+    "name": "organizationContentComposer",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "OutcomeAgentPackage",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeCancelRequest",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeCancelResponse",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeEvidenceRequest",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeEvidenceResponse",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeExecuteRequest",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeExecuteResponse",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeHydratedAgent",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeInvocation",
+    "typeOnly": true,
+    "source": "src/core/createOutcomeTool.ts"
+  },
+  {
+    "name": "OutcomeNegotiation",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomePackageRequest",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeRequestIdentity",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "OutcomeToolOptions",
+    "typeOnly": true,
+    "source": "src/core/createOutcomeTool.ts"
+  },
+  {
+    "name": "OutputFormat",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "OutputItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "OutputTextContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "OutputTextDeltaEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "OutputTextDoneEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "OversizedInputResult",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "OwnerRequiredError",
+    "typeOnly": false,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "Page",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "PagePosition",
+    "typeOnly": true,
+    "source": "src/tools/connector/pages/types.ts"
+  },
+  {
+    "name": "ParallelTasksError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ParsedConnectorCategory",
+    "typeOnly": true,
+    "source": "src/core/ToolCatalogRegistry.ts"
+  },
+  {
+    "name": "ParsedPrincipal",
+    "typeOnly": true,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "parseExtractionResponse",
+    "typeOnly": false,
+    "source": "src/memory/integration/signals/ConnectorExtractor.ts"
+  },
+  {
+    "name": "ParseExtractionResult",
+    "typeOnly": true,
+    "source": "src/memory/integration/parseExtraction.ts"
+  },
+  {
+    "name": "parseExtractionWithStatus",
+    "typeOnly": false,
+    "source": "src/memory/integration/parseExtraction.ts"
+  },
+  {
+    "name": "parsePrincipal",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "parseProfileResponse",
+    "typeOnly": false,
+    "source": "src/memory/integration/ConnectorProfileGenerator.ts"
+  },
+  {
+    "name": "ParseReconciliationOpsResult",
+    "typeOnly": true,
+    "source": "src/memory/integration/parseExtraction.ts"
+  },
+  {
+    "name": "parseReconciliationOpsWithStatus",
+    "typeOnly": false,
+    "source": "src/memory/integration/parseExtraction.ts"
+  },
+  {
+    "name": "parseRepository",
+    "typeOnly": false,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "ParseSignalReconciliationOpsResult",
+    "typeOnly": true,
+    "source": "src/memory/integration/parseExtraction.ts"
+  },
+  {
+    "name": "parseSignalReconciliationOpsWithStatus",
+    "typeOnly": false,
+    "source": "src/memory/integration/parseExtraction.ts"
+  },
+  {
+    "name": "parseSkepticOutput",
+    "typeOnly": false,
+    "source": "src/memory/integration/SkepticPass.ts"
+  },
+  {
+    "name": "ParseStatus",
+    "typeOnly": true,
+    "source": "src/memory/integration/parseExtraction.ts"
+  },
+  {
+    "name": "parseStructuredOutput",
+    "typeOnly": false,
+    "source": "src/core/StructuredOutput.ts"
+  },
+  {
+    "name": "ParticipantSeed",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/types.ts"
+  },
+  {
+    "name": "patchTouchesAccessFields",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "PendingAsyncTool",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "PendingAsyncToolStatus",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "Permission",
+    "typeOnly": true,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "PermissionAuditEntry",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "PermissionCheckContext",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "PermissionCheckResult",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "PermissionDeniedError",
+    "typeOnly": false,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "PermissionManagerEvent",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "PermissionPolicyManager",
+    "typeOnly": false,
+    "source": "src/core/permissions/PermissionPolicyManager.ts"
+  },
+  {
+    "name": "PermissionPolicyManagerConfig",
+    "typeOnly": true,
+    "source": "src/core/permissions/PermissionPolicyManager.ts"
+  },
+  {
+    "name": "Permissions",
+    "typeOnly": true,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "PermissionScope",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "PersistentInstructionsConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts"
+  },
+  {
+    "name": "PersistentInstructionsPluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts"
+  },
+  {
+    "name": "personContentComposer",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "PipelineExecutionOptions",
+    "typeOnly": true,
+    "source": "src/core/tool-execution/types.ts"
+  },
+  {
+    "name": "PlainTextAdapter",
+    "typeOnly": false,
+    "source": "src/memory/integration/signals/adapters/PlainTextAdapter.ts"
+  },
+  {
+    "name": "PlainTextRaw",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/adapters/PlainTextAdapter.ts"
+  },
+  {
+    "name": "Plan",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "PlanConcurrency",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "PlanInput",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "PlanStatus",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "PluginConfigs",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "PluginExecutionContext",
+    "typeOnly": true,
+    "source": "src/core/tool-execution/types.ts"
+  },
+  {
+    "name": "PluginFactory",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/PluginRegistry.ts"
+  },
+  {
+    "name": "PluginFactoryContext",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/PluginRegistry.ts"
+  },
+  {
+    "name": "PluginRegisterOptions",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/PluginRegistry.ts"
+  },
+  {
+    "name": "PluginRegistry",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/PluginRegistry.ts"
+  },
+  {
+    "name": "PluginRegistryEntry",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/PluginRegistry.ts"
+  },
+  {
+    "name": "PluginRegistryInfo",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/PluginRegistry.ts"
+  },
+  {
+    "name": "PolicyChainConfig",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "PolicyCheckResult",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "PolicyContext",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "PolicyDecision",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "PolicyManagerEvents",
+    "typeOnly": true,
+    "source": "src/core/permissions/PermissionPolicyManager.ts"
+  },
+  {
+    "name": "PortableAgentContext",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "PortableAgentRuntimeConfig",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "PortableRealtimeProfile",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "PortableToolDescriptor",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "PortableToolPermissionResolver",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "PortableToolPlacement",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "PortableToolPlacementResolver",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "PredicateDefinition",
+    "typeOnly": true,
+    "source": "src/memory/predicates/types.ts"
+  },
+  {
+    "name": "PredicateRegistry",
+    "typeOnly": false,
+    "source": "src/memory/predicates/PredicateRegistry.ts"
+  },
+  {
+    "name": "PreparedContext",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "PreResolvedBinding",
+    "typeOnly": true,
+    "source": "src/memory/integration/defaultExtractionPrompt.ts"
+  },
+  {
+    "name": "Principal",
+    "typeOnly": true,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "PRINCIPAL_WORLD",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "principalEntity",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "principalGroup",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "PrincipalKind",
+    "typeOnly": true,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "principalService",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "principalsForLibraryRecord",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "principalUser",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "ProcessingMode",
+    "typeOnly": true,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "ProcessOptions",
+    "typeOnly": true,
+    "source": "src/core/TemplateEngine.ts"
+  },
+  {
+    "name": "ProfileGeneratorInput",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "ProfileGeneratorMissingError",
+    "typeOnly": false,
+    "source": "src/memory/MemorySystem.ts"
+  },
+  {
+    "name": "projectContentComposer",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "PromptCachePolicy",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "PromptCachingMode",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "ProviderAmbiguousOperationError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ProviderAuthError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ProviderCapabilities",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IProvider.ts"
+  },
+  {
+    "name": "ProviderCapabilityNotSupportedError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ProviderContextLengthError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ProviderError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ProviderMisalignmentError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ProviderNotFoundError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ProviderRateLimitError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ProviderStateContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "ProviderStateEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ProviderStopDetails",
+    "typeOnly": true,
+    "source": "src/domain/entities/Response.ts"
+  },
+  {
+    "name": "QualityLevel",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "rankFacts",
+    "typeOnly": false,
+    "source": "src/memory/Ranking.ts"
+  },
+  {
+    "name": "RankingConfig",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "RateLimiterConfig",
+    "typeOnly": true,
+    "source": "src/infrastructure/resilience/RateLimiter.ts"
+  },
+  {
+    "name": "RateLimiterMetrics",
+    "typeOnly": true,
+    "source": "src/infrastructure/resilience/RateLimiter.ts"
+  },
+  {
+    "name": "RateLimitError",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/RateLimiter.ts"
+  },
+  {
+    "name": "readFilterForPrincipals",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "RealtimeModelCapabilities",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "RealtimeModelCapabilityQuery",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "RealtimeReasoningEffort",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "RealtimeTransport",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "ReasoningDeltaEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ReasoningDoneEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ReasoningEffort",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ITextProvider.ts"
+  },
+  {
+    "name": "ReasoningItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "RecaseIdentifierOptions",
+    "typeOnly": true,
+    "source": "src/memory/identifierMigration.ts"
+  },
+  {
+    "name": "RecaseIdentifierResult",
+    "typeOnly": true,
+    "source": "src/memory/identifierMigration.ts"
+  },
+  {
+    "name": "recaseIdentifierValues",
+    "typeOnly": false,
+    "source": "src/memory/identifierMigration.ts"
+  },
+  {
+    "name": "ReconciliationOp",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "RefreshStrategy",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/types.ts"
+  },
+  {
+    "name": "registerRoutineToolCategory",
+    "typeOnly": false,
+    "source": "src/core/createRoutineTool.ts"
+  },
+  {
+    "name": "RegistryAgentStatus",
+    "typeOnly": true,
+    "source": "src/core/AgentRegistry.ts"
+  },
+  {
+    "name": "RelatedEvent",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "RelatedItemHit",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "RelatedItemsResult",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "RelatedTask",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "RemoteMcpDescriptor",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAdvancedInference.ts"
+  },
+  {
+    "name": "RemoteOutcomeAccess",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "RemoteOutcomeCheckpoint",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "RemoteOutcomeEffect",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "RemoteOutcomeReceipt",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "RemoteOutcomeReport",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "RemoteOutcomeSession",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "RemoteOutcomeTransport",
+    "typeOnly": true,
+    "source": "src/portable/outcomeTypes.ts"
+  },
+  {
+    "name": "RemoteToolError",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "RemoteToolExecutionError",
+    "typeOnly": false,
+    "source": "src/portable/AgentPackage.ts"
+  },
+  {
+    "name": "RemoteToolExecutionRequest",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "RemoteToolExecutionResponse",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "RemoteToolTransport",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "RESOLUTION_DEFAULTS",
+    "typeOnly": false,
+    "source": "src/memory/resolution/EntityResolver.ts"
+  },
+  {
+    "name": "resolveConnectorContext",
+    "typeOnly": false,
+    "source": "src/tools/connector/ConnectorTools.ts"
+  },
+  {
+    "name": "ResolvedContextFeatures",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "resolveDependencies",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "ResolvedLocalTool",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "resolveEagerness",
+    "typeOnly": false,
+    "source": "src/memory/integration/EagernessProfile.ts"
+  },
+  {
+    "name": "ResolveEntityOptions",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "ResolveEntityQuery",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "resolveFlowSource",
+    "typeOnly": false,
+    "source": "src/core/routineControlFlow.ts"
+  },
+  {
+    "name": "resolveModelName",
+    "typeOnly": false,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "resolveRepository",
+    "typeOnly": false,
+    "source": "src/tools/github/types.ts"
+  },
+  {
+    "name": "ResolverMemoryHooks",
+    "typeOnly": true,
+    "source": "src/memory/resolution/EntityResolver.ts"
+  },
+  {
+    "name": "resolveStepArgs",
+    "typeOnly": false,
+    "source": "src/core/routineControlFlow.ts"
+  },
+  {
+    "name": "resolveStorageUserContext",
+    "typeOnly": false,
+    "source": "src/domain/interfaces/StorageContext.ts"
+  },
+  {
+    "name": "resolveTemplates",
+    "typeOnly": false,
+    "source": "src/core/routineControlFlow.ts"
+  },
+  {
+    "name": "ResponseCompleteEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ResponseCreatedEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ResponseFormat",
+    "typeOnly": true,
+    "source": "src/core/StructuredOutput.ts"
+  },
+  {
+    "name": "ResponseInProgressEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "RestrainedExtractionInput",
+    "typeOnly": true,
+    "source": "src/memory/integration/RestrainedExtractionContract.ts"
+  },
+  {
+    "name": "RestrainedExtractionOptions",
+    "typeOnly": true,
+    "source": "src/memory/integration/RestrainedExtractionContract.ts"
+  },
+  {
+    "name": "RestrainedExtractionResult",
+    "typeOnly": true,
+    "source": "src/memory/integration/RestrainedExtractionContract.ts"
+  },
+  {
+    "name": "RestraintEvent",
+    "typeOnly": true,
+    "source": "src/memory/integration/RestraintEvent.ts"
+  },
+  {
+    "name": "RestraintEventKind",
+    "typeOnly": true,
+    "source": "src/memory/integration/RestraintEvent.ts"
+  },
+  {
+    "name": "RestraintEventListener",
+    "typeOnly": true,
+    "source": "src/memory/integration/RestraintEvent.ts"
+  },
+  {
+    "name": "RestraintModelInfo",
+    "typeOnly": true,
+    "source": "src/memory/integration/RestraintEvent.ts"
+  },
+  {
+    "name": "RestraintStage",
+    "typeOnly": true,
+    "source": "src/memory/integration/RestraintEvent.ts"
+  },
+  {
+    "name": "retryWithBackoff",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/BackoffStrategy.ts"
+  },
+  {
+    "name": "rewriteAclPrincipalReferences",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "rewritePrincipalReferences",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  },
+  {
+    "name": "RiskLevel",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "ROUTINE_KEYS",
+    "typeOnly": false,
+    "source": "src/core/routineKeys.ts"
+  },
+  {
+    "name": "RoutineContinuation",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineDefinition",
+    "typeOnly": true,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "RoutineDefinitionInput",
+    "typeOnly": true,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "RoutineExecution",
+    "typeOnly": true,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "RoutineExecutionRecord",
+    "typeOnly": true,
+    "source": "src/domain/entities/RoutineExecutionRecord.ts"
+  },
+  {
+    "name": "RoutineExecutionStatus",
+    "typeOnly": true,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "RoutineExecutionStep",
+    "typeOnly": true,
+    "source": "src/domain/entities/RoutineExecutionRecord.ts"
+  },
+  {
+    "name": "RoutineInspection",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineObservation",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineParameter",
+    "typeOnly": true,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "RoutineProgress",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineReport",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineRunner",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineRunnerOptions",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineRunRequest",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineRunResult",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineSource",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineStepObservation",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineStepType",
+    "typeOnly": true,
+    "source": "src/domain/entities/RoutineExecutionRecord.ts"
+  },
+  {
+    "name": "RoutineSummary",
+    "typeOnly": true,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "RoutineTaskResult",
+    "typeOnly": true,
+    "source": "src/domain/entities/RoutineExecutionRecord.ts"
+  },
+  {
+    "name": "RoutineTaskSnapshot",
+    "typeOnly": true,
+    "source": "src/domain/entities/RoutineExecutionRecord.ts"
+  },
+  {
+    "name": "RoutineTaskSummary",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineToolCatalogOptions",
+    "typeOnly": true,
+    "source": "src/core/createRoutineTool.ts"
+  },
+  {
+    "name": "RoutineToolOptions",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RoutineToolResult",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "RunOptions",
+    "typeOnly": true,
+    "source": "src/core/Agent.ts"
+  },
+  {
+    "name": "ScheduleHandle",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IScheduler.ts"
+  },
+  {
+    "name": "ScheduleSpec",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IScheduler.ts"
+  },
+  {
+    "name": "ScopedConnectorRegistry",
+    "typeOnly": false,
+    "source": "src/core/ScopedConnectorRegistry.ts"
+  },
+  {
+    "name": "scopeEquals",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "ScopeFields",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "ScopeFilter",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "ScopeInvariantError",
+    "typeOnly": false,
+    "source": "src/memory/MemorySystem.ts"
+  },
+  {
+    "name": "scopeMatches",
+    "typeOnly": false,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "ScopeViolationError",
+    "typeOnly": false,
+    "source": "src/memory/adapters/inmemory/InMemoryAdapter.ts"
+  },
+  {
+    "name": "scoreEntityPair",
+    "typeOnly": false,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "scoreFact",
+    "typeOnly": false,
+    "source": "src/memory/Ranking.ts"
+  },
+  {
+    "name": "ScoreThresholds",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "SeedFact",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/types.ts"
+  },
+  {
+    "name": "SegmentTimestamp",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "SemanticSearchOptions",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "SemanticSearchUnavailableError",
+    "typeOnly": false,
+    "source": "src/memory/MemorySystem.ts"
+  },
+  {
+    "name": "SerializedAgentPackage",
+    "typeOnly": true,
+    "source": "src/portable/types.ts"
+  },
+  {
+    "name": "SerializedApprovalEntry",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "SerializedApprovalState",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "SerializedContextState",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IContextStorage.ts"
+  },
+  {
+    "name": "SerializedHistoryState",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IHistoryManager.ts"
+  },
+  {
+    "name": "SerializedInContextMemoryState",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.ts"
+  },
+  {
+    "name": "SerializedPersistentInstructionsState",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts"
+  },
+  {
+    "name": "SerializedSharedWorkspaceState",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/SharedWorkspacePluginNextGen.ts"
+  },
+  {
+    "name": "SerializedToolState",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "SerializedUserInfoState",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts"
+  },
+  {
+    "name": "SerializedWorkingMemoryState",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.ts"
+  },
+  {
+    "name": "SERVICE_DEFINITIONS",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "SERVICE_INFO",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "SERVICE_URL_PATTERNS",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "ServiceCategory",
+    "typeOnly": true,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "ServiceDefinition",
+    "typeOnly": true,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "ServiceInfo",
+    "typeOnly": true,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "Services",
+    "typeOnly": false,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "ServiceToolFactory",
+    "typeOnly": true,
+    "source": "src/tools/connector/ConnectorTools.ts"
+  },
+  {
+    "name": "ServiceToolFactoryOptions",
+    "typeOnly": true,
+    "source": "src/tools/connector/ConnectorTools.ts"
+  },
+  {
+    "name": "ServiceType",
+    "typeOnly": true,
+    "source": "src/domain/entities/Services.ts"
+  },
+  {
+    "name": "SessionIngestorDiligence",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts"
+  },
+  {
+    "name": "SessionIngestorPluginConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts"
+  },
+  {
+    "name": "SessionIngestorPluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts"
+  },
+  {
+    "name": "SessionRef",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ICorrelationStorage.ts"
+  },
+  {
+    "name": "setMetricsCollector",
+    "typeOnly": false,
+    "source": "src/infrastructure/observability/Metrics.ts"
+  },
+  {
+    "name": "SharedWorkspaceConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/SharedWorkspacePluginNextGen.ts"
+  },
+  {
+    "name": "SharedWorkspaceEntry",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/SharedWorkspacePluginNextGen.ts"
+  },
+  {
+    "name": "SharedWorkspacePluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/SharedWorkspacePluginNextGen.ts"
+  },
+  {
+    "name": "ShellCallOutputContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "ShellCallOutputItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "SIGNAL_RECONCILIATION_PROMPT_VERSION",
+    "typeOnly": false,
+    "source": "src/memory/integration/signalReconciliationPrompt.ts"
+  },
+  {
+    "name": "SignalBreakdown",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "SignalIngestor",
+    "typeOnly": false,
+    "source": "src/memory/integration/signals/SignalIngestor.ts"
+  },
+  {
+    "name": "SignalIngestorConfig",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/SignalIngestor.ts"
+  },
+  {
+    "name": "SignalReconciliationOp",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "SignalReconciliationOutcome",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "signalReconciliationPrompt",
+    "typeOnly": false,
+    "source": "src/memory/integration/signalReconciliationPrompt.ts"
+  },
+  {
+    "name": "SignalReconciliationPromptContext",
+    "typeOnly": true,
+    "source": "src/memory/integration/signalReconciliationPrompt.ts"
+  },
+  {
+    "name": "SignalSourceAdapter",
+    "typeOnly": true,
+    "source": "src/memory/integration/signals/types.ts"
+  },
+  {
+    "name": "SignalThreadMessage",
+    "typeOnly": true,
+    "source": "src/memory/integration/defaultExtractionPrompt.ts"
+  },
+  {
+    "name": "SignalWeights",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "SIMPLE_ICONS_CDN",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "SimpleIcon",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "SimpleScope",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "simpleTokenEstimator",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/BasePluginNextGen.ts"
+  },
+  {
+    "name": "SkepticPass",
+    "typeOnly": false,
+    "source": "src/memory/integration/SkepticPass.ts"
+  },
+  {
+    "name": "SkepticPassConfig",
+    "typeOnly": true,
+    "source": "src/memory/integration/SkepticPass.ts"
+  },
+  {
+    "name": "SkepticPassMode",
+    "typeOnly": true,
+    "source": "src/memory/integration/EagernessProfile.ts"
+  },
+  {
+    "name": "SkepticPromptContext",
+    "typeOnly": true,
+    "source": "src/memory/integration/SkepticPass.ts"
+  },
+  {
+    "name": "SkepticReviewContext",
+    "typeOnly": true,
+    "source": "src/memory/integration/SkepticPass.ts"
+  },
+  {
+    "name": "SkepticReviewItem",
+    "typeOnly": true,
+    "source": "src/memory/integration/SkepticPass.ts"
+  },
+  {
+    "name": "SkepticReviewResult",
+    "typeOnly": true,
+    "source": "src/memory/integration/SkepticPass.ts"
+  },
+  {
+    "name": "SlackAddReactionResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackChannel",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "slackFetch",
+    "typeOnly": false,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackGetChannelInfoResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackGetMentionsResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackGetMessagesResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackGetThreadResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackGetUsersResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackListChannelsResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackMentionMessage",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackMessage",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "slackPaginate",
+    "typeOnly": false,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackPostMessageResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackSearchMessagesResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackSetChannelTopicResult",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "SlackUser",
+    "typeOnly": true,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "slugify",
+    "typeOnly": false,
+    "source": "src/memory/identifiers.ts"
+  },
+  {
+    "name": "SlugifyOptions",
+    "typeOnly": true,
+    "source": "src/memory/identifiers.ts"
+  },
+  {
+    "name": "STANDARD_PREDICATES",
+    "typeOnly": false,
+    "source": "src/memory/predicates/standard.ts"
+  },
+  {
+    "name": "StaticAnchorRegistry",
+    "typeOnly": false,
+    "source": "src/memory/integration/AnchorRegistry.ts"
+  },
+  {
+    "name": "StdioTransportConfig",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPConfig.ts"
+  },
+  {
+    "name": "StepErrorStrategy",
+    "typeOnly": true,
+    "source": "src/domain/entities/Routine.ts"
+  },
+  {
+    "name": "StepResolveContext",
+    "typeOnly": true,
+    "source": "src/core/routineControlFlow.ts"
+  },
+  {
+    "name": "StorageConfig",
+    "typeOnly": true,
+    "source": "src/core/StorageRegistry.ts"
+  },
+  {
+    "name": "StorageContext",
+    "typeOnly": true,
+    "source": "src/core/StorageRegistry.ts"
+  },
+  {
+    "name": "StorageRegistry",
+    "typeOnly": false,
+    "source": "src/core/StorageRegistry.ts"
+  },
+  {
+    "name": "StorageUserContext",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/StorageContext.ts"
+  },
+  {
+    "name": "StorageUserContextInput",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/StorageContext.ts"
+  },
+  {
+    "name": "StoreActionResult",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "StoredAgentDefinition",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAgentDefinitionStorage.ts"
+  },
+  {
+    "name": "StoredAgentType",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAgentDefinitionStorage.ts"
+  },
+  {
+    "name": "StoredConnectorConfig",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IConnectorConfigStorage.ts"
+  },
+  {
+    "name": "StoredContextSession",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IContextStorage.ts"
+  },
+  {
+    "name": "StoreDeleteResult",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "StoredToken",
+    "typeOnly": true,
+    "source": "src/connectors/oauth/types.ts"
+  },
+  {
+    "name": "StoreEntrySchema",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "StoreGetResult",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "StoreListResult",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "StoreSetResult",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/types.ts"
+  },
+  {
+    "name": "StoreToolsManager",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/store-tools.ts"
+  },
+  {
+    "name": "StrategyInfo",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/StrategyRegistry.ts"
+  },
+  {
+    "name": "StrategyRegistry",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/strategies/StrategyRegistry.ts"
+  },
+  {
+    "name": "StrategyRegistryEntry",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/StrategyRegistry.ts"
+  },
+  {
+    "name": "StreamEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "StreamEventType",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "StreamHelpers",
+    "typeOnly": false,
+    "source": "src/capabilities/agents/StreamHelpers.ts"
+  },
+  {
+    "name": "StreamOutputPosition",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamState.ts"
+  },
+  {
+    "name": "StreamState",
+    "typeOnly": false,
+    "source": "src/domain/entities/StreamState.ts"
+  },
+  {
+    "name": "STRUCTURED_OUTPUT_MAX_REPAIR_ATTEMPTS",
+    "typeOnly": false,
+    "source": "src/core/StructuredOutput.ts"
+  },
+  {
+    "name": "StructuredContextSummary",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/conversation-compaction.ts"
+  },
+  {
+    "name": "StructuredOutputError",
+    "typeOnly": false,
+    "source": "src/core/StructuredOutput.ts"
+  },
+  {
+    "name": "StructuredParseResult",
+    "typeOnly": true,
+    "source": "src/core/StructuredOutput.ts"
+  },
+  {
+    "name": "StructuredSummaryStrategy",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/strategies/StructuredSummaryStrategy.ts"
+  },
+  {
+    "name": "StructuredSummaryStrategyConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/strategies/conversation-compaction.ts"
+  },
+  {
+    "name": "STT_MODEL_REGISTRY",
+    "typeOnly": false,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "STT_MODELS",
+    "typeOnly": false,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "STTModelCapabilities",
+    "typeOnly": true,
+    "source": "src/domain/entities/STTModel.ts"
+  },
+  {
+    "name": "STTOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "STTOutputFormat",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "STTResponse",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "STTStreamEvent",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "STTStreamInput",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "STTStreamOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "SubRoutineSpec",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "SuspendSignal",
+    "typeOnly": false,
+    "source": "src/core/SuspendSignal.ts"
+  },
+  {
+    "name": "SuspendSignalOptions",
+    "typeOnly": true,
+    "source": "src/core/SuspendSignal.ts"
+  },
+  {
+    "name": "sweepDuplicates",
+    "typeOnly": false,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "SweepOptions",
+    "typeOnly": true,
+    "source": "src/memory/dedup.ts"
+  },
+  {
+    "name": "Task",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskAgentStateConfig",
+    "typeOnly": true,
+    "source": "src/domain/entities/AgentState.ts"
+  },
+  {
+    "name": "TaskAwareScope",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "TaskCondition",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "taskContentComposer",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "TaskControlFlow",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskExecution",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskFailure",
+    "typeOnly": true,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "TaskFoldFlow",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskInput",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskMapFlow",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskReconciliationOp",
+    "typeOnly": true,
+    "source": "src/memory/integration/ExtractionResolver.ts"
+  },
+  {
+    "name": "TaskSourceRef",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskStateAction",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStateCategory",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStateHistoryEntry",
+    "typeOnly": true,
+    "source": "src/memory/MemorySystem.ts"
+  },
+  {
+    "name": "TaskStateHostDelta",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStateLifecycleBinding",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStateLifecycleView",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStateNote",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStateNoteInput",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStatePluginConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStatePluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStatesConfig",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "TaskStateSnapshot",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStateSource",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts"
+  },
+  {
+    "name": "TaskStatus",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskStatusForMemory",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "TaskTimeoutError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "TaskToolContext",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IToolContext.ts"
+  },
+  {
+    "name": "TaskUntilFlow",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskValidation",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TaskValidationError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "TaskValidationResult",
+    "typeOnly": true,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TemplateContext",
+    "typeOnly": true,
+    "source": "src/core/TemplateEngine.ts"
+  },
+  {
+    "name": "TemplateCredentials",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/types.ts"
+  },
+  {
+    "name": "TemplateEngine",
+    "typeOnly": false,
+    "source": "src/core/TemplateEngine.ts"
+  },
+  {
+    "name": "TemplateHandler",
+    "typeOnly": true,
+    "source": "src/core/TemplateEngine.ts"
+  },
+  {
+    "name": "TemplateHandlerOptions",
+    "typeOnly": true,
+    "source": "src/core/TemplateEngine.ts"
+  },
+  {
+    "name": "TERMINAL_TASK_STATUSES",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "TextCompactionResponse",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ITextProvider.ts"
+  },
+  {
+    "name": "TextGenerateOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ITextProvider.ts"
+  },
+  {
+    "name": "ThinkingConfig",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/ITextProvider.ts"
+  },
+  {
+    "name": "ThinkingContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "toDate",
+    "typeOnly": false,
+    "source": "src/memory/dateCoercion.ts"
+  },
+  {
+    "name": "TokenBucketRateLimiter",
+    "typeOnly": false,
+    "source": "src/infrastructure/resilience/RateLimiter.ts"
+  },
+  {
+    "name": "TokenContentType",
+    "typeOnly": true,
+    "source": "src/core/context/types.ts"
+  },
+  {
+    "name": "TokenPricing",
+    "typeOnly": true,
+    "source": "src/domain/entities/Model.ts"
+  },
+  {
+    "name": "TokenUsage",
+    "typeOnly": true,
+    "source": "src/domain/entities/Response.ts"
+  },
+  {
+    "name": "Tool",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolCall",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolCallArgumentsDeltaEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ToolCallArgumentsDoneEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ToolCallBuffer",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamState.ts"
+  },
+  {
+    "name": "ToolCallOutputContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "ToolCallStartEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ToolCallState",
+    "typeOnly": false,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolCatalogPluginConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts"
+  },
+  {
+    "name": "ToolCatalogPluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts"
+  },
+  {
+    "name": "ToolCatalogRegistry",
+    "typeOnly": false,
+    "source": "src/core/ToolCatalogRegistry.ts"
+  },
+  {
+    "name": "ToolCategory",
+    "typeOnly": true,
+    "source": "src/tools/registry.browser.generated.ts"
+  },
+  {
+    "name": "ToolCategoryDefinition",
+    "typeOnly": true,
+    "source": "src/core/ToolCatalogRegistry.ts"
+  },
+  {
+    "name": "ToolCategoryScope",
+    "typeOnly": true,
+    "source": "src/core/ToolCatalogRegistry.ts"
+  },
+  {
+    "name": "ToolCondition",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "ToolContext",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IToolContext.ts"
+  },
+  {
+    "name": "ToolEvidenceConfig",
+    "typeOnly": true,
+    "source": "src/core/evidence/ToolEvidenceMiddleware.ts"
+  },
+  {
+    "name": "ToolEvidenceDelivery",
+    "typeOnly": true,
+    "source": "src/core/evidence/ToolEvidenceMiddleware.ts"
+  },
+  {
+    "name": "ToolEvidenceMiddleware",
+    "typeOnly": false,
+    "source": "src/core/evidence/ToolEvidenceMiddleware.ts"
+  },
+  {
+    "name": "ToolEvidenceReceipt",
+    "typeOnly": true,
+    "source": "src/core/evidence/ToolEvidenceMiddleware.ts"
+  },
+  {
+    "name": "ToolExecutionContext",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolExecutionDoneEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ToolExecutionError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ToolExecutionOptions",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolExecutionOutcome",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolExecutionPipeline",
+    "typeOnly": false,
+    "source": "src/core/tool-execution/ToolExecutionPipeline.ts"
+  },
+  {
+    "name": "ToolExecutionPipelineOptions",
+    "typeOnly": true,
+    "source": "src/core/tool-execution/types.ts"
+  },
+  {
+    "name": "ToolExecutionReport",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolExecutionStartEvent",
+    "typeOnly": true,
+    "source": "src/domain/entities/StreamEvent.ts"
+  },
+  {
+    "name": "ToolFunction",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolManager",
+    "typeOnly": false,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "ToolManagerConfig",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "ToolManagerEvent",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "ToolManagerStats",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "ToolMetadata",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "ToolModification",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "ToolNotFoundError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ToolOptions",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "ToolOutputHints",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolPermissionConfig",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "ToolPermissionManager",
+    "typeOnly": false,
+    "source": "src/core/permissions/ToolPermissionManager.ts"
+  },
+  {
+    "name": "ToolRegistration",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "toolRegistry",
+    "typeOnly": false,
+    "source": "src/tools/registry.browser.generated.ts"
+  },
+  {
+    "name": "ToolRegistry",
+    "typeOnly": false,
+    "source": "src/tools/ToolRegistry.ts"
+  },
+  {
+    "name": "ToolRegistryEntry",
+    "typeOnly": true,
+    "source": "src/tools/registry.browser.generated.ts"
+  },
+  {
+    "name": "ToolResult",
+    "typeOnly": true,
+    "source": "src/domain/entities/Tool.ts"
+  },
+  {
+    "name": "ToolResultContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "ToolResultEvidence",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "ToolSearchOutputItem",
+    "typeOnly": true,
+    "source": "src/domain/entities/Message.ts"
+  },
+  {
+    "name": "ToolSelectionContext",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "ToolSource",
+    "typeOnly": true,
+    "source": "src/core/ToolManager.ts"
+  },
+  {
+    "name": "ToolTimeoutError",
+    "typeOnly": false,
+    "source": "src/domain/errors/AIErrors.ts"
+  },
+  {
+    "name": "ToolUseContent",
+    "typeOnly": true,
+    "source": "src/domain/entities/Content.ts"
+  },
+  {
+    "name": "topicContentComposer",
+    "typeOnly": false,
+    "source": "src/memory/composers/defaults.ts"
+  },
+  {
+    "name": "toSlackTimestamp",
+    "typeOnly": false,
+    "source": "src/tools/slack/types.ts"
+  },
+  {
+    "name": "TranscriptionCapabilities",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "TranscriptionCapabilityQuery",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/realtime.ts"
+  },
+  {
+    "name": "TransitionTaskStateOptions",
+    "typeOnly": true,
+    "source": "src/memory/MemorySystem.ts"
+  },
+  {
+    "name": "TransitionTaskStateResult",
+    "typeOnly": true,
+    "source": "src/memory/MemorySystem.ts"
+  },
+  {
+    "name": "TransportConfig",
+    "typeOnly": true,
+    "source": "src/domain/entities/MCPConfig.ts"
+  },
+  {
+    "name": "TraversalOptions",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "TTS_MODEL_REGISTRY",
+    "typeOnly": false,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "TTS_MODELS",
+    "typeOnly": false,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "TTSModelCapabilities",
+    "typeOnly": true,
+    "source": "src/domain/entities/TTSModel.ts"
+  },
+  {
+    "name": "TTSOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "TTSResponse",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "TTSStreamChunk",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "updateTaskStatus",
+    "typeOnly": false,
+    "source": "src/domain/entities/Task.ts"
+  },
+  {
+    "name": "UpsertBySurfaceInput",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "UpsertBySurfaceOptions",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "UpsertBySurfaceResult",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "UpsertEntityResult",
+    "typeOnly": true,
+    "source": "src/memory/types.ts"
+  },
+  {
+    "name": "USER_IDENTIFIER_KIND",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/MemoryPluginNextGen.ts"
+  },
+  {
+    "name": "UserInfoEntry",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IUserInfoStorage.ts"
+  },
+  {
+    "name": "UserInfoPluginConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts"
+  },
+  {
+    "name": "UserInfoPluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts"
+  },
+  {
+    "name": "UserPermissionRule",
+    "typeOnly": true,
+    "source": "src/core/permissions/types.ts"
+  },
+  {
+    "name": "UserPermissionRulesEngine",
+    "typeOnly": false,
+    "source": "src/core/permissions/UserPermissionRulesEngine.ts"
+  },
+  {
+    "name": "ValidationContext",
+    "typeOnly": true,
+    "source": "src/core/routineRunner.ts"
+  },
+  {
+    "name": "Vendor",
+    "typeOnly": false,
+    "source": "src/core/Vendor.ts"
+  },
+  {
+    "name": "VENDOR_ICON_MAP",
+    "typeOnly": false,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "VENDOR_PRESENTATIONS",
+    "typeOnly": false,
+    "source": "src/capabilities/metadata/vendorPresentation.ts"
+  },
+  {
+    "name": "VendorInfo",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/helpers.ts"
+  },
+  {
+    "name": "VendorLogo",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/logos.ts"
+  },
+  {
+    "name": "VendorOptionSchema",
+    "typeOnly": true,
+    "source": "src/domain/types/SharedTypes.ts"
+  },
+  {
+    "name": "VendorPresentation",
+    "typeOnly": true,
+    "source": "src/capabilities/metadata/vendorPresentation.ts"
+  },
+  {
+    "name": "VendorRegistryEntry",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/types.ts"
+  },
+  {
+    "name": "VENDORS",
+    "typeOnly": false,
+    "source": "src/core/Vendor.ts"
+  },
+  {
+    "name": "VendorTemplate",
+    "typeOnly": true,
+    "source": "src/connectors/vendors/types.ts"
+  },
+  {
+    "name": "VerificationContext",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "VerificationDecision",
+    "typeOnly": true,
+    "source": "src/core/routines/types.ts"
+  },
+  {
+    "name": "VIDEO_MODEL_REGISTRY",
+    "typeOnly": false,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "VIDEO_MODELS",
+    "typeOnly": false,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "VideoEditOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "VideoExtendOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "VideoGenerateOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "VideoJob",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "VideoModelCapabilities",
+    "typeOnly": true,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "VideoModelPricing",
+    "typeOnly": true,
+    "source": "src/domain/entities/VideoModel.ts"
+  },
+  {
+    "name": "VideoRemixOptions",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "VideoResponse",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "VideoStatus",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IVideoProvider.ts"
+  },
+  {
+    "name": "VisibilityContext",
+    "typeOnly": true,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "VisibilityPolicy",
+    "typeOnly": true,
+    "source": "src/memory/AccessControl.ts"
+  },
+  {
+    "name": "WordTimestamp",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IAudioProvider.ts"
+  },
+  {
+    "name": "WorkingMemoryAccess",
+    "typeOnly": true,
+    "source": "src/domain/interfaces/IToolContext.ts"
+  },
+  {
+    "name": "WorkingMemoryConfig",
+    "typeOnly": true,
+    "source": "src/domain/entities/Memory.ts"
+  },
+  {
+    "name": "WorkingMemoryPluginConfig",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.ts"
+  },
+  {
+    "name": "WorkingMemoryPluginNextGen",
+    "typeOnly": false,
+    "source": "src/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.ts"
+  },
+  {
+    "name": "WorkspaceLogEntry",
+    "typeOnly": true,
+    "source": "src/core/context-nextgen/plugins/SharedWorkspacePluginNextGen.ts"
+  },
+  {
+    "name": "writeFilterForPrincipals",
+    "typeOnly": false,
+    "source": "src/access/principals.ts"
+  }
+]

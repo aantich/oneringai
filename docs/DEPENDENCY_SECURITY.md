@@ -14,6 +14,42 @@ that consumer. `--report <path>` saves the result; `--keep-temp` retains the aud
 and installed tree for inspection. This command uses the npm registry and makes
 no model calls. `npm run release:check` also performs the local build/test/doc gates.
 
+## Unreleased beta corrections — 2026-11-08
+
+The Node build embeds MCP SDK code, so a clean consumer's newer installed SDK
+does not replace an older embedded copy. The dependency floor is now **1.32.0**;
+the qualified build uses **1.32.2**. This fixes the
+[cross-origin redirect advisory](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-6prh-2h8m-c8cw).
+MCP HTTP redirects remain supported within the same origin. Cross-origin redirects
+are blocked; configure the intended final server URL explicitly.
+
+The build also updates embedded `fast-uri` to **3.1.9**, `hono` to **4.13.17** and
+`@hono/node-server` to **2.1.6**, with compatible patched lower bounds. These remain
+within their existing major versions. Browser schema parity is requalified against
+the updated URI resolver rather than assuming unchanged behavior.
+
+`npm run build` captures actual esbuild dependency input files, package identities
+and hashes, then seals final ESM/CJS artifacts in `dist/bundle-provenance.json`.
+`npm run release:bundled` verifies that the artifacts and local inputs still match,
+enforces known patched floors and checks direct advisory entries for the exact
+embedded package paths in the maintainer production audit. An unavailable audit
+or an unreviewed embedded advisory fails this gate. External dependency findings
+are checked separately by the clean-consumer audit; this is not a claim that every
+maintainer dependency has zero audit entries.
+
+The corrected tarball passes clean ESM/CJS consumers on Node **22.13.1** and
+**24.20.0**, including the declared optional SDKs. Each current consumer audit has
+**zero high/critical entries** and **three moderate package entries** from the
+previously reviewed indirect UUID advisory. Its exact installed source still
+passes the existing applicability checks. The larger counts below describe the
+historical November 2 install, not this corrected tarball.
+
+The clean-consumer gate verifies the tarball's artifact hashes and provenance,
+then tests the actual public MCP adapter in both ESM and CJS against two local
+servers. It requires successful same-origin redirects and zero forwarded requests
+on cross-origin redirects, including custom headers and request bodies. It does
+not substitute a source import or the consumer's separate SDK for bundled code.
+
 ## Corrected dependency paths
 
 - `officeparser` is pinned to **8.0.0**, whose PDF.js dependency is **6.2.108**,

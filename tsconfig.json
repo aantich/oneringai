@@ -4,6 +4,9 @@
     "module": "ESNext",
     "lib": ["ES2022"],
     "moduleResolution": "bundler",
+    "paths": {
+      "#oneringai-media-bytes": ["./src/infrastructure/runtime/mediaTypes.ts"]
+    },
     "resolveJsonModule": true,
     "allowJs": false,
     "checkJs": false,

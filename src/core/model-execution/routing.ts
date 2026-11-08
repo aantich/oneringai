@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../infrastructure/runtime/primitives.js';
 import { InvalidConfigError } from '../../domain/errors/AIErrors.js';
 import type { InputItem } from '../../domain/entities/Message.js';
 import type { DataHandlingPolicy } from '../../domain/interfaces/IAdvancedInference.js';

@@ -1,3 +1,4 @@
+/** @browserCompatible Complete implementation; existing configured storage is required where applicable. */
 /**
  * routine_list - Lists routine definitions accessible to the caller.
  *

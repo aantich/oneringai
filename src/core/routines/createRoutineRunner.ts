@@ -1,5 +1,5 @@
 import { containAsyncRejection } from '../evidence/validation.js';
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../infrastructure/runtime/primitives.js';
 import type { Agent } from '../Agent.js';
 import { InvalidConfigError } from '../../domain/errors/AIErrors.js';
 import { evaluateCondition } from '../../domain/entities/Task.js';

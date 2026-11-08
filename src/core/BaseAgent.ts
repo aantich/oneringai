@@ -12,7 +12,7 @@
  * Use Agent instead.
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID } from '../infrastructure/runtime/primitives.js';
 import { EventEmitter } from 'eventemitter3';
 import { Connector } from './Connector.js';
 import { admitComposition, beginCompositionDirect, hasCompositionOwner, trackCompositionWork } from './execution/composition.js';

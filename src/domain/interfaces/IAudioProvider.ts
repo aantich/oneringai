@@ -2,6 +2,7 @@
  * Audio provider interfaces for Text-to-Speech and Speech-to-Text
  */
 
+import type { MediaBytes as Buffer } from '#oneringai-media-bytes';
 import type { IProvider } from './IProvider.js';
 import type { AudioFormat } from '../types/SharedTypes.js';
 import type { IVoiceInfo } from '../entities/SharedVoices.js';

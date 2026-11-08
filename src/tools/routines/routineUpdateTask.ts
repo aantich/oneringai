@@ -1,3 +1,4 @@
+/** @browserCompatible Complete implementation; existing configured storage is required where applicable. */
 /**
  * routine_update_task - Updates a specific task within a routine definition.
  */

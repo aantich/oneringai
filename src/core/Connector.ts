@@ -13,12 +13,13 @@
  */
 
 import { connectorAttemptObserver } from './connector-execution/attempts.js';
-import { randomUUID } from 'crypto';
+import { randomUUID } from '../infrastructure/runtime/primitives.js';
 import { ConnectorConfig, ConnectorAuth } from '../domain/entities/Connector.js';
 import { Vendor } from './Vendor.js';
-import { OAuthManager } from '../connectors/oauth/OAuthManager.js';
+import type { OAuthManager } from '../connectors/oauth/OAuthManager.js';
+import { createOAuthManager } from '../infrastructure/runtime/connectorAuth.js';
 import type { OAuthCallbackResult } from '../connectors/oauth/types.js';
-import { MemoryStorage } from '../connectors/oauth/infrastructure/storage/MemoryStorage.js';
+import { defaultTokenStorage } from '../infrastructure/runtime/storageDefaults.js';
 import type { ITokenStorage } from '../connectors/oauth/domain/ITokenStorage.js';
 import { StorageRegistry } from './StorageRegistry.js';
 import { CircuitBreaker } from '../infrastructure/resilience/CircuitBreaker.js';
@@ -207,7 +208,7 @@ export class Connector {
    * Resolves from StorageRegistry, falling back to MemoryStorage.
    */
   private static get defaultStorage(): ITokenStorage {
-    return StorageRegistry.resolve('oauthTokens', () => new MemoryStorage());
+    return StorageRegistry.resolve('oauthTokens', defaultTokenStorage);
   }
 
   /**
@@ -1062,12 +1063,12 @@ export class Connector {
       storageKey: auth.storageKey ?? this.name,
     };
 
-    this.oauthManager = new OAuthManager(oauthConfig);
+    this.oauthManager = createOAuthManager(oauthConfig);
   }
 
   private initJWTManager(auth: ConnectorAuth & { type: 'jwt' }): void {
     // JWT uses jwt_bearer flow via OAuthManager
-    this.oauthManager = new OAuthManager({
+    this.oauthManager = createOAuthManager({
       flow: 'jwt_bearer',
       clientId: auth.clientId,
       tokenUrl: auth.tokenUrl,

@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0-beta.2] — 2026-11-08
+
+- Match native schema resource normalization (including `#/`), metadata ID
+  discovery and duplicate detection, strict helper admission, and ignored branch
+  applicability in the CSP browser adapter. Preserve independent `validationSchema`
+  roots, literal data and before-dispatch failure behavior; Node retains AJV.
+
+- Rebuild embedded MCP code with SDK 1.32.2 (minimum 1.32.0), preserving same-origin
+  HTTP redirects while blocking cross-origin forwarding of custom headers and
+  request bodies. Update compatible embedded URI/Hono security patches. Add build
+  input/artifact provenance, an exact embedded-dependency audit, and ESM/CJS tarball
+  redirect regressions alongside the existing clean-consumer audit.
+- Complete browser helper schema processing for referenced annotation subtrees,
+  including optional local validation, before-dispatch admission and exact const/
+  enum literals. Match native empty-ID compiler caching without changing ordinary
+  duplicate-ID rejection or the Agent API.
+
+- Run the existing Agent/context API in browser pages and dedicated Workers as
+  well as Node.js. Add conditional browser exports/declarations, private platform
+  dependencies, explicit browser model-transport ownership, CSP-compatible dynamic
+  schema validation and a generated nine-tool browser catalog. Preserve native
+  Node APIs/defaults, ALS accounting, full tool inventory and Buffer extension
+  contracts. Custom plugins remain extensible through both existing registration
+  paths. Add a shared offline example, browser/recovery/scale/package checks and
+  [browser integration guidance](docs/BROWSER_AGENTS.md). Host-only auth/storage/tools
+  retain explicit limits.
+
+- Preserve the complete portable `shared`/`types` export surfaces and supporting
+  routine/principal/history APIs in browser builds. Correct browser schema URI
+  scopes (including URNs and nested IDs), retain Node's ignored collection
+  extensions, and preserve UTF-8 BOM bytes in GitHub file tools. AMOS now settles
+  prompts and shuts down cleanly when stdin closes before or during a read.
+
 - Preserve canonical developer instruction authority in ordinary Anthropic,
   Gemini GenerateContent, Gemini Interactions, and Vertex requests, matching the
   existing OpenAI contract and Anthropic native path. User context and tool

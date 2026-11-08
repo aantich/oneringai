@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'crypto';
+import { createHash, randomUUID } from '../infrastructure/runtime/primitives.js';
 import { Agent, type AgentRuntimeConfigSnapshot } from '../core/Agent.js';
 import type { ToolFunction } from '../domain/entities/Tool.js';
 import { ToolCallState } from '../domain/entities/Tool.js';

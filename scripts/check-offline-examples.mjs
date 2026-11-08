@@ -2,6 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 const examples = [
+  'examples/browser-node/node.ts',
   'examples/custom-context-plugin.ts',
   'examples/plugin-instructions-and-data.ts',
   'examples/agentic-evaluation-baseline.ts', 'examples/context-strategy-comparison.ts',

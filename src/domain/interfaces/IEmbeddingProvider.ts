@@ -1,3 +1,5 @@
+import type { MediaBytes as Buffer } from '#oneringai-media-bytes';
+
 /**
  * Embedding provider interface
  */

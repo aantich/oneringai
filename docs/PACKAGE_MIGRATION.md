@@ -6,6 +6,12 @@ The maintainer is Anton Antic, `anton.antich@gmail.com`.
 
 ## Current availability
 
+The current release target is **`oneringai@2.0.0-beta.2`**, which adds the same
+Agent API in browser pages/Workers and Node.js. Use `oneringai@next` or pin
+`oneringai@2.0.0-beta.2`. See [browser setup](BROWSER_AGENTS.md) and
+[beta.2 validation/publication](evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json).
+The following beta.1 publication details describe the first release.
+
 **Published — 2026-11-02:** [oneringai@2.0.0-beta.1](https://www.npmjs.com/package/oneringai)
 is owned by `aantich`. The registry assigns both `latest` and `next` to this first
 beta, so plain `npm i oneringai` currently installs a prerelease. You can explicitly
@@ -37,7 +43,7 @@ npm run build
 npm pack --ignore-scripts --pack-destination /tmp
 ```
 
-Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.0-beta.1.tgz`).
+Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.0-beta.2.tgz`).
 For a source example, install development dependencies in the checkout and run the
 [documented examples](../examples/README.md). A local tarball is not a registry
 release, and `--ignore-scripts` here is not a publish-gate bypass: build/check the

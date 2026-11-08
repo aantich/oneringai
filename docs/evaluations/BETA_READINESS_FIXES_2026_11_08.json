@@ -1,0 +1,676 @@
+{
+  "date": "2026-11-08",
+  "availability": "main source, unreleased",
+  "status": "R1–R3 fixed; offline release gates pass; publication not performed",
+  "source": {
+    "branch": "main",
+    "head": "f0cb9cd743c669a0f8e37431ce1930b9bc8d8e6e",
+    "workingTree": "uncommitted; existing browser/Node implementation plus authorized fixes",
+    "manifestVersion": "2.0.0-beta.1"
+  },
+  "resolves": [
+    {
+      "id": "R1",
+      "status": "fixed",
+      "change": "Patch the embedded MCP SDK and compatible URI/Hono copies; capture actual dependency inputs and seal final ESM/CJS output hashes; audit embedded paths separately from the clean consumer graph.",
+      "regression": "Actual packaged public MCPRegistry in ESM and CJS: same-origin connects, cross-origin blocked with zero forwarded requests."
+    },
+    {
+      "id": "R2",
+      "status": "fixed",
+      "change": "Index reached annotation schema subtrees and descendants through the existing resolver/traversal, preserving lexical scope, native ID registration and const/enum literal data. Admit both primary schema and validationSchema before model I/O.",
+      "regression": "Nullable data succeeds and invalid nested references fail before dispatch in Node, browser page and Worker."
+    },
+    {
+      "id": "R3",
+      "status": "fixed",
+      "change": "Do not cache anonymous empty/hash IDs as named roots; retain object-identity caching and ordinary duplicate-ID rejection.",
+      "regression": "Repeated anonymous schemas in one compiler pass in helper and collection profiles on both runtimes."
+    }
+  ],
+  "versions": {
+    "@hono/node-server": "2.1.6",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "fast-uri": "3.1.9",
+    "hono": "4.13.17"
+  },
+  "compatibility": {
+    "agentApi": "unchanged; same Agent and context plugin API in Node and browser",
+    "nodeSchemas": "native AJV implementation and caller lifetimes/options retained",
+    "hostBoundaries": "unchanged; browser-compatible tools/storage/auth still subject to documented host boundaries",
+    "mcpRedirects": "same-origin preserved; cross-origin forwarding deliberately blocked by patched SDK"
+  },
+  "checks": {
+    "releaseCheck": "pass end to end",
+    "build": "pass; 41 export files and ESM/CJS registry identity",
+    "typecheck": "pass",
+    "lint": "pass",
+    "unit": {
+      "passed": 9470,
+      "files": 435,
+      "node": "24.20.0"
+    },
+    "finalAuditGuardRegression": {
+      "passed": 3,
+      "files": 1,
+      "scope": "additional completeness assertions after broad suite"
+    },
+    "examples": {
+      "typecheck": "pass",
+      "offline": 30,
+      "stage00BuiltConsumerCompatibility": "pass"
+    },
+    "documentation": {
+      "publicAndFullApiGeneration": "pass",
+      "semanticExamples": 12,
+      "typeScriptBlocks": 500,
+      "markdownFiles": 160,
+      "check": "pass"
+    },
+    "bundled": {
+      "embeddedPackages": 60,
+      "finalJavaScriptArtifacts": 95,
+      "directAdvisories": 0,
+      "provenance": "dist/bundle-provenance.json",
+      "provenanceSha256": "2d8011743cafcdf50cb5f924efda6236cbcdf881d8b0430b7351ea043b8d9c02",
+      "verification": "actual consumed dependency files and final output set/hash match; missing SDK, old floors, altered inputs/artifacts and unavailable/incomplete audits fail closed"
+    },
+    "cleanConsumers": [
+      {
+        "node": "v24.20.0",
+        "runnerNode": "v24.20.0",
+        "status": "pass",
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "publicEntries": 11,
+        "documentFormats": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "coreTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+        "optionalTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+        "optionalSdkVersions": {
+          "@openai/codex-sdk": "0.149.1",
+          "@anthropic-ai/claude-agent-sdk": "0.3.319"
+        },
+        "mcpRedirects": {
+          "esm": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          },
+          "cjs": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          }
+        },
+        "audit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "optionalSdkAudit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "providerCalls": 0,
+        "finishedAt": "2026-11-08T20:09:15.280Z"
+      },
+      {
+        "node": "v22.13.1",
+        "runnerNode": "v24.20.0",
+        "status": "pass",
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "publicEntries": 11,
+        "documentFormats": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "coreTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+        "optionalTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+        "optionalSdkVersions": {
+          "@openai/codex-sdk": "0.149.1",
+          "@anthropic-ai/claude-agent-sdk": "0.3.319"
+        },
+        "mcpRedirects": {
+          "esm": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          },
+          "cjs": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          }
+        },
+        "audit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "optionalSdkAudit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "providerCalls": 0,
+        "finishedAt": "2026-11-08T20:09:22.158Z"
+      }
+    ],
+    "browser": {
+      "passed": true,
+      "bytes": 11149220,
+      "gzipBytes": 3150263,
+      "hosts": [
+        {
+          "engine": "chromium",
+          "version": "158.0.8127.18",
+          "page": {
+            "primaryAndValidationSchemas": 18,
+            "urn": true,
+            "nestedScopes": true,
+            "githubBom": true,
+            "annotationReferences": true,
+            "beforeDispatch": true
+          },
+          "worker": {
+            "primaryAndValidationSchemas": 18,
+            "urn": true,
+            "nestedScopes": true,
+            "githubBom": true,
+            "annotationReferences": true,
+            "beforeDispatch": true
+          },
+          "errors": [],
+          "violations": []
+        },
+        {
+          "engine": "firefox",
+          "version": "159.0",
+          "page": {
+            "primaryAndValidationSchemas": 18,
+            "urn": true,
+            "nestedScopes": true,
+            "githubBom": true,
+            "annotationReferences": true,
+            "beforeDispatch": true
+          },
+          "worker": {
+            "primaryAndValidationSchemas": 18,
+            "urn": true,
+            "nestedScopes": true,
+            "githubBom": true,
+            "annotationReferences": true,
+            "beforeDispatch": true
+          },
+          "errors": [],
+          "violations": []
+        },
+        {
+          "engine": "webkit",
+          "version": "27.2",
+          "page": {
+            "primaryAndValidationSchemas": 18,
+            "urn": true,
+            "nestedScopes": true,
+            "githubBom": true,
+            "annotationReferences": true,
+            "beforeDispatch": true
+          },
+          "worker": {
+            "primaryAndValidationSchemas": 18,
+            "urn": true,
+            "nestedScopes": true,
+            "githubBom": true,
+            "annotationReferences": true,
+            "beforeDispatch": true
+          },
+          "errors": [],
+          "violations": []
+        }
+      ],
+      "fixture": "actual packaged Agent on strict-CSP pages and dedicated Workers; scripted/local HTTP providers"
+    },
+    "schemaQualification": {
+      "node": "v22.13.1",
+      "adapter": {
+        "total": 150,
+        "matches": 150,
+        "mismatches": []
+      },
+      "strictCsp": {
+        "page": true,
+        "worker": true,
+        "oracle": "Node 22.13.1",
+        "schemaCases": 150
+      },
+      "broaderProbe": {
+        "cases": 462,
+        "dataValues": 38,
+        "mismatches": []
+      }
+    },
+    "originalMcpReproduction": {
+      "source": "http://127.0.0.1:54535",
+      "target": "http://127.0.0.1:54534",
+      "crossOrigin": true,
+      "captured": [],
+      "error": "MCPConnectionError: Failed to connect to MCP server 'offline-redirect-probe'",
+      "leakedSyntheticHeader": false
+    },
+    "originalPublicSchemaReproduction": {
+      "node": {
+        "results": [
+          {
+            "label": "nullable-schema",
+            "status": "success",
+            "value": {
+              "currency": null
+            }
+          },
+          {
+            "label": "nullable-validationSchema",
+            "status": "success",
+            "value": {
+              "currency": null
+            }
+          },
+          {
+            "label": "unresolved-schema",
+            "status": "failed",
+            "error": "InvalidConfigError: Invalid helper JSON schema: can't resolve reference #/missing from id #"
+          },
+          {
+            "label": "unresolved-validationSchema",
+            "status": "failed",
+            "error": "InvalidConfigError: Invalid helper JSON schema: can't resolve reference #/missing from id #"
+          }
+        ],
+        "calls": 2
+      },
+      "page": {
+        "results": [
+          {
+            "label": "nullable-schema",
+            "status": "success",
+            "value": {
+              "currency": null
+            }
+          },
+          {
+            "label": "nullable-validationSchema",
+            "status": "success",
+            "value": {
+              "currency": null
+            }
+          },
+          {
+            "label": "unresolved-schema",
+            "status": "failed",
+            "error": "InvalidConfigError: Invalid helper JSON schema: no such schema #/missing located in <https://oneringai.invalid/schema>"
+          },
+          {
+            "label": "unresolved-validationSchema",
+            "status": "failed",
+            "error": "InvalidConfigError: Invalid helper JSON schema: no such schema #/missing located in <https://oneringai.invalid/schema>"
+          }
+        ],
+        "calls": 2
+      },
+      "worker": {
+        "results": [
+          {
+            "label": "nullable-schema",
+            "status": "success",
+            "value": {
+              "currency": null
+            }
+          },
+          {
+            "label": "nullable-validationSchema",
+            "status": "success",
+            "value": {
+              "currency": null
+            }
+          },
+          {
+            "label": "unresolved-schema",
+            "status": "failed",
+            "error": "InvalidConfigError: Invalid helper JSON schema: no such schema #/missing located in <https://oneringai.invalid/schema>"
+          },
+          {
+            "label": "unresolved-validationSchema",
+            "status": "failed",
+            "error": "InvalidConfigError: Invalid helper JSON schema: no such schema #/missing located in <https://oneringai.invalid/schema>"
+          }
+        ],
+        "calls": 2
+      },
+      "browser": "158.0.8127.18"
+    },
+    "actualProviderAdapters": {
+      "scope": "Anthropic, Google, DeepSeek, Grok and generic adapter; nonstream and stream in Node, Chromium page and Worker; no live providers",
+      "results": {
+        "node": [
+          {
+            "vendor": "anthropic",
+            "model": "claude-sonnet-4-6",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "google",
+            "model": "gemini-2.5-flash",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "deepseek",
+            "model": "deepseek-v4-flash",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "grok",
+            "model": "grok-4-1-fast-reasoning",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "groq",
+            "model": "gpt-4o-mini",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          }
+        ],
+        "page": [
+          {
+            "vendor": "anthropic",
+            "model": "claude-sonnet-4-6",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "google",
+            "model": "gemini-2.5-flash",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "deepseek",
+            "model": "deepseek-v4-flash",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "grok",
+            "model": "grok-4-1-fast-reasoning",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "groq",
+            "model": "gpt-4o-mini",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          }
+        ],
+        "worker": [
+          {
+            "vendor": "anthropic",
+            "model": "claude-sonnet-4-6",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "google",
+            "model": "gemini-2.5-flash",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "deepseek",
+            "model": "deepseek-v4-flash",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "grok",
+            "model": "grok-4-1-fast-reasoning",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          },
+          {
+            "vendor": "groq",
+            "model": "gpt-4o-mini",
+            "output": "verified",
+            "stream": "verified",
+            "calls": 2,
+            "unknownUsage": 0
+          }
+        ]
+      }
+    },
+    "extractedPackage": {
+      "passed": true,
+      "node": [
+        {
+          "node": "v24.20.0",
+          "esm": true,
+          "cjs": true,
+          "protectedBuffer": true
+        },
+        {
+          "node": "v22.13.1",
+          "esm": true,
+          "cjs": true,
+          "protectedBuffer": true
+        }
+      ],
+      "declarations": [
+        {
+          "host": "page",
+          "files": 72,
+          "nodeAmbient": false
+        },
+        {
+          "host": "worker",
+          "files": 71,
+          "nodeAmbient": false
+        },
+        {
+          "host": "node",
+          "files": 745,
+          "nodeAmbient": true
+        }
+      ],
+      "portableExports": {
+        "shared": {
+          "declarations": 53,
+          "runtime": 27
+        },
+        "types": {
+          "declarations": 599,
+          "runtime": 147
+        }
+      },
+      "scope": "reused local dependencies; no clean-install claim"
+    },
+    "amos": {
+      "build": "pass",
+      "typecheck": "pass",
+      "unit": {
+        "passed": 214,
+        "files": 25,
+        "includedInBroadSuite": true
+      },
+      "offlineExamples": [
+        {
+          "file": "agent-runtime-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "composition-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "context-budget-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "context-selection-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "context-strategies-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "evidence-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "loop-policy-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "model-helpers-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "native-compaction-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "outcome-aware-tools-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "presets-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "routing-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "task-state-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "tool-outcomes-offline.ts",
+          "status": "pass"
+        }
+      ],
+      "compiledClosedStdinExit": 0
+    }
+  },
+  "artifactScope": "Clean installs validate the sealed JavaScript outputs. Evidence/documentation metadata is then refreshed and checked in the final extracted tarball; no recursively self-referencing tarball integrity claim.",
+  "remainingReleaseSteps": [
+    "Select a new beta version (the current manifest still names the already published beta.1).",
+    "Create the reviewed release commit/tag and rerun release guards for that version.",
+    "Publish only as a separate authorized release action."
+  ],
+  "limits": [
+    "Offline synthetic/local transports only; no real credentials or billable LLM calls.",
+    "Three moderate indirect UUID package audit entries remain visible and pass the existing source applicability checks; no high or critical consumer entries.",
+    "Embedded audit covers captured bundled code; unembedded installed dependencies are evaluated by the clean-consumer audit."
+  ],
+  "actions": {
+    "newBranches": 0,
+    "commits": 0,
+    "pushes": 0,
+    "publication": false,
+    "liveModelCalls": 0
+  },
+  "followupBeta2": {
+    "evidence": "BETA2_RELEASE_VALIDATION_2026_11_08.json",
+    "scope": "Earlier observations/results below are historical. Final review corrections, beta.2 validation and publication are tracked separately."
+  }
+}

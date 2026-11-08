@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../../infrastructure/runtime/primitives.js';
 import type { InputItem } from '../../../domain/entities/Message.js';
 import { BasePluginNextGen } from '../BasePluginNextGen.js';
 import type { ToolFunction, ToolExecutionOutcome, ToolContext } from '../../../domain/entities/Tool.js';

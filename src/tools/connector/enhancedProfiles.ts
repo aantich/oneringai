@@ -1,5 +1,5 @@
 import { containAsyncRejection } from '../../core/evidence/validation.js';
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../infrastructure/runtime/primitives.js';
 import { Connector, type ConnectorFetchOptions } from '../../core/Connector.js';
 import { createOutcomeTool } from '../../core/createOutcomeTool.js';
 import { createExecutionSignal, withAbort } from '../../core/tool-execution/cancellation.js';

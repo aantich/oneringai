@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash } from '../../../infrastructure/runtime/primitives.js';
 
 /** JSON object ordering is not state: JSONB and other faithful stores may reorder keys. */
 export function nativeJSON(value: unknown): string {

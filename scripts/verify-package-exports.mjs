@@ -6,14 +6,11 @@ const packageRoot = fileURLToPath(new URL('..', import.meta.url));
 const manifest = JSON.parse(await readFile(packagePath, 'utf8'));
 const required = new Set([manifest.main, manifest.module, manifest.types]);
 
-for (const target of Object.values(manifest.exports ?? {})) {
+function collectTargets(target) {
   if (typeof target === 'string') required.add(target);
-  else if (target && typeof target === 'object') {
-    for (const path of Object.values(target)) {
-      if (typeof path === 'string') required.add(path);
-    }
-  }
+  else if (target && typeof target === 'object') for (const child of Object.values(target)) collectTargets(child);
 }
+collectTargets(manifest.exports ?? {});
 
 const missing = [];
 for (const path of required) {

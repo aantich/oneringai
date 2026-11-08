@@ -1,3 +1,4 @@
+import { byteLength } from '../../infrastructure/runtime/primitives.js';
 import { InvalidConfigError } from '../../domain/errors/AIErrors.js';
 import type { EvidenceReference } from '../../domain/interfaces/IEvidenceStorage.js';
 import type { RoutineObservation, RoutineSource } from './types.js';
@@ -8,12 +9,12 @@ export function boundedData<T>(value: T, maximum: number): { data: T; bytes: num
   const json = JSON.stringify(value, (key, child) => {
     if (typeof child === 'function' || typeof child === 'symbol' || typeof child === 'bigint'
       || (typeof child === 'number' && !Number.isFinite(child))) throw new InvalidConfigError('Routine observations require JSON data');
-    estimate += Buffer.byteLength(key) + (typeof child === 'string' ? Buffer.byteLength(child) : 8);
+    estimate += byteLength(key) + (typeof child === 'string' ? byteLength(child) : 8);
     if (estimate > maximum) throw new InvalidConfigError('Routine observation capacity exceeded');
     return child;
   });
   if (json === undefined) throw new InvalidConfigError('Routine observations require JSON data');
-  const bytes = Buffer.byteLength(json);
+  const bytes = byteLength(json);
   if (bytes > maximum) throw new InvalidConfigError('Routine observation capacity exceeded');
   return { data: JSON.parse(json) as T, bytes };
 }

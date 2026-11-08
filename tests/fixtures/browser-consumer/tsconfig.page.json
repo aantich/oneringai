@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "strict": true, "noEmit": true, "target": "ES2022", "module": "ESNext",
+    "moduleResolution": "bundler", "customConditions": ["browser"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"], "types": [], "skipLibCheck": false
+  },
+  "files": ["page.ts"]
+}

@@ -1,3 +1,4 @@
+import { byteLength } from '../../infrastructure/runtime/primitives.js';
 /**
  * Memory entities for WorkingMemory
  *
@@ -545,7 +546,7 @@ export function calculateEntrySize(value: unknown): number {
   // Use Buffer.byteLength for accurate UTF-8 byte count
   // This handles multi-byte characters correctly (e.g., '中文'.length = 2, but byte length = 6)
   if (typeof Buffer !== 'undefined') {
-    return Buffer.byteLength(serialized, 'utf8');
+    return byteLength(serialized, 'utf8');
   }
   // Fallback for environments without Buffer (browser)
   return new Blob([serialized]).size;

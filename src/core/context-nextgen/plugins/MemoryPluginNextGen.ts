@@ -61,7 +61,7 @@
  *     blipped.
  */
 
-import { randomBytes } from 'crypto';
+import { randomHex } from '../../../infrastructure/runtime/primitives.js';
 import type { IContextPluginNextGen, ITokenEstimator } from '../types.js';
 import type { ToolFunction } from '../../../domain/entities/Tool.js';
 import type {
@@ -1511,7 +1511,7 @@ function escapeInline(s: string): string {
  *  cryptographically random nonce. The preamble inside tells the LLM that
  *  the content is data, not directives. */
 function wrapMemoryContent(body: string): string {
-  const nonce = randomBytes(8).toString('hex');
+  const nonce = randomHex(8);
   const open = `<memory-context:${nonce}>`;
   const close = `</memory-context:${nonce}>`;
   const preamble =

@@ -1,3 +1,4 @@
+import { encodeUTF8, encodeBase64 } from '../../infrastructure/runtime/primitives.js';
 /**
  * Google API Tools - Shared Types and Helpers
  *
@@ -330,7 +331,7 @@ export function buildMimeMessage(options: {
   lines.push('Content-Transfer-Encoding: base64');
   lines.push('');
   // Base64-encode the HTML body, wrapped to 76-char lines per RFC 2822 Section 6.8
-  const b64Body = Buffer.from(options.body, 'utf-8').toString('base64');
+  const b64Body = encodeBase64(encodeUTF8(options.body));
   lines.push(b64Body.replace(/.{1,76}/g, '$&\r\n').trimEnd());
 
   return lines.join('\r\n');
@@ -340,8 +341,7 @@ export function buildMimeMessage(options: {
  * Encode a MIME message string to base64url (RFC 4648 Section 5) for Gmail API.
  */
 export function encodeBase64Url(input: string): string {
-  return Buffer.from(input, 'utf-8')
-    .toString('base64')
+  return encodeBase64(encodeUTF8(input))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');

@@ -1,3 +1,4 @@
+import { env } from '../infrastructure/runtime/environment.js';
 /**
  * Provider Factory - creates the right provider from a Connector
  *
@@ -9,14 +10,14 @@ import { Connector } from './Connector.js';
 import { Vendor } from './Vendor.js';
 import { ITextProvider } from '../domain/interfaces/ITextProvider.js';
 import { ProviderConfig } from '../domain/types/ProviderConfig.js';
-import { createHash } from 'node:crypto';
+import { createHash } from '../infrastructure/runtime/primitives.js';
 import { InvalidConfigError } from '../domain/errors/AIErrors.js';
 
 // Import providers
 import { OpenAITextProvider } from '../infrastructure/providers/openai/OpenAITextProvider.js';
 import { AnthropicTextProvider } from '../infrastructure/providers/anthropic/AnthropicTextProvider.js';
 import { GoogleTextProvider } from '../infrastructure/providers/google/GoogleTextProvider.js';
-import { VertexAITextProvider } from '../infrastructure/providers/vertex/VertexAITextProvider.js';
+import { createVertexProvider } from '../infrastructure/runtime/hostProvider.js';
 import { GenericOpenAIProvider } from '../infrastructure/providers/generic/GenericOpenAIProvider.js';
 import { GrokTextProvider } from '../infrastructure/providers/grok/GrokTextProvider.js';
 import { DeepSeekTextProvider } from '../infrastructure/providers/deepseek/DeepSeekTextProvider.js';
@@ -66,11 +67,11 @@ export function capturedProviderEndpoint(provider: ITextProvider): string | unde
 function configuredNativeEndpoint(connector: Connector): string {
   const options = connector.getOptions();
   const openai = connector.vendor === Vendor.OpenAI;
-  const envURL = openai ? process.env.OPENAI_BASE_URL : connector.vendor === Vendor.Anthropic ? process.env.ANTHROPIC_BASE_URL : undefined;
+  const envURL = openai ? env('OPENAI_BASE_URL') : connector.vendor === Vendor.Anthropic ? env('ANTHROPIC_BASE_URL') : undefined;
   return createHash('sha256').update(JSON.stringify({ vendor: connector.vendor,
     baseURL: connector.baseURL || envURL || getVendorDefaultBaseURL(connector.vendor ?? ''),
-    ...(openai ? { organization: options.organization === undefined ? process.env.OPENAI_ORG_ID ?? null : options.organization,
-      project: options.project === undefined ? process.env.OPENAI_PROJECT_ID ?? null : options.project } : {}),
+    ...(openai ? { organization: options.organization === undefined ? env('OPENAI_ORG_ID') ?? null : options.organization,
+      project: options.project === undefined ? env('OPENAI_PROJECT_ID') ?? null : options.project } : {}),
     ...(connector.vendor === Vendor.Anthropic ? { apiVersion: options.anthropicVersion } : {}),
   })).digest('hex');
 }
@@ -137,7 +138,7 @@ function createProviderInstance(connector: Connector): ITextProvider {
       return new GoogleTextProvider(config);
 
     case Vendor.GoogleVertex:
-      return new VertexAITextProvider({
+      return createVertexProvider({
         ...config,
         projectId: connector.getOptions().projectId as string || '',
         location: connector.getOptions().location as string || 'us-central1',

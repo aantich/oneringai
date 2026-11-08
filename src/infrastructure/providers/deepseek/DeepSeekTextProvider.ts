@@ -1,6 +1,7 @@
-import { createHash } from 'crypto';
+import { browserSDKOptions } from '../../runtime/environment.js';
+import { createHash } from '../../runtime/primitives.js';
 import OpenAI from 'openai';
-import { modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
+import { modelTransportClient, modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
 import type { ProviderCapabilities } from '../../../domain/interfaces/IProvider.js';
 import type {
   ModelCapabilities,
@@ -98,6 +99,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
       timeout: this.getTimeout(),
       maxRetries: this.getMaxRetries(),
       fetch: modelExecutionFetch,
+      ...browserSDKOptions,
     });
     if (host.profile.id === 'official') {
       this.betaClient = new OpenAI({
@@ -106,6 +108,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
         timeout: this.getTimeout(),
         maxRetries: this.getMaxRetries(),
         fetch: modelExecutionFetch,
+      ...browserSDKOptions,
       });
     }
     registerModelTransport(this);
@@ -121,7 +124,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
       try {
         if (model.transport === 'responses') {
           const params = this.converter.convertResponsesRequest(options, model);
-          const response = await this.client.responses.create(params as never, ...modelRequestOptions(options));
+          const response = await modelTransportClient(this.client, options.signal).responses.create(params as never, ...modelRequestOptions(options));
           return this.converter.convertResponsesResponse(
             response as unknown as Record<string, any>,
             options.model,
@@ -156,7 +159,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
           ...this.converter.convertResponsesRequest(options, model),
           stream: true,
         };
-        stream = await this.client.responses.create(params as never, ...modelRequestOptions(options));
+        stream = await modelTransportClient(this.client, options.signal).responses.create(params as never, ...modelRequestOptions(options));
         const streamConverter = new OpenAIResponsesStreamConverter();
         yield* streamConverter.convertStream(stream);
       } else {
@@ -317,7 +320,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
       options.tools?.some((tool) =>
         tool.type === 'function' && tool.function.strict === true
       );
-    return requiresStrictBeta ? this.betaClient! : this.client;
+    return modelTransportClient(requiresStrictBeta ? this.betaClient! : this.client, options.signal);
   }
 
   private findCanonicalModel(apiModel: string): string | undefined {

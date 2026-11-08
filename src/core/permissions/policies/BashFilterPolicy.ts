@@ -12,7 +12,7 @@
  * returns deny with needsApproval.
  */
 
-import { createHash } from 'crypto';
+import { createHash } from '../../../infrastructure/runtime/primitives.js';
 import type { IPermissionPolicy, PolicyContext, PolicyDecision, IPermissionPolicyFactory, StoredPolicyDefinition } from '../types.js';
 
 export interface BashFilterConfig {

@@ -1,3 +1,4 @@
+import { env } from '../../runtime/environment.js';
 /**
  * OpenAI Responses API Streaming Converter
  *
@@ -72,7 +73,7 @@ export class OpenAIResponsesStreamConverter {
     try {
     for await (const event of stream) {
       // Debug logging
-      if (process.env.DEBUG_OPENAI) {
+      if (env('DEBUG_OPENAI')) {
         console.error('[DEBUG] Responses API event:', event.type);
       }
 
@@ -445,7 +446,7 @@ export class OpenAIResponsesStreamConverter {
 
         // Handle other event types if needed
         default:
-          if (process.env.DEBUG_OPENAI) {
+          if (env('DEBUG_OPENAI')) {
             console.error('[DEBUG] Unhandled Responses API event type:', (event as any).type);
           }
       }

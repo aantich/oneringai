@@ -1,0 +1,152 @@
+[
+  {
+    "name": "AfterToolContext",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "AgentEventName",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AgentEvents",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AgenticLoopEventName",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AgenticLoopEvents",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "ApprovalResult",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "ApproveToolContext",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "AsyncContinuationStartEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AsyncToolCompleteEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AsyncToolErrorEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AsyncToolStartedEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AsyncToolTimeoutEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "AuditEntry",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/ExecutionContext.ts"
+  },
+  {
+    "name": "BeforeToolContext",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "ExecutionCompleteEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "ExecutionConfig",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "ExecutionContext",
+    "typeOnly": false,
+    "source": "src/capabilities/agents/ExecutionContext.ts"
+  },
+  {
+    "name": "ExecutionMetrics",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/ExecutionContext.ts"
+  },
+  {
+    "name": "ExecutionStartEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "HistoryMode",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/ExecutionContext.ts"
+  },
+  {
+    "name": "Hook",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "HookConfig",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "HookManager",
+    "typeOnly": false,
+    "source": "src/capabilities/agents/HookManager.ts"
+  },
+  {
+    "name": "HookName",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "LLMRequestEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "LLMResponseEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "ModifyingHook",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "ToolCompleteEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  },
+  {
+    "name": "ToolModification",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/HookTypes.ts"
+  },
+  {
+    "name": "ToolStartEvent",
+    "typeOnly": true,
+    "source": "src/capabilities/agents/types/EventTypes.ts"
+  }
+]

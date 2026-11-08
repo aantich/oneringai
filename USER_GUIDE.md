@@ -1,6 +1,6 @@
 # OneRingAI v2 User Guide
 
-**Documented version:** `oneringai@2.0.0-beta.1` · **Reviewed:** 2026-11-02
+**Documented version:** `oneringai@2.0.0-beta.2` · **Reviewed:** 2026-11-08
 
 **Published beta:** [npm package](https://www.npmjs.com/package/oneringai).
 Both `latest` and `next` currently select this beta; `npm install oneringai` works.
@@ -69,8 +69,8 @@ and storage objects must already exist where indicated. Host functions such as
 points, not library exports. Type/interface sketches show only the fields under
 discussion; consult the generated reference for full public declarations.
 
-Use `import type` for types and documented package subpaths for runtime/browser
-adapters. Native responses use `output_text`; Agent Runtime results use
+Use `import type` for types and documented package subpaths for optional runtime
+adapters. Browser Agents import from the same `oneringai` root. Native responses use `output_text`; Agent Runtime results use
 `outputText`. Always destroy agents/runtimes and close MCP/database/media resources.
 Examples making actual model calls require provider credentials and may be billable.
 Offline demonstrations are explicitly identified in the examples index.
@@ -148,13 +148,20 @@ Offline demonstrations are explicitly identified in the examples index.
 
 ### Installation
 
-Use Node.js 22.13+ or 24+. Install the published unscoped v2 beta:
+Use Node.js 22.13+ or 24+. Agents also use the **same API in browsers and Node.js**
+since 2.0.0-beta.2: no separate Agent class, async factory
+or application bootstrap. Browser-aware bundlers select compatible imports;
+TypeScript needs `customConditions: ["browser"]`. See [Browser Agents](docs/BROWSER_AGENTS.md)
+for page/Worker setup, extensible context plugins, storage/credential injection,
+tool boundaries and measured scale.
+
+Install the published unscoped v2 beta:
 
 ```bash
 npm install oneringai
 ```
 
-The published package is `oneringai@2.0.0-beta.1`; both `latest` and `next` currently
+The documented package is `oneringai@2.0.0-beta.2`; both `latest` and `next`
 select this beta. For source development, follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
 ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
 native desktop dependencies are needed only for their respective integrations.
@@ -9041,7 +9048,7 @@ input. Tools and permissions remain on the shared `ToolManager`.
 OpenAI retains the `developer` instruction role; Claude uses `system`,
 Gemini/Vertex use `systemInstruction`, and Gemini Interactions uses
 `system_instruction`. The Claude/Gemini/Vertex adapter correction is available
-in source and is not yet included in the published beta. The contributor API is
+in 2.0.0-beta.2. The contributor API is
 already included in that beta. See [Creating context plugins](#creating-context-plugins)
 for the complete implementation and agent wiring.
 

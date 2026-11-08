@@ -1,0 +1,1834 @@
+{
+  "package": "oneringai@2.0.0-beta.2",
+  "date": "2026-11-08",
+  "branch": "main",
+  "sourceBase": "f0cb9cd743c669a0f8e37431ce1930b9bc8d8e6e",
+  "authorization": "fix all; then commit, push and release to npm as beta2",
+  "status": "all candidate gates passed; publication pending",
+  "publicationPerformed": false,
+  "liveModelCalls": 0,
+  "compatibility": "Same public Agent/context/plugin API in browser and Node; native Node AJV/defaults/ALS/Buffer contracts retained",
+  "fixes": [
+    {
+      "id": "R1",
+      "change": "Use native AJV ID normalization for resource scopes, references and compiler identity, including #/."
+    },
+    {
+      "id": "R2",
+      "change": "Discover IDs through the native all-keys traversal independently of applicable schema traversal; preserve metadata literals and captured reference targets."
+    },
+    {
+      "id": "R3",
+      "change": "Preserve strict helper admission for property/pattern overlap and non-tuple additionalItems without weakening Node."
+    },
+    {
+      "id": "R4",
+      "change": "Use generated AJV validation-keyword metadata to skip inactive conditional/collection branches; explicitly referenced targets remain active and whole-schema metadata validation remains."
+    }
+  ],
+  "checks": {
+    "build": "pass; 41 exports and ESM/CJS singleton identity",
+    "typecheck": "pass",
+    "lint": "pass",
+    "unit": {
+      "passed": 9478,
+      "files": 435,
+      "node": "24.20.0"
+    },
+    "examples": {
+      "typecheck": "pass",
+      "offline": 30,
+      "stage00BuiltConsumerCompatibility": "pass"
+    },
+    "documentation": {
+      "publicAndFullApiGeneration": "pass",
+      "check": "pass",
+      "typescriptBlocks": 500,
+      "completeExamples": 12,
+      "markdownFiles": 160
+    },
+    "bundled": {
+      "packages": 60,
+      "javaScriptArtifacts": 95,
+      "directAdvisories": 0,
+      "provenance": "dist/bundle-provenance.json"
+    },
+    "schema": {
+      "nativeOracle": "v22.13.1",
+      "productionAdapter": {
+        "total": 186,
+        "matches": 186,
+        "mismatches": []
+      },
+      "broaderProbe": {
+        "cases": 462,
+        "dataValues": 38,
+        "mismatches": []
+      },
+      "strictCsp": {
+        "page": true,
+        "worker": true,
+        "errors": [],
+        "violations": []
+      },
+      "publicReviewReproductions": {
+        "node": {
+          "results": [
+            {
+              "label": "trailing-hash-slash",
+              "local": false,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "trailing-hash-slash",
+              "local": true,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "content-schema-id",
+              "local": false,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "content-schema-id",
+              "local": true,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "duplicate-metadata-id",
+              "local": false,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: reference \"https://fixture.invalid/child\" resolves to more than one schema"
+            },
+            {
+              "label": "duplicate-metadata-id",
+              "local": true,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: reference \"https://fixture.invalid/child\" resolves to more than one schema"
+            },
+            {
+              "label": "strict-pattern-overlap",
+              "local": false,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: strict mode: property currency matches pattern ^currency$ (use allowMatchingProperties)"
+            },
+            {
+              "label": "strict-pattern-overlap",
+              "local": true,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: strict mode: property currency matches pattern ^currency$ (use allowMatchingProperties)"
+            },
+            {
+              "label": "strict-additionalItems",
+              "local": false,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: strict mode: \"additionalItems\" is ignored when \"items\" is not an array of schemas"
+            },
+            {
+              "label": "strict-additionalItems",
+              "local": true,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: strict mode: \"additionalItems\" is ignored when \"items\" is not an array of schemas"
+            },
+            {
+              "label": "inactive-conditional",
+              "local": false,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "inactive-conditional",
+              "local": true,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            }
+          ],
+          "calls": 6
+        },
+        "page": {
+          "results": [
+            {
+              "label": "trailing-hash-slash",
+              "local": false,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "trailing-hash-slash",
+              "local": true,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "content-schema-id",
+              "local": false,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "content-schema-id",
+              "local": true,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "duplicate-metadata-id",
+              "local": false,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: Duplicate schema ID"
+            },
+            {
+              "label": "duplicate-metadata-id",
+              "local": true,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: Duplicate schema ID"
+            },
+            {
+              "label": "strict-pattern-overlap",
+              "local": false,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: Property matches patternProperties"
+            },
+            {
+              "label": "strict-pattern-overlap",
+              "local": true,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: Property matches patternProperties"
+            },
+            {
+              "label": "strict-additionalItems",
+              "local": false,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: additionalItems requires tuple items"
+            },
+            {
+              "label": "strict-additionalItems",
+              "local": true,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: additionalItems requires tuple items"
+            },
+            {
+              "label": "inactive-conditional",
+              "local": false,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "inactive-conditional",
+              "local": true,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            }
+          ],
+          "calls": 6
+        },
+        "worker": {
+          "results": [
+            {
+              "label": "trailing-hash-slash",
+              "local": false,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "trailing-hash-slash",
+              "local": true,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "content-schema-id",
+              "local": false,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "content-schema-id",
+              "local": true,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "duplicate-metadata-id",
+              "local": false,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: Duplicate schema ID"
+            },
+            {
+              "label": "duplicate-metadata-id",
+              "local": true,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: Duplicate schema ID"
+            },
+            {
+              "label": "strict-pattern-overlap",
+              "local": false,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: Property matches patternProperties"
+            },
+            {
+              "label": "strict-pattern-overlap",
+              "local": true,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: Property matches patternProperties"
+            },
+            {
+              "label": "strict-additionalItems",
+              "local": false,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: additionalItems requires tuple items"
+            },
+            {
+              "label": "strict-additionalItems",
+              "local": true,
+              "status": "failed",
+              "error": "InvalidConfigError: Invalid helper JSON schema: additionalItems requires tuple items"
+            },
+            {
+              "label": "inactive-conditional",
+              "local": false,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            },
+            {
+              "label": "inactive-conditional",
+              "local": true,
+              "status": "success",
+              "value": {
+                "currency": "USD"
+              }
+            }
+          ],
+          "calls": 6
+        },
+        "browser": "158.0.8127.18"
+      }
+    },
+    "browser": {
+      "bytes": 11206038,
+      "gzipBytes": 3159802,
+      "hosts": [
+        {
+          "engine": "chromium",
+          "version": "158.0.8127.18",
+          "normal": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "retry": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 5,
+            "estimatedTokens": 2695
+          },
+          "worker": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "pageRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "workerRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "largePage": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 63.89999961853027,
+            "runMs": 103.69999980926514,
+            "serializationMs": 6,
+            "timerLagMs": 110.10000038146973,
+            "heapBefore": 39600000,
+            "heapAfter": 39600000,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "largeWorker": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 54.5,
+            "runMs": 85.80000019073486,
+            "serializationMs": 5.299999237060547,
+            "timerLagMs": 91.09999942779541,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "errors": [],
+          "violations": []
+        },
+        {
+          "engine": "firefox",
+          "version": "159.0",
+          "normal": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "retry": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 5,
+            "estimatedTokens": 2695
+          },
+          "worker": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "pageRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "workerRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "largePage": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 47,
+            "runMs": 74,
+            "serializationMs": 2,
+            "timerLagMs": 76,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "largeWorker": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 42,
+            "runMs": 76,
+            "serializationMs": 3,
+            "timerLagMs": 79,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "errors": [],
+          "violations": []
+        },
+        {
+          "engine": "webkit",
+          "version": "27.2",
+          "normal": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "retry": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 5,
+            "estimatedTokens": 2695
+          },
+          "worker": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "pageRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "workerRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "largePage": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 41,
+            "runMs": 65,
+            "serializationMs": 3,
+            "timerLagMs": 69,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "largeWorker": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 44,
+            "runMs": 72,
+            "serializationMs": 3,
+            "timerLagMs": 75,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "errors": [],
+          "violations": []
+        }
+      ],
+      "requests": 273,
+      "passed": true
+    },
+    "extractedPackage": {
+      "node": [
+        {
+          "node": "v24.20.0",
+          "esm": true,
+          "cjs": true,
+          "protectedBuffer": true
+        },
+        {
+          "node": "v22.13.1",
+          "esm": true,
+          "cjs": true,
+          "protectedBuffer": true
+        }
+      ],
+      "declarations": [
+        {
+          "host": "page",
+          "files": 72,
+          "nodeAmbient": false
+        },
+        {
+          "host": "worker",
+          "files": 71,
+          "nodeAmbient": false
+        },
+        {
+          "host": "node",
+          "files": 745,
+          "nodeAmbient": true
+        }
+      ],
+      "portableExports": {
+        "shared": {
+          "declarations": 53,
+          "runtime": 27
+        },
+        "types": {
+          "declarations": 599,
+          "runtime": 147
+        }
+      },
+      "boundaries": {
+        "browserInputs": 19,
+        "browserBytes": 10752804,
+        "serverPackageImport": true,
+        "browserRoot": true,
+        "originalSources": 925,
+        "dependencySources": [
+          "../../node_modules/simple-icons/index.mjs",
+          "../node_modules/@anthropic-ai/sdk/internal/tslib.js",
+          "../node_modules/@anthropic-ai/sdk/internal/tslib.mjs",
+          "../node_modules/@anthropic-ai/sdk/src/_vendor/partial-json-parser/parser.ts",
+          "../node_modules/@anthropic-ai/sdk/src/client.ts",
+          "../node_modules/@anthropic-ai/sdk/src/core/api-promise.ts",
+          "../node_modules/@anthropic-ai/sdk/src/core/credentials.ts",
+          "../node_modules/@anthropic-ai/sdk/src/core/error.ts",
+          "../node_modules/@anthropic-ai/sdk/src/core/middleware.ts",
+          "../node_modules/@anthropic-ai/sdk/src/core/pagination.ts",
+          "../node_modules/@anthropic-ai/sdk/src/core/resource.ts",
+          "../node_modules/@anthropic-ai/sdk/src/core/streaming.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/constants.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/decoders/jsonl.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/decoders/line.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/detect-platform.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/errors.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/headers.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/message-stream-utils.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/node.browser.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/parse.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/qs/formats.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/qs/stringify.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/qs/utils.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/request-options.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/request-signal.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/shims.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/stainless-helper-header.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/to-file.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/uploads.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/abort.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/async-queue.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/backoff.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/base64.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/bytes.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/env.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/log.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/path.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/promise.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/query.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/sleep.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/time.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/uuid.ts",
+          "../node_modules/@anthropic-ai/sdk/src/internal/utils/values.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/BetaMessageStream.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/MessageStream.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/beta-parser.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/credentials/credential-chain.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/credentials/identity-token.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/credentials/oidc-federation.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/credentials/token-cache.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/credentials/types.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/credentials/user-oauth.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/environments/poller.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/environments/worker.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/helper-client.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/internal/BetaToolRunnerStream.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/parser.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/tools/BetaRunnableTool.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/tools/BetaToolRunner.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/tools/SessionToolRunner.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/tools/ToolError.ts",
+          "../node_modules/@anthropic-ai/sdk/src/lib/transform-json-schema.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/agents/agents.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/agents/versions.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/beta.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/deployment-runs.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/deployments.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/dreams.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/environments/environments.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/environments/work.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/files.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/memory-stores/memories.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/memory-stores/memory-stores.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/memory-stores/memory-versions.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/messages/batches.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/messages/messages.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/models.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/analytics.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/apps/apps.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/apps/chat/chat.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/apps/chat/projects.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/artifacts.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/connectors.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/cost-report.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/plugins.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/skills.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/summaries.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/usage-report.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/user-cost-report.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/user-usage-report.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/analytics/users.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/api-keys.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/compliance-settings.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/external-keys.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/federation/federation.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/federation/issuers.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/federation/rules/rules.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/federation/rules/workspaces.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/invites.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/organization.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/plugin-marketplaces.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/plugins/installation-settings.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/plugins/plugins.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/plugins/shares.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/plugins/versions.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/rate-limits.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/rbac-groups/members.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/rbac-groups/rbac-groups.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/rbac-roles/permissions.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/rbac-roles/rbac-roles.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/service-accounts/service-accounts.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/service-accounts/workspaces.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/spend-limits/effective.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/spend-limits/increase-requests.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/spend-limits/spend-limits.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/users.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/workspaces/members.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/workspaces/rate-limits.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/workspaces/service-accounts.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/organization/workspaces/workspaces.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/sessions/events.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/sessions/resources.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/sessions/sessions.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/sessions/threads/events.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/sessions/threads/threads.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/skills/skills.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/skills/versions.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/tunnels/certificates.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/tunnels/tunnels.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/user-profiles.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/vaults/credentials.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/vaults/vaults.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/beta/webhooks.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/completions.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/files.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/messages/batches.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/messages/messages.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/models.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/api-keys.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/compliance-settings.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/external-keys.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/federation/federation.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/federation/issuers.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/federation/rules/rules.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/federation/rules/workspaces.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/invites.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/organization.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/rate-limits.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/service-accounts/service-accounts.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/service-accounts/workspaces.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/users.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/workspaces/members.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/workspaces/rate-limits.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/workspaces/service-accounts.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/organization/workspaces/workspaces.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/skills/skills.ts",
+          "../node_modules/@anthropic-ai/sdk/src/resources/skills/versions.ts",
+          "../node_modules/@anthropic-ai/sdk/src/tools/agent-toolset/node.browser.ts",
+          "../node_modules/@anthropic-ai/sdk/src/tools/agent-toolset/sync-interval.ts",
+          "../node_modules/@anthropic-ai/sdk/src/version.ts",
+          "../node_modules/@google/genai/src/_afc.ts",
+          "../node_modules/@google/genai/src/_api_client.ts",
+          "../node_modules/@google/genai/src/_base_transformers.ts",
+          "../node_modules/@google/genai/src/_base_url.ts",
+          "../node_modules/@google/genai/src/_common.ts",
+          "../node_modules/@google/genai/src/_transformers.ts",
+          "../node_modules/@google/genai/src/batches.ts",
+          "../node_modules/@google/genai/src/caches.ts",
+          "../node_modules/@google/genai/src/chats.ts",
+          "../node_modules/@google/genai/src/converters/_batches_converters.ts",
+          "../node_modules/@google/genai/src/converters/_caches_converters.ts",
+          "../node_modules/@google/genai/src/converters/_documents_converters.ts",
+          "../node_modules/@google/genai/src/converters/_files_converters.ts",
+          "../node_modules/@google/genai/src/converters/_filesearchstores_converters.ts",
+          "../node_modules/@google/genai/src/converters/_live_converters.ts",
+          "../node_modules/@google/genai/src/converters/_models_converters.ts",
+          "../node_modules/@google/genai/src/converters/_operations_converters.ts",
+          "../node_modules/@google/genai/src/converters/_tokens_converters.ts",
+          "../node_modules/@google/genai/src/converters/_tunings_converters.ts",
+          "../node_modules/@google/genai/src/cross/_cross_uploader.ts",
+          "../node_modules/@google/genai/src/documents.ts",
+          "../node_modules/@google/genai/src/errors.ts",
+          "../node_modules/@google/genai/src/files.ts",
+          "../node_modules/@google/genai/src/filesearchstores.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/agents-create.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/agents-delete.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/agents-get.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/agents-list.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/credentials-create.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/credentials-delete.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/credentials-get.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/credentials-list.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/credentials-update.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/environments-create-environment.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/environments-delete-environment.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/environments-files-list.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/environments-get-environment.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/environments-internal-start-upload.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/environments-list-environments.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/interactions-cancel.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/interactions-create.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/interactions-delete.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/interactions-get.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/triggers-create.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/triggers-delete.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/triggers-get.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/triggers-list-executions.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/triggers-list.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/triggers-run.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/triggers-update.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/voices-create.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/voices-delete.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/voices-get.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/voices-list.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/webhooks-create.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/webhooks-delete.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/webhooks-get.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/webhooks-list.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/webhooks-ping.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/webhooks-rotate-signing-secret.ts",
+          "../node_modules/@google/genai/src/gaos/funcs/webhooks-update.ts",
+          "../node_modules/@google/genai/src/gaos/google-genai.ts",
+          "../node_modules/@google/genai/src/gaos/hooks/google-genai-auth.ts",
+          "../node_modules/@google/genai/src/gaos/hooks/hooks.ts",
+          "../node_modules/@google/genai/src/gaos/hooks/registration.ts",
+          "../node_modules/@google/genai/src/gaos/lib/base64.ts",
+          "../node_modules/@google/genai/src/gaos/lib/compat-errors.ts",
+          "../node_modules/@google/genai/src/gaos/lib/config.ts",
+          "../node_modules/@google/genai/src/gaos/lib/encodings.ts",
+          "../node_modules/@google/genai/src/gaos/lib/env.ts",
+          "../node_modules/@google/genai/src/gaos/lib/event-streams.ts",
+          "../node_modules/@google/genai/src/gaos/lib/http.ts",
+          "../node_modules/@google/genai/src/gaos/lib/matchers.ts",
+          "../node_modules/@google/genai/src/gaos/lib/primitives.ts",
+          "../node_modules/@google/genai/src/gaos/lib/retries.ts",
+          "../node_modules/@google/genai/src/gaos/lib/sdks.ts",
+          "../node_modules/@google/genai/src/gaos/lib/security.ts",
+          "../node_modules/@google/genai/src/gaos/lib/url.ts",
+          "../node_modules/@google/genai/src/gaos/models/errors/cancel-interaction-by-id.ts",
+          "../node_modules/@google/genai/src/gaos/models/errors/create-interaction.ts",
+          "../node_modules/@google/genai/src/gaos/models/errors/delete-interaction.ts",
+          "../node_modules/@google/genai/src/gaos/models/errors/get-interaction-by-id.ts",
+          "../node_modules/@google/genai/src/gaos/models/errors/google-gen-ai-default-error.ts",
+          "../node_modules/@google/genai/src/gaos/models/errors/google-gen-ai-error.ts",
+          "../node_modules/@google/genai/src/gaos/models/errors/http-client-errors.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/agents.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/credentials.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/environments.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/files.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/interactions.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/internal.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/sdk.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/triggers.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/voices.ts",
+          "../node_modules/@google/genai/src/gaos/sdk/webhooks.ts",
+          "../node_modules/@google/genai/src/gaos/types/async.ts",
+          "../node_modules/@google/genai/src/gaos/types/fp.ts",
+          "../node_modules/@google/genai/src/live.ts",
+          "../node_modules/@google/genai/src/mcp/_mcp.ts",
+          "../node_modules/@google/genai/src/models.ts",
+          "../node_modules/@google/genai/src/music.ts",
+          "../node_modules/@google/genai/src/operations.ts",
+          "../node_modules/@google/genai/src/pagers.ts",
+          "../node_modules/@google/genai/src/tokens.ts",
+          "../node_modules/@google/genai/src/tunings.ts",
+          "../node_modules/@google/genai/src/types.ts",
+          "../node_modules/@google/genai/src/web/_browser_downloader.ts",
+          "../node_modules/@google/genai/src/web/_browser_uploader.ts",
+          "../node_modules/@google/genai/src/web/_browser_websocket.ts",
+          "../node_modules/@google/genai/src/web/_web_auth.ts",
+          "../node_modules/@google/genai/src/web/web_client.ts",
+          "../node_modules/@noble/ciphers/_polyval.js",
+          "../node_modules/@noble/ciphers/aes.js",
+          "../node_modules/@noble/ciphers/utils.js",
+          "../node_modules/@noble/hashes/_md.js",
+          "../node_modules/@noble/hashes/_u64.js",
+          "../node_modules/@noble/hashes/hmac.js",
+          "../node_modules/@noble/hashes/sha2.js",
+          "../node_modules/@noble/hashes/utils.js",
+          "../node_modules/@stablelib/base64/base64.ts",
+          "../node_modules/ajv-formats/src/formats.ts",
+          "../node_modules/ajv/lib/compile/codegen/code.ts",
+          "../node_modules/ajv/lib/compile/codegen/index.ts",
+          "../node_modules/ajv/lib/compile/codegen/scope.ts",
+          "../node_modules/ajv/lib/compile/resolve.ts",
+          "../node_modules/ajv/lib/compile/util.ts",
+          "../node_modules/ajv/lib/runtime/equal.ts",
+          "../node_modules/assert/build/internal/util/comparisons.js",
+          "../node_modules/available-typed-arrays/index.js",
+          "../node_modules/call-bind-apply-helpers/actualApply.js",
+          "../node_modules/call-bind-apply-helpers/applyBind.js",
+          "../node_modules/call-bind-apply-helpers/functionApply.js",
+          "../node_modules/call-bind-apply-helpers/functionCall.js",
+          "../node_modules/call-bind-apply-helpers/index.js",
+          "../node_modules/call-bind-apply-helpers/reflectApply.js",
+          "../node_modules/call-bind/index.js",
+          "../node_modules/call-bound/index.js",
+          "../node_modules/define-data-property/index.js",
+          "../node_modules/define-properties/index.js",
+          "../node_modules/dunder-proto/get.js",
+          "../node_modules/es-define-property/index.js",
+          "../node_modules/es-errors/eval.js",
+          "../node_modules/es-errors/index.js",
+          "../node_modules/es-errors/range.js",
+          "../node_modules/es-errors/ref.js",
+          "../node_modules/es-errors/syntax.js",
+          "../node_modules/es-errors/type.js",
+          "../node_modules/es-errors/uri.js",
+          "../node_modules/es-object-atoms/index.js",
+          "../node_modules/eventemitter3/index.js",
+          "../node_modules/eventemitter3/index.mjs",
+          "../node_modules/fast-deep-equal/index.js",
+          "../node_modules/fast-sha256/sha256.js",
+          "../node_modules/fast-uri/index.js",
+          "../node_modules/fast-uri/lib/schemes.js",
+          "../node_modules/fast-uri/lib/utils.js",
+          "../node_modules/for-each/index.js",
+          "../node_modules/function-bind/implementation.js",
+          "../node_modules/function-bind/index.js",
+          "../node_modules/generator-function/index.js",
+          "../node_modules/get-intrinsic/index.js",
+          "../node_modules/get-proto/Object.getPrototypeOf.js",
+          "../node_modules/get-proto/Reflect.getPrototypeOf.js",
+          "../node_modules/get-proto/index.js",
+          "../node_modules/gopd/gOPD.js",
+          "../node_modules/gopd/index.js",
+          "../node_modules/has-property-descriptors/index.js",
+          "../node_modules/has-symbols/index.js",
+          "../node_modules/has-symbols/shams.js",
+          "../node_modules/has-tostringtag/shams.js",
+          "../node_modules/hasown/index.js",
+          "../node_modules/is-arguments/index.js",
+          "../node_modules/is-callable/index.js",
+          "../node_modules/is-generator-function/index.js",
+          "../node_modules/is-nan/implementation.js",
+          "../node_modules/is-nan/index.js",
+          "../node_modules/is-nan/polyfill.js",
+          "../node_modules/is-nan/shim.js",
+          "../node_modules/is-regex/index.js",
+          "../node_modules/is-typed-array/index.js",
+          "../node_modules/json-schema-traverse/index.js",
+          "../node_modules/jsonschema/lib/attribute.js",
+          "../node_modules/jsonschema/lib/helpers.js",
+          "../node_modules/jsonschema/lib/index.js",
+          "../node_modules/jsonschema/lib/scan.js",
+          "../node_modules/jsonschema/lib/validator.js",
+          "../node_modules/math-intrinsics/abs.js",
+          "../node_modules/math-intrinsics/floor.js",
+          "../node_modules/math-intrinsics/isNaN.js",
+          "../node_modules/math-intrinsics/max.js",
+          "../node_modules/math-intrinsics/min.js",
+          "../node_modules/math-intrinsics/pow.js",
+          "../node_modules/math-intrinsics/round.js",
+          "../node_modules/math-intrinsics/sign.js",
+          "../node_modules/object-is/implementation.js",
+          "../node_modules/object-is/index.js",
+          "../node_modules/object-is/polyfill.js",
+          "../node_modules/object-is/shim.js",
+          "../node_modules/object-keys/implementation.js",
+          "../node_modules/object-keys/index.js",
+          "../node_modules/object-keys/isArguments.js",
+          "../node_modules/openai/internal/auth/x509-transport-state.mjs",
+          "../node_modules/openai/internal/tslib.mjs",
+          "../node_modules/openai/src/_vendor/partial-json-parser/parser.ts",
+          "../node_modules/openai/src/auth/workload-identity-auth.ts",
+          "../node_modules/openai/src/client.ts",
+          "../node_modules/openai/src/core/api-promise.ts",
+          "../node_modules/openai/src/core/error.ts",
+          "../node_modules/openai/src/core/pagination.ts",
+          "../node_modules/openai/src/core/resource.ts",
+          "../node_modules/openai/src/core/streaming.ts",
+          "../node_modules/openai/src/internal/assistant-stream-delta.ts",
+          "../node_modules/openai/src/internal/auth/x509-api-origin.ts",
+          "../node_modules/openai/src/internal/auth/x509-credential-options.ts",
+          "../node_modules/openai/src/internal/auth/x509-transport-registry.ts",
+          "../node_modules/openai/src/internal/auth/x509-transport-state-browser.ts",
+          "../node_modules/openai/src/internal/auth/x509-transport-state.cts",
+          "../node_modules/openai/src/internal/auth/x509-workload-identity-auth.ts",
+          "../node_modules/openai/src/internal/bedrock.ts",
+          "../node_modules/openai/src/internal/data-residency.ts",
+          "../node_modules/openai/src/internal/decoders/line.ts",
+          "../node_modules/openai/src/internal/detect-platform.ts",
+          "../node_modules/openai/src/internal/errors.ts",
+          "../node_modules/openai/src/internal/headers.ts",
+          "../node_modules/openai/src/internal/multipart-encoding.ts",
+          "../node_modules/openai/src/internal/parse.ts",
+          "../node_modules/openai/src/internal/provider.ts",
+          "../node_modules/openai/src/internal/qs/formats.ts",
+          "../node_modules/openai/src/internal/qs/stringify.ts",
+          "../node_modules/openai/src/internal/qs/utils.ts",
+          "../node_modules/openai/src/internal/realtime-credentials.ts",
+          "../node_modules/openai/src/internal/request-options.ts",
+          "../node_modules/openai/src/internal/responses/canonical-output-text.ts",
+          "../node_modules/openai/src/internal/responses/output-text-index.ts",
+          "../node_modules/openai/src/internal/responses/response-accumulator.ts",
+          "../node_modules/openai/src/internal/shims.ts",
+          "../node_modules/openai/src/internal/to-file.ts",
+          "../node_modules/openai/src/internal/uploads.ts",
+          "../node_modules/openai/src/internal/utils/abort.ts",
+          "../node_modules/openai/src/internal/utils/base64.ts",
+          "../node_modules/openai/src/internal/utils/bytes.ts",
+          "../node_modules/openai/src/internal/utils/env.ts",
+          "../node_modules/openai/src/internal/utils/log.ts",
+          "../node_modules/openai/src/internal/utils/path.ts",
+          "../node_modules/openai/src/internal/utils/query.ts",
+          "../node_modules/openai/src/internal/utils/sleep.ts",
+          "../node_modules/openai/src/internal/utils/uuid.ts",
+          "../node_modules/openai/src/internal/utils/values.ts",
+          "../node_modules/openai/src/internal/ws.ts",
+          "../node_modules/openai/src/lib/AbstractChatCompletionRunner.ts",
+          "../node_modules/openai/src/lib/AssistantStream.ts",
+          "../node_modules/openai/src/lib/ChatCompletionRunner.ts",
+          "../node_modules/openai/src/lib/ChatCompletionStream.ts",
+          "../node_modules/openai/src/lib/ChatCompletionStreamingRunner.ts",
+          "../node_modules/openai/src/lib/EventStream.ts",
+          "../node_modules/openai/src/lib/ResponsesParser.ts",
+          "../node_modules/openai/src/lib/RunnableFunction.ts",
+          "../node_modules/openai/src/lib/Util.ts",
+          "../node_modules/openai/src/lib/agents/agent-session-stream.ts",
+          "../node_modules/openai/src/lib/agents/output-text.ts",
+          "../node_modules/openai/src/lib/agents/turn-state.ts",
+          "../node_modules/openai/src/lib/assistant-run-polling.ts",
+          "../node_modules/openai/src/lib/beta/agents/agent-session-create-stream.ts",
+          "../node_modules/openai/src/lib/beta/agents/agent-turn-result-collector.ts",
+          "../node_modules/openai/src/lib/beta/agents/agent-turn-result-error.ts",
+          "../node_modules/openai/src/lib/beta/agents/agent-turn-result.ts",
+          "../node_modules/openai/src/lib/beta/agents/files.ts",
+          "../node_modules/openai/src/lib/beta/agents/output-parse-error.ts",
+          "../node_modules/openai/src/lib/beta/agents/pages.ts",
+          "../node_modules/openai/src/lib/beta/agents/parse-result.ts",
+          "../node_modules/openai/src/lib/beta/agents/parsed-agent-turn-result.ts",
+          "../node_modules/openai/src/lib/beta/agents/result-artifacts.ts",
+          "../node_modules/openai/src/lib/beta/agents/result-collection.ts",
+          "../node_modules/openai/src/lib/beta/agents/tool-dispatcher.ts",
+          "../node_modules/openai/src/lib/beta/agents/tool-output.ts",
+          "../node_modules/openai/src/lib/beta/agents/tool-stages.ts",
+          "../node_modules/openai/src/lib/chat-completions/streaming.ts",
+          "../node_modules/openai/src/lib/chatCompletionUtils.ts",
+          "../node_modules/openai/src/lib/embeddings.ts",
+          "../node_modules/openai/src/lib/file-processing.ts",
+          "../node_modules/openai/src/lib/parser.ts",
+          "../node_modules/openai/src/lib/polling.ts",
+          "../node_modules/openai/src/lib/responses/ResponseStream.ts",
+          "../node_modules/openai/src/lib/vector-store-polling.ts",
+          "../node_modules/openai/src/lib/vector-store-upload.ts",
+          "../node_modules/openai/src/lib/webhook-signature.ts",
+          "../node_modules/openai/src/resources/admin/admin.ts",
+          "../node_modules/openai/src/resources/admin/organization/admin-api-keys.ts",
+          "../node_modules/openai/src/resources/admin/organization/audit-logs.ts",
+          "../node_modules/openai/src/resources/admin/organization/certificates.ts",
+          "../node_modules/openai/src/resources/admin/organization/data-retention.ts",
+          "../node_modules/openai/src/resources/admin/organization/external-storage.ts",
+          "../node_modules/openai/src/resources/admin/organization/groups/groups.ts",
+          "../node_modules/openai/src/resources/admin/organization/groups/roles.ts",
+          "../node_modules/openai/src/resources/admin/organization/groups/users.ts",
+          "../node_modules/openai/src/resources/admin/organization/invites.ts",
+          "../node_modules/openai/src/resources/admin/organization/organization.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/api-keys.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/certificates.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/data-retention.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/groups/groups.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/groups/roles.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/hosted-tool-permissions.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/model-permissions.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/projects.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/rate-limits.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/roles.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/service-accounts/api-keys.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/service-accounts/service-accounts.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/spend-alerts.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/spend-limit.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/users/roles.ts",
+          "../node_modules/openai/src/resources/admin/organization/projects/users/users.ts",
+          "../node_modules/openai/src/resources/admin/organization/roles.ts",
+          "../node_modules/openai/src/resources/admin/organization/spend-alerts.ts",
+          "../node_modules/openai/src/resources/admin/organization/spend-limit.ts",
+          "../node_modules/openai/src/resources/admin/organization/usage.ts",
+          "../node_modules/openai/src/resources/admin/organization/users/roles.ts",
+          "../node_modules/openai/src/resources/admin/organization/users/users.ts",
+          "../node_modules/openai/src/resources/audio/audio.ts",
+          "../node_modules/openai/src/resources/audio/speech.ts",
+          "../node_modules/openai/src/resources/audio/transcriptions.ts",
+          "../node_modules/openai/src/resources/audio/translations.ts",
+          "../node_modules/openai/src/resources/audio/voices.ts",
+          "../node_modules/openai/src/resources/batches.ts",
+          "../node_modules/openai/src/resources/beta/agents/agents.ts",
+          "../node_modules/openai/src/resources/beta/agents/environments/environments.ts",
+          "../node_modules/openai/src/resources/beta/agents/environments/files.ts",
+          "../node_modules/openai/src/resources/beta/agents/environments/templates.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/artifacts.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/events.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/items.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/sessions.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/subagents/items.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/subagents/subagents.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/subagents/turns/items.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/subagents/turns/turns.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/traces.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/turns/items.ts",
+          "../node_modules/openai/src/resources/beta/agents/sessions/turns/turns.ts",
+          "../node_modules/openai/src/resources/beta/agents/vaults/credentials.ts",
+          "../node_modules/openai/src/resources/beta/agents/vaults/vaults.ts",
+          "../node_modules/openai/src/resources/beta/assistants.ts",
+          "../node_modules/openai/src/resources/beta/beta.ts",
+          "../node_modules/openai/src/resources/beta/chatkit/chatkit.ts",
+          "../node_modules/openai/src/resources/beta/chatkit/sessions.ts",
+          "../node_modules/openai/src/resources/beta/chatkit/threads.ts",
+          "../node_modules/openai/src/resources/beta/realtime/realtime.ts",
+          "../node_modules/openai/src/resources/beta/realtime/sessions.ts",
+          "../node_modules/openai/src/resources/beta/realtime/transcription-sessions.ts",
+          "../node_modules/openai/src/resources/beta/responses/input-items.ts",
+          "../node_modules/openai/src/resources/beta/responses/input-tokens.ts",
+          "../node_modules/openai/src/resources/beta/responses/responses.ts",
+          "../node_modules/openai/src/resources/beta/threads/messages.ts",
+          "../node_modules/openai/src/resources/beta/threads/runs/runs.ts",
+          "../node_modules/openai/src/resources/beta/threads/runs/steps.ts",
+          "../node_modules/openai/src/resources/beta/threads/threads.ts",
+          "../node_modules/openai/src/resources/chat/chat.ts",
+          "../node_modules/openai/src/resources/chat/completions/completions.ts",
+          "../node_modules/openai/src/resources/chat/completions/messages.ts",
+          "../node_modules/openai/src/resources/completions.ts",
+          "../node_modules/openai/src/resources/containers/containers.ts",
+          "../node_modules/openai/src/resources/containers/files/content.ts",
+          "../node_modules/openai/src/resources/containers/files/files.ts",
+          "../node_modules/openai/src/resources/content-provenance-checks.ts",
+          "../node_modules/openai/src/resources/conversations/conversations.ts",
+          "../node_modules/openai/src/resources/conversations/items.ts",
+          "../node_modules/openai/src/resources/decisions.ts",
+          "../node_modules/openai/src/resources/embeddings.ts",
+          "../node_modules/openai/src/resources/evals/evals.ts",
+          "../node_modules/openai/src/resources/evals/runs/output-items.ts",
+          "../node_modules/openai/src/resources/evals/runs/runs.ts",
+          "../node_modules/openai/src/resources/files.ts",
+          "../node_modules/openai/src/resources/fine-tuning/alpha/alpha.ts",
+          "../node_modules/openai/src/resources/fine-tuning/alpha/graders.ts",
+          "../node_modules/openai/src/resources/fine-tuning/checkpoints/checkpoints.ts",
+          "../node_modules/openai/src/resources/fine-tuning/checkpoints/permissions.ts",
+          "../node_modules/openai/src/resources/fine-tuning/fine-tuning.ts",
+          "../node_modules/openai/src/resources/fine-tuning/jobs/checkpoints.ts",
+          "../node_modules/openai/src/resources/fine-tuning/jobs/jobs.ts",
+          "../node_modules/openai/src/resources/fine-tuning/methods.ts",
+          "../node_modules/openai/src/resources/graders/grader-models.ts",
+          "../node_modules/openai/src/resources/graders/graders.ts",
+          "../node_modules/openai/src/resources/images.ts",
+          "../node_modules/openai/src/resources/live/forks/forks.ts",
+          "../node_modules/openai/src/resources/live/live.ts",
+          "../node_modules/openai/src/resources/live/sessions.ts",
+          "../node_modules/openai/src/resources/live/sideband/sideband.ts",
+          "../node_modules/openai/src/resources/models.ts",
+          "../node_modules/openai/src/resources/moderations.ts",
+          "../node_modules/openai/src/resources/realtime/calls.ts",
+          "../node_modules/openai/src/resources/realtime/client-secrets.ts",
+          "../node_modules/openai/src/resources/realtime/realtime.ts",
+          "../node_modules/openai/src/resources/realtime/translations/client-secrets.ts",
+          "../node_modules/openai/src/resources/realtime/translations/translations.ts",
+          "../node_modules/openai/src/resources/responses/input-items.ts",
+          "../node_modules/openai/src/resources/responses/input-tokens.ts",
+          "../node_modules/openai/src/resources/responses/responses.ts",
+          "../node_modules/openai/src/resources/safety/alerts.ts",
+          "../node_modules/openai/src/resources/safety/cases.ts",
+          "../node_modules/openai/src/resources/safety/safety.ts",
+          "../node_modules/openai/src/resources/skills/content.ts",
+          "../node_modules/openai/src/resources/skills/skills.ts",
+          "../node_modules/openai/src/resources/skills/versions/content.ts",
+          "../node_modules/openai/src/resources/skills/versions/versions.ts",
+          "../node_modules/openai/src/resources/uploads/parts.ts",
+          "../node_modules/openai/src/resources/uploads/uploads.ts",
+          "../node_modules/openai/src/resources/vector-stores/file-batches.ts",
+          "../node_modules/openai/src/resources/vector-stores/files.ts",
+          "../node_modules/openai/src/resources/vector-stores/vector-stores.ts",
+          "../node_modules/openai/src/resources/videos.ts",
+          "../node_modules/openai/src/resources/webhooks/event-types.ts",
+          "../node_modules/openai/src/resources/webhooks/webhooks.ts",
+          "../node_modules/openai/src/version.ts",
+          "../node_modules/p-retry/index.js",
+          "../node_modules/possible-typed-array-names/index.js",
+          "../node_modules/retry/index.js",
+          "../node_modules/retry/lib/retry.js",
+          "../node_modules/retry/lib/retry_operation.js",
+          "../node_modules/safe-regex-test/index.js",
+          "../node_modules/set-function-length/index.js",
+          "../node_modules/standardwebhooks/src/index.ts",
+          "../node_modules/standardwebhooks/src/timing_safe_equal.ts",
+          "../node_modules/util/support/types.js",
+          "../node_modules/which-typed-array/index.js"
+        ]
+      },
+      "dependencies": "reused local dependencies; no clean-install claim",
+      "bundledDependencies": {
+        "packages": 60,
+        "artifacts": 95
+      },
+      "passed": true
+    },
+    "amos": {
+      "build": "pass",
+      "typecheck": "pass",
+      "unit": {
+        "passed": 214,
+        "files": 25,
+        "includedInBroadSuite": true
+      },
+      "examples": [
+        {
+          "file": "agent-runtime-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "composition-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "context-budget-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "context-selection-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "context-strategies-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "evidence-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "loop-policy-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "model-helpers-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "native-compaction-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "outcome-aware-tools-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "presets-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "routing-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "task-state-offline.ts",
+          "status": "pass"
+        },
+        {
+          "file": "tool-outcomes-offline.ts",
+          "status": "pass"
+        }
+      ],
+      "compiledClosedStdinExit": 0,
+      "signal": null
+    },
+    "cleanConsumers": [
+      {
+        "status": "pass",
+        "node": "v24.20.0",
+        "startedAt": "2026-11-08T20:32:09.640Z",
+        "package": "oneringai@2.0.0-beta.2",
+        "integrity": "sha512-t8L78mXuzFQsziqVsk0RbBFD1R2FMLIH6R7stzODTK+8p7Jeioc8FDdRR4x3tcoj7HpyzChqFZctvxQBMN8RvA==",
+        "files": 557,
+        "mcpRedirects": {
+          "esm": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          },
+          "cjs": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          }
+        },
+        "documentationMatchesSource": true,
+        "probe": {
+          "node": "v22.13.1",
+          "sdkModules": [],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+        "audit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "optionalSdkVersions": {
+          "@openai/codex-sdk": "0.149.1",
+          "@anthropic-ai/claude-agent-sdk": "0.3.319"
+        },
+        "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+        "optionalSdkProbe": {
+          "node": "v22.13.1",
+          "sdkModules": [
+            "@openai/codex-sdk",
+            "@anthropic-ai/claude-agent-sdk"
+          ],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        "optionalSdkAudit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "finishedAt": "2026-11-08T20:32:47.363Z"
+      },
+      {
+        "status": "pass",
+        "node": "v24.20.0",
+        "startedAt": "2026-11-08T20:33:52.707Z",
+        "package": "oneringai@2.0.0-beta.2",
+        "integrity": "sha512-tj/gGECsn9f+YPWCLqSDfFIsBGKEYBxjaRof7ENHy7l5ZiUFCEsLQA4Zqibjxae+qgf3l4SEbHuzgYWfcj6VGg==",
+        "files": 557,
+        "mcpRedirects": {
+          "esm": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          },
+          "cjs": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          }
+        },
+        "documentationMatchesSource": true,
+        "probe": {
+          "node": "v24.20.0",
+          "sdkModules": [],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+        "audit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "optionalSdkVersions": {
+          "@openai/codex-sdk": "0.149.1",
+          "@anthropic-ai/claude-agent-sdk": "0.3.319"
+        },
+        "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+        "optionalSdkProbe": {
+          "node": "v24.20.0",
+          "sdkModules": [
+            "@openai/codex-sdk",
+            "@anthropic-ai/claude-agent-sdk"
+          ],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        "optionalSdkAudit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "finishedAt": "2026-11-08T20:34:32.710Z"
+      }
+    ],
+    "releaseCheck": "pass end to end"
+  },
+  "releasePlan": {
+    "version": "2.0.0-beta.2",
+    "sourceTag": "v2.0.0-beta.2",
+    "registry": "https://registry.npmjs.org/",
+    "npmAccount": "aantich",
+    "tags": [
+      "latest",
+      "next"
+    ],
+    "status": "not yet published"
+  },
+  "limits": [
+    "Synthetic/local HTTP and offline scenarios only; no live or billable LLM calls.",
+    "Clean consumers retain three moderate indirect UUID audit entries with existing source applicability checks; no high/critical entries.",
+    "Registry publication and integrity are verified separately after candidate validation."
+  ],
+  "validatedAt": "2026-11-08T20:35:15.018Z",
+  "artifactScope": "Clean-consumer reports validate the beta.2 code outputs before evidence metadata is finalized. The final committed package is rebuilt and checked again by prepublishOnly; publication integrity is recorded separately."
+}

@@ -1,5 +1,9 @@
 # Selective context assembly and stable prompt layout
 
+The browser target in 2.0.0-beta.2 uses the same Agent/context/plugin/contributor APIs
+as Node. Register code and contributors in each realm before loading saved state;
+selection and instruction/data authority are shared. See [Browser Agents](BROWSER_AGENTS.md).
+
 Available in `oneringai@2.0.0-beta.1`. **Recorded stage validation (2026-10-22):
 all first- and second-review corrections validated**. See [completion](designs/STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22)
 and [validation](evaluations/STAGE_05_SECOND_CORRECTIONS_VALIDATION.json): 8,340 units,

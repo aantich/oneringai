@@ -1,3 +1,4 @@
+/** @browserCompatible Complete implementation; existing configured storage is required where applicable. */
 /**
  * generate_routine - Generates and persists a complete RoutineDefinition from LLM output.
  */

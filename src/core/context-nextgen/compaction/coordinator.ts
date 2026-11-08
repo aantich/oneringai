@@ -1,4 +1,4 @@
-import { isDeepStrictEqual } from 'node:util';
+import { isDeepStrictEqual } from '../../../infrastructure/runtime/primitives.js';
 import { AIError, InvalidConfigError } from '../../../domain/errors/AIErrors.js';
 import { ContentType } from '../../../domain/entities/Content.js';
 import type { InputItem } from '../../../domain/entities/Message.js';

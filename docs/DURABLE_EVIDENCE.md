@@ -1,5 +1,10 @@
 # Durable tool evidence (Stage 03)
 
+The browser Agent in 2.0.0-beta.2 uses the same evidence API and recovery protections
+as Node. Its default evidence is realm-local memory; file storage remains Node-only.
+Supply an acknowledged durable backend for restart recovery. Early tab/Worker exit
+does not establish whether an external action completed. See [Browser Agents](BROWSER_AGENTS.md).
+
 Available in the published `oneringai@2.0.0-beta.1` beta. See the
 [release notes](../CHANGELOG.md#200-beta1--2026-11-02) for publication and validation.
 Evidence is opt-in. Existing tool returns, defaults, execution plugins, and older

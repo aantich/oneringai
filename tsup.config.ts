@@ -1,6 +1,28 @@
 import { defineConfig } from 'tsup';
+import { browserPlatformPlugin } from './scripts/browser-platform.mjs';
+import { bundledDependenciesPlugin } from './scripts/release/bundle-provenance.mjs';
 
 export default defineConfig([
+  {
+    entry: {
+      'browser/index': 'src/browser/index.generated.ts',
+      'browser/shared': 'src/browser/shared.generated.ts',
+      'browser/types': 'src/browser/types.generated.ts',
+      'browser/agents': 'src/browser/agents.generated.ts',
+    },
+    metafile: true,
+    format: ['esm'],
+    dts: { compilerOptions: { paths: { '#oneringai-media-bytes': ['./src/infrastructure/runtime/mediaTypes.browser.ts'] } } },
+    splitting: true,
+    sourcemap: true,
+    clean: false,
+    treeshake: true,
+    target: 'es2022',
+    platform: 'browser',
+    outDir: 'dist',
+    noExternal: [/.*/],
+    esbuildPlugins: [browserPlatformPlugin(), bundledDependenciesPlugin('browser')],
+  },
   // Main bundle + shared + capabilities
   {
     entry: {
@@ -33,6 +55,7 @@ export default defineConfig([
     noExternal: [
       '@modelcontextprotocol/sdk',
     ],
+    esbuildPlugins: [bundledDependenciesPlugin('node')],
   },
   // Browser-safe OpenAI Realtime WebRTC media and data-channel peer.
   {
@@ -48,6 +71,7 @@ export default defineConfig([
     target: 'es2020',
     platform: 'browser',
     outDir: 'dist',
+    esbuildPlugins: [bundledDependenciesPlugin('realtime')],
   },
   // Lightweight types bundle — no Node.js / SDK dependencies
   {
@@ -62,6 +86,7 @@ export default defineConfig([
     treeshake: true,
     target: 'es2020',
     platform: 'neutral',
+    esbuildPlugins: [bundledDependenciesPlugin('types')],
     outDir: 'dist',
     // Externalize everything that isn't a pure domain/entity file
     external: [

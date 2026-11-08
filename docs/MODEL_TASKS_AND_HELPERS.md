@@ -1,5 +1,11 @@
 # Model tasks and purpose-specific helpers
 
+The browser target in 2.0.0-beta.2 uses this same Agent/ModelTask/helper API. Budgets
+are local to the explicitly shared task in one realm. Browser SDK transport
+ownership is captured per invocation; Node retains ALS. Dynamic helper schemas
+work under strict CSP without eval. Custom-provider attestation and unknown-usage
+rules below still apply. See [Browser Agents](BROWSER_AGENTS.md).
+
 Stage 06's optional helper roles and shared, process-local model budgets are
 available in `oneringai@2.0.0-beta.1`. See the [release notes](../CHANGELOG.md#200-beta1--2026-11-02).
 Existing agents continue to use their configured main model. Omitting

@@ -1,6 +1,27 @@
 # OneRingAI Version 2 Guide
 
-**Instruction-authority correction — 2026-11-08 (unreleased):** The existing
+**Beta.2 — 2026-11-08:** `oneringai@2.0.0-beta.2` includes browser/Node portability,
+the provider instruction-authority correction, AMOS input closure recovery,
+and embedded MCP dependency hardening. The four final browser schema review
+findings are corrected without changing Node AJV or the Agent/plugin surface.
+See [beta.2 validation](evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json) for
+the release gates and publication status. Earlier dated beta.1/stage records below
+remain historical; external harness and live-provider boundaries are unchanged.
+
+**Browser and Node Agent portability — 2026-11-08 (2.0.0-beta.2):**
+Agents use the **same API in browsers and Node.js**, including the agentic loop,
+context plugins, managed/direct calls, helpers, routing, permissions, evidence and
+explicit model budgets. Synchronous construction, Node exports/file defaults,
+ALS accounting, Buffer extension contracts and both custom-plugin registration
+paths are preserved. Browser-aware package conditions select private host
+dependencies; TypeScript consumers select `customConditions: ["browser"]`.
+Strict-CSP Chromium/Firefox/WebKit pages and Workers, extracted Node 22/24 consumers,
+AMOS and offline examples are covered. See [Browser Agents](BROWSER_AGENTS.md) for
+tools/storage/auth/lifecycle limits and [the shared example](../examples/browser-node/shared.ts).
+The [delivery record](designs/AGENT_BROWSER_NODE_DELIVERY.md) records P0–P6 checks,
+measurements and the documentation handoff.
+
+**Instruction-authority correction — 2026-11-08 (2.0.0-beta.2):** The existing
 `ContextContributor` API already separates selected JSON user data from trusted
 plugin instructions; no placement API is added. Ordinary Claude, Gemini
 GenerateContent, Gemini Interactions and Vertex now preserve canonical developer
@@ -11,7 +32,7 @@ on these paths. Review untrusted plugin data before adopting the fix. Read
 existing override/suppression controls, protected sources and upgrade boundaries.
 The [delivery record](designs/PLUGIN_INSTRUCTION_AUTHORITY_FIX.md) records the
 specific behavior-change authorization, documentation handoff and offline checks.
-This correction is not included in the published beta below.
+This correction is included in beta.2; the beta.1 record below predates it.
 
 **Plugin authoring documentation — 2026-11-08:** README and User Guide now teach
 one current pattern: implement plugin and contributor on the same class, keep

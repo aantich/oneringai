@@ -1,3 +1,4 @@
+import { byteLength } from '../../../infrastructure/runtime/primitives.js';
 /**
  * UserInfoPluginNextGen - User information storage plugin for NextGen context
  *
@@ -30,7 +31,7 @@
 import type { IContextPluginNextGen, ITokenEstimator, IStoreHandler, StoreEntrySchema, StoreGetResult, StoreSetResult, StoreDeleteResult, StoreListResult, StoreActionResult } from '../types.js';
 import type { ToolFunction, ToolContext } from '../../../domain/entities/Tool.js';
 import type { IUserInfoStorage, UserInfoEntry } from '../../../domain/interfaces/IUserInfoStorage.js';
-import { FileUserInfoStorage } from '../../../infrastructure/storage/FileUserInfoStorage.js';
+import { defaultUserInfoStorage, preflightUserInfoStorage } from '../../../infrastructure/runtime/storageDefaults.js';
 import { simpleTokenEstimator } from '../BasePluginNextGen.js';
 import { StorageRegistry } from '../../StorageRegistry.js';
 import type { StorageContext } from '../../StorageRegistry.js';
@@ -239,7 +240,7 @@ function getValueType(value: unknown): UserInfoEntry['valueType'] {
  */
 function calculateValueSize(value: unknown): number {
   const json = JSON.stringify(value);
-  return Buffer.byteLength(json, 'utf-8');
+  return byteLength(json, 'utf-8');
 }
 
 /**
@@ -345,6 +346,7 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen, IStoreHandl
   private _instructionsTokenCache: number | null = null;
 
   constructor(config?: UserInfoPluginConfig) {
+    preflightUserInfoStorage(config?.storage);
     this.maxTotalSize = config?.maxTotalSize ?? DEFAULT_MAX_TOTAL_SIZE;
     this.maxEntries = config?.maxEntries ?? DEFAULT_MAX_ENTRIES;
     this.explicitStorage = config?.storage;
@@ -586,7 +588,7 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen, IStoreHandl
     }
 
     // 3. Default file storage
-    this._storage = new FileUserInfoStorage();
+    this._storage = defaultUserInfoStorage();
     return this._storage;
   }
 

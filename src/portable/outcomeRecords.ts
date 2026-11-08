@@ -3,7 +3,7 @@ import type { ToolExecutionOutcome } from '../domain/entities/Tool.js';
 import type { RemoteInvocationIdentity } from '../core/tool-execution/remoteObservation.js';
 import type { OutcomeExecuteRequest, RemoteOutcomeReceipt } from './outcomeTypes.js';
 import { copyOutcomeData, outcomeForWire, parseOutcomeReceipt } from './outcomeWire.js';
-import { isDeepStrictEqual } from 'node:util';
+import { isDeepStrictEqual } from '../infrastructure/runtime/primitives.js';
 
 export const ADMISSION_KIND = 'oneringai.remote-admission/1';
 export const SOURCE_KIND = 'oneringai.remote-source/1';

@@ -1,5 +1,5 @@
 import { BasePluginNextGen } from '../BasePluginNextGen.js';
-import { isDeepStrictEqual } from 'node:util';
+import { isDeepStrictEqual } from '../../../infrastructure/runtime/primitives.js';
 import { AIError } from '../../../domain/errors/AIErrors.js';
 import type { EvidenceScope, EvidenceReference } from '../../../domain/interfaces/IEvidenceStorage.js';
 import type { TaskStatus } from '../../../domain/entities/Task.js';
