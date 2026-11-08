@@ -92,6 +92,7 @@ describe('16A provider-native wire adapters', () => {
     expect(sent[0]!.body.compaction).toEqual({ type: 'summarize' });
     expect(sent[0]!.headers.get('anthropic-beta')).toContain('compact-2026-09-04');
     expect(sent[1]!.body.messages).toEqual(converted.messages);
+    expect(sent[1]!.body.system).toEqual(converted.system);
     expect(sent[1]!.headers.get('anthropic-beta')).not.toContain('compact-2026-01-12');
   });
   it('rejects unverified Anthropic support before summary dispatch', async () => {

@@ -1,5 +1,30 @@
 # OneRingAI Version 2 Guide
 
+**Instruction-authority correction — 2026-11-08 (unreleased):** The existing
+`ContextContributor` API already separates selected JSON user data from trusted
+plugin instructions; no placement API is added. Ordinary Claude, Gemini
+GenerateContent, Gemini Interactions and Vertex now preserve canonical developer
+instructions in their provider's system field, using OpenAI as the reference.
+Legacy `getContent()` views therefore gain their intended instruction authority
+on these paths. Review untrusted plugin data before adopting the fix. Read
+[plugin prompt authority](PLUGIN_PROMPT_AUTHORITY.md) for exact method routing,
+existing override/suppression controls, protected sources and upgrade boundaries.
+The [delivery record](designs/PLUGIN_INSTRUCTION_AUTHORITY_FIX.md) records the
+specific behavior-change authorization, documentation handoff and offline checks.
+This correction is not included in the published beta below.
+
+**Plugin authoring documentation — 2026-11-08:** README and User Guide now teach
+one current pattern: implement plugin and contributor on the same class, keep
+trusted guidance in `getInstructions()`, return `null` from `getContent()`, and
+register both roles on `agent.context`. The [walkthrough](../USER_GUIDE.md#creating-context-plugins)
+covers revisions, plain-text data, selection limits, tools, session restoration
+and cleanup. The [offline example](../examples/custom-context-plugin.ts) verifies
+managed run/stream wiring through public exports. Deprecated plugin/store material
+is retained only in a [migration reference](LEGACY_CONTEXT_PLUGINS.md); existing
+guide entry anchors redirect there. Whiteboard examples use the existing
+contributor adapter and distinguish source capacity from selection budget. These
+are documentation/example changes, with no new API, default or package release.
+
 **Published beta — 2026-11-02:** [oneringai@2.0.0-beta.1](https://www.npmjs.com/package/oneringai)
 is published under `aantich`, from source tag `v2.0.0-beta.1` at `318c84b`.
 Both `latest` and `next` select this first beta. Registry integrity matches the
@@ -54,7 +79,7 @@ scope, dependencies, research, and acceptance criteria.
 - **Status:** Core stages, Stage 16A, Stage 14A and consumer slices C1–C9-C and agent-harness H0–H6 are implemented on branch. The user separately authorized [bounded Codex/OpenAI validation on 2026-11-01](evaluations/LIVE_VALIDATION_2026_11_01.md); other new native/provider live gates remain pending. The [latest consumer review corrections](#consumer-review-corrections--2026-10-28) track the preceding corrective validation; earlier totals and live-pause statements below are historical. Publication remains separate; this bounded run is not standing authorization for additional live suites.
 - **Stage 03 review:** All findings fixed and validated: 7,473 units / 245 Stage 03 cases, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](./designs/STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
-- **Created / last updated:** 2026-10-07 / 2026-11-02.
+- **Created / last updated:** 2026-10-07 / 2026-11-08.
 - **Current selected scope:** Agent-harness revision 3 H0–H6 is sequentially authorized; see [the delivery ledger](designs/AGENT_HARNESS_DELIVERY_LEDGER.md). The preceding full consumer-hardening sequence C2–C8 and C9-A/B/C is authorized, in order with review/fixes after each slice. C1 is complete. The [delivery ledger](./designs/CONSUMER_DELIVERY_LEDGER.md) records current availability; each slice must pass its own gates. Existing APIs/defaults stay unchanged; no consumer upgrade or release is included.
 - **Repository package version at creation:** `1.2.0`.
 - **Implemented stages:** 00 — evaluation and compatibility baselines;

@@ -2,6 +2,8 @@
 import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 const examples = [
+  'examples/custom-context-plugin.ts',
+  'examples/plugin-instructions-and-data.ts',
   'examples/agentic-evaluation-baseline.ts', 'examples/context-strategy-comparison.ts',
   'examples/adaptive-model-routing.ts', 'examples/verified-routines.ts', 'examples/routine-store-bridge.ts',
   'examples/agent-runtime-swappable.ts', 'examples/agent-runtime-claude.ts',

@@ -16,6 +16,8 @@ import {
 } from '@/domain/errors/AIErrors.js';
 import { Connector } from '@/core/Connector.js';
 import { Vendor } from '@/core/Vendor.js';
+import { MessageRole } from '@/domain/entities/Message.js';
+import { ContentType } from '@/domain/entities/Content.js';
 
 const textOptions = (model: string) => ({ model, input: 'hello' });
 
@@ -634,6 +636,11 @@ describe('advanced inference provider contracts', () => {
           customId: 'legacy-schema',
           options: {
             ...textOptions('claude-3-7-sonnet-20250219'),
+            instructions: 'BATCH_HOST_RULE',
+            input: [
+              { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: 'BATCH_PLUGIN_RULE' }] },
+              { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'BATCH_USER_DATA' }] },
+            ],
             response_format: {
               type: 'json_schema',
               json_schema: {
@@ -655,6 +662,28 @@ describe('advanced inference provider contracts', () => {
     expect(params.output_config).toBeUndefined();
     expect(params.system).toContain('Respond with ONLY a single JSON value');
     expect(params.system).toContain('"answer"');
+    expect(params.system).toContain('BATCH_HOST_RULE');
+    expect(params.system).toContain('BATCH_PLUGIN_RULE');
+    expect(params.system).not.toContain('BATCH_USER_DATA');
+    expect(JSON.stringify(params.messages)).toContain('BATCH_USER_DATA');
+    expect(JSON.stringify(params.messages)).not.toContain('BATCH_PLUGIN_RULE');
+  });
+
+  it('preserves system instruction authority and user data in Google inline batches', async () => {
+    const provider = new GoogleTextProvider({ apiKey: 'test' });
+    const create = vi.fn().mockResolvedValue({ name: 'batches/authority', state: 'JOB_STATE_PENDING' });
+    (provider as any).client.batches.create = create;
+    await provider.submitBatch([{ customId: 'authority', options: {
+      model: 'gemini-2.5-pro', instructions: 'BATCH_HOST_RULE',
+      input: [
+        { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: 'BATCH_PLUGIN_RULE' }] },
+        { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'BATCH_USER_DATA' }] },
+      ],
+    } }], { dataHandling: { allowBatchRetention: true } });
+    const request = create.mock.calls[0]![0].src[0];
+    expect(request.config.systemInstruction).toEqual({ parts: [{ text: 'BATCH_HOST_RULE\n\nBATCH_PLUGIN_RULE' }] });
+    expect(JSON.stringify(request.contents)).toContain('BATCH_USER_DATA');
+    expect(JSON.stringify(request.contents)).not.toContain('BATCH_PLUGIN_RULE');
   });
 
   it('rejects malformed low-level schemas before a batch can be submitted', async () => {

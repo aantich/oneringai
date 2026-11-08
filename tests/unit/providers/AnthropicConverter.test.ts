@@ -34,7 +34,7 @@ describe('AnthropicConverter', () => {
       expect(request.model).toBe('claude-3-5-sonnet-20241022');
     });
 
-    it('should map DEVELOPER role to user role', () => {
+    it('maps DEVELOPER messages into the system field, not a user turn', () => {
       const request = converter.convertRequest({
         model: 'claude-3-5-sonnet-20241022',
         input: [{
@@ -45,7 +45,8 @@ describe('AnthropicConverter', () => {
         tools: []
       });
 
-      expect(request.messages[0].role).toBe('user');
+      expect(request.system).toBe('System instruction');
+      expect(request.messages).toEqual([{ role: 'user', content: 'Continue.' }]);
     });
 
     it('should convert system instructions', () => {

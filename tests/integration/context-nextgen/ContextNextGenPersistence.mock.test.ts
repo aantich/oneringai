@@ -32,10 +32,8 @@ describe('AgentContextNextGen Persistence (Mock)', () => {
   beforeEach(async () => {
     // Create temp directory for storage
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'context-persistence-test-'));
-    process.env.ONERINGAI_DATA_DIR = tempDir;
-
     // Create storage for testing
-    storage = createFileContextStorage('test-persistence-agent');
+    storage = createFileContextStorage('test-persistence-agent', { baseDirectory: tempDir });
   });
 
   afterEach(async () => {
@@ -50,7 +48,6 @@ describe('AgentContextNextGen Persistence (Mock)', () => {
       await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
       tempDir = null;
     }
-    delete process.env.ONERINGAI_DATA_DIR;
   });
 
   // ============================================================================

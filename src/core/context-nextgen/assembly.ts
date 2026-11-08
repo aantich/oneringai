@@ -30,7 +30,12 @@ export interface ContextContributor {
   /** Must change whenever source content, host selection policy, permissions or scope changes; packet input is tracked separately. */
   getRevision(): string | number;
   contribute(request: ContextContributionRequest): ContextBlock[] | Promise<ContextBlock[]>;
-  /** Explicit trusted host replacement for this plugin's usage instructions. */
+  /**
+   * Trusted host replacement for this plugin's developer-role usage guidance.
+   * Omit this property to inherit getInstructions(); a string replaces it and
+   * null suppresses it. Presence is significant (explicit undefined also supplies
+   * no usage text). Never copy retrieved block text into this field.
+   */
   instructions?: string | null;
 }
 export interface ContextAssemblyConfig {

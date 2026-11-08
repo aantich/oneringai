@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MessageRole } from '@/domain/entities/Message.js';
 import { ContentType } from '@/domain/entities/Content.js';
 import {
+  InvalidConfigError,
   ProviderAuthError,
   ProviderRateLimitError,
   ProviderContextLengthError,
@@ -154,15 +155,29 @@ describe('AnthropicTextProvider', () => {
     it('should pass system instructions correctly', async () => {
       await provider.generate({
         model: 'claude-3-5-sonnet-20241022',
-        input: 'Hello',
+        input: [
+          { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: 'Plugin usage rules' }] },
+          { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Context data' }] },
+          { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Hello' }] },
+        ],
         instructions: 'You are a helpful assistant',
       });
 
       expect(mockStream).toHaveBeenCalledWith(
         expect.objectContaining({
-          system: 'You are a helpful assistant',
+          system: 'You are a helpful assistant\n\nPlugin usage rules',
+          messages: [{ role: 'user', content: 'Context data' }, { role: 'user', content: 'Hello' }],
         })
       );
+    });
+
+    it('rejects malformed developer text before SDK dispatch and preserves the configuration error', async () => {
+      await expect(provider.generate({ model: 'claude-sonnet-4-6', input: [
+        { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: { invalid: true } as unknown as string }] },
+        { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Hello' }] },
+      ] })).rejects.toBeInstanceOf(InvalidConfigError);
+      expect(mockStream).not.toHaveBeenCalled();
+      expect(mockCreate).not.toHaveBeenCalled();
     });
 
     it('should pass temperature if provided', async () => {

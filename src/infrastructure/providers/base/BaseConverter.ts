@@ -17,7 +17,7 @@ import { LLMResponse } from '../../../domain/entities/Response.js';
 import { InputItem, MessageRole } from '../../../domain/entities/Message.js';
 import { Content, ContentType } from '../../../domain/entities/Content.js';
 import { Tool } from '../../../domain/entities/Tool.js';
-import { InvalidToolArgumentsError } from '../../../domain/errors/AIErrors.js';
+import { InvalidConfigError, InvalidToolArgumentsError } from '../../../domain/errors/AIErrors.js';
 import {
   buildLLMResponse,
   createTextContent,
@@ -124,9 +124,10 @@ export abstract class BaseConverter<
    * Override in subclass if provider uses different role names
    */
   protected mapRole(role: MessageRole): string {
-    // Most providers don't have 'developer' role - map to 'user'
+    // A missing native developer role must never silently downgrade authority.
+    // Extract instruction messages into the provider's dedicated field first.
     if (role === MessageRole.DEVELOPER) {
-      return 'user';
+      throw new InvalidConfigError('Extract developer instructions before converting conversation roles');
     }
     return role;
   }

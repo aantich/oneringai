@@ -360,6 +360,21 @@ The actual app/session command and timer-backed autosave paths are covered by
 
 ### Stage 05: selective context and cache-aware layout
 
+**Create a plugin:** `npm run example:custom-context-plugin` registers one class
+as a context plugin and contributor on a real managed Agent. It verifies trusted
+instructions, plain text as user-context data, host updates reaching `stream()`,
+state restoration and the shared ToolManager. Expected output has `offline: true`
+and five true checks. Build first; no credentials, model calls or files are used,
+and the agent/connector are cleaned up. Follow the
+[plugin authoring walkthrough](../USER_GUIDE.md#creating-context-plugins).
+
+**Compatibility regression:** `npm run example:plugin-authority` checks the existing instruction/data boundary
+using a custom plugin. It prints six true checks for legacy instruction placement,
+selected JSON user data, unchanged source, trusted usage override, suppression,
+and unregister restoring the legacy view. No keys, model calls, or files are needed;
+the context is destroyed on exit. Read [plugin prompt authority](../docs/PLUGIN_PROMPT_AUTHORITY.md)
+before putting external content in plugin instruction fields.
+
 Build first. `npm run example:context-selection` compares an overflowing legacy
 whiteboard/source view with budgeted selection, retaining the exact stored entries
 and printing selection reasons, exact omitted-source recovery and stale-account

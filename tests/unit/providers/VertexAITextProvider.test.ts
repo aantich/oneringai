@@ -8,6 +8,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InvalidConfigError } from '@/domain/errors/AIErrors.js';
 import { StreamEventType } from '@/domain/entities/StreamEvent.js';
+import { MessageRole } from '@/domain/entities/Message.js';
+import { ContentType } from '@/domain/entities/Content.js';
 
 // Create mock functions with vi.hoisted for proper hoisting
 const { mockGenerateContent, mockGenerateContentStream, mockGoogleGenAI } = vi.hoisted(() => {
@@ -209,14 +211,26 @@ describe('VertexAITextProvider', () => {
     it('should pass systemInstruction correctly', async () => {
       await provider.generate({
         model: 'gemini-2.0-flash',
-        input: 'Hello',
+        input: [
+          { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: 'Plugin rules' }] },
+          { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Context data' }] },
+        ],
         instructions: 'Be very helpful',
       });
 
       const call = mockGenerateContent.mock.calls[0][0];
       expect(call.config.systemInstruction).toEqual({
-        parts: [{ text: 'Be very helpful' }],
+        parts: [{ text: 'Be very helpful\n\nPlugin rules' }],
       });
+      expect(call.contents).toEqual([{ role: 'user', parts: [{ text: 'Context data' }] }]);
+    });
+
+    it('rejects malformed developer text before Vertex SDK dispatch', async () => {
+      await expect(provider.generate({ model: 'gemini-2.0-flash', input: [
+        { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: { invalid: true } as unknown as string }] },
+        { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Hello' }] },
+      ] })).rejects.toBeInstanceOf(InvalidConfigError);
+      expect(mockGenerateContent).not.toHaveBeenCalled();
     });
 
     it('should convert response to LLMResponse format', async () => {

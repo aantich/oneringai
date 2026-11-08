@@ -206,6 +206,14 @@ Astra because the model does not support that parameter.
 /context history [n]    Show conversation history
 ```
 
+To select lower-authority whiteboard data, configure `contextAssembly.selectWhiteboard`
+for the next Agent initialization, as shown in the [AMOS setup guide](../README.md#selective-context-and-provider-cache-diagnostics).
+The existing companion sends selected entries as JSON user data and retains
+trusted usage instructions. Layout alone does not demote plugin content. The
+shared adapters preserve developer instruction authority on Claude, Gemini, and
+Vertex as on OpenAI; this correction is unreleased. See [plugin prompt authority](../../../docs/PLUGIN_PROMPT_AUTHORITY.md)
+for the exact routing and legacy-data upgrade implications.
+
 ### Configuration
 
 ```

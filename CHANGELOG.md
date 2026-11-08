@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Preserve canonical developer instruction authority in ordinary Anthropic,
+  Gemini GenerateContent, Gemini Interactions, and Vertex requests, matching the
+  existing OpenAI contract and Anthropic native path. User context and tool
+  results remain data. Unsupported non-text developer content fails explicitly
+  on these adapters instead of being dropped or downgraded; malformed developer
+  text values fail instead of being coerced or omitted. **Behavior change:**
+  legacy plugin `getContent()` now reaches the intended instruction channel on
+  the affected vendors. Use the existing contributor API for lower-authority
+  data; no new placement API or session format is introduced. See
+  [plugin prompt authority](docs/PLUGIN_PROMPT_AUTHORITY.md).
+- Document plugin method/contributor routing, usage overrides, protected sources,
+  and AMOS whiteboard selection; add a deterministic offline custom-plugin example
+  and cross-provider authority regression tests.
+- Rewrite README/User Guide plugin authoring around `BasePluginNextGen` plus
+  `ContextContributor`, with both registrations on Agent context. Cover updates,
+  tools, selection, persistence and cleanup; add an offline run/stream example.
+  Move deprecated plugin/store tutorials into a migration reference and correct
+  built-in whiteboard contributor setup and partial visibility.
+
 - Correct standalone guide availability and installation instructions after the
   verified v2 beta publication. Historical stage validation records and external
   harness preview boundaries remain explicit.

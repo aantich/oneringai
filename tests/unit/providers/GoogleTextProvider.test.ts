@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MessageRole } from '@/domain/entities/Message.js';
 import { ContentType } from '@/domain/entities/Content.js';
 import {
+  InvalidConfigError,
   ProviderAuthError,
   ProviderRateLimitError,
   ProviderContextLengthError,
@@ -46,6 +47,15 @@ describe('GoogleTextProvider', () => {
     provider = new GoogleTextProvider({
       apiKey: 'test-google-api-key',
     });
+  });
+
+  it.each(['gemini-2.0-flash', 'gemini-3.6-flash'])('rejects malformed developer text before SDK dispatch for %s', async model => {
+    await expect(provider.generate({ model, input: [
+      { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: { invalid: true } as unknown as string }] },
+      { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Hello' }] },
+    ] })).rejects.toBeInstanceOf(InvalidConfigError);
+    expect(mockGenerateContent).not.toHaveBeenCalled();
+    expect(mockInteractionsCreate).not.toHaveBeenCalled();
   });
 
   describe('constructor', () => {
@@ -128,14 +138,22 @@ describe('GoogleTextProvider', () => {
     it('should pass systemInstruction correctly', async () => {
       await provider.generate({
         model: 'gemini-2.0-flash',
-        input: 'Hello',
+        input: [
+          { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: 'Plugin usage rules' }] },
+          { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Context data' }] },
+          { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Hello' }] },
+        ],
         instructions: 'You are a helpful assistant',
       });
 
       const call = mockGenerateContent.mock.calls[0][0];
       expect(call.config.systemInstruction).toEqual({
-        parts: [{ text: 'You are a helpful assistant' }],
+        parts: [{ text: 'You are a helpful assistant\n\nPlugin usage rules' }],
       });
+      expect(call.contents).toEqual([
+        { role: 'user', parts: [{ text: 'Context data' }] },
+        { role: 'user', parts: [{ text: 'Hello' }] },
+      ]);
     });
 
     it('should pass tools and toolConfig', async () => {
@@ -236,6 +254,16 @@ describe('GoogleTextProvider', () => {
   });
 
   describe('Interactions API', () => {
+    it('sends developer messages in system_instruction while preserving user data', async () => {
+      mockInteractionsCreate.mockResolvedValue({ id: 'int_roles', status: 'completed',
+        steps: [{ type: 'model_output', content: [{ type: 'text', text: 'Done' }] }] });
+      await provider.generate({ model: 'gemini-3.6-flash', instructions: 'Host rules', input: [
+        { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: 'Plugin rules' }] },
+        { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Context data' }] },
+      ] });
+      expect(mockInteractionsCreate.mock.calls[0][0]).toMatchObject({ system_instruction: 'Host rules\n\nPlugin rules',
+        input: [{ type: 'user_input', content: [{ type: 'text', text: 'Context data' }] }] });
+    });
     it('routes Gemini 3.8 Flash through Interactions by default', async () => {
       mockInteractionsCreate.mockResolvedValue({
         id: 'int_38',
@@ -447,6 +475,17 @@ describe('GoogleTextProvider', () => {
   });
 
   describe('streamGenerate()', () => {
+    it('preserves developer instructions in the streaming SDK request', async () => {
+      mockGenerateContentStream.mockResolvedValue({ [Symbol.asyncIterator]: async function* () {
+        yield { candidates: [{ content: { parts: [{ text: 'Done' }] }, finishReason: 'STOP' }] };
+      } });
+      for await (const _event of provider.streamGenerate({ model: 'gemini-2.0-flash', input: [
+        { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: 'Plugin rules' }] },
+        { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Context data' }] },
+      ] })) { /* Drain the provider stream. */ }
+      expect(mockGenerateContentStream.mock.calls[0][0]).toMatchObject({ config: { systemInstruction: { parts: [{ text: 'Plugin rules' }] } },
+        contents: [{ role: 'user', parts: [{ text: 'Context data' }] }] });
+    });
     it('should spread generationConfig in stream config (CRITICAL FIX)', async () => {
       const mockStream = {
         [Symbol.asyncIterator]: async function* () {

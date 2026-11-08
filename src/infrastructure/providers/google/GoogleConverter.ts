@@ -20,6 +20,7 @@ import { Content, ContentType, ToolUseContent } from '../../../domain/entities/C
 import { Tool } from '../../../domain/entities/Tool.js';
 import { fetchImageAsBase64 } from '../../../utils/imageUtils.js';
 import { InvalidToolArgumentsError } from '../../../domain/errors/AIErrors.js';
+import { extractInstructions } from '../shared/extractInstructions.js';
 import {
   buildLLMResponse,
   createTextContent,
@@ -55,6 +56,7 @@ export class GoogleConverter {
    * Convert our format → Google Gemini format
    */
   async convertRequest(options: TextGenerateOptions): Promise<any> {
+    options = { ...options, ...extractInstructions(options.input, options.instructions) };
     // Debug input messages
     if (process.env.DEBUG_GOOGLE && Array.isArray(options.input)) {
       console.error('[DEBUG] Input messages:', JSON.stringify(options.input.map((msg: any) => ({
@@ -204,7 +206,7 @@ export class GoogleConverter {
     for (const item of input) {
       if (item.type === 'message') {
         // Map roles
-        const role = item.role === MessageRole.USER || item.role === MessageRole.DEVELOPER ? 'user' : 'model';
+        const role = item.role === MessageRole.USER ? 'user' : 'model';
 
         // Convert content to parts
         const parts = await this.convertContentToParts(item.content);

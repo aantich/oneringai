@@ -538,6 +538,14 @@ removing source data. For example:
 {"contextAssembly":{"layout":"stable-prefix","maxDataTokens":512,"selectWhiteboard":true,"reasoningReserveTokens":256}}
 ```
 
+`selectWhiteboard` attaches the existing contributor adapter: selected whiteboard
+entries become JSON user data while trusted usage guidance remains instructions.
+`stable-prefix` by itself only changes layout; it does not lower ordinary plugin
+data's authority. Other unregistered plugin views remain in instructions. The
+shared Claude/Gemini/Vertex adapter correction now preserves that intended role;
+it is not yet in the published beta. See [plugin prompt authority](../../docs/PLUGIN_PROMPT_AUTHORITY.md).
+AMOS needs no new placement setting or provider-specific conversion code.
+
 Critical entries stay protected; source state persists, while trusted companions
 are recreated after loading. `/context breakdown` shows selected/omitted/projected
 IDs/reasons and actual or unknown provider input/cache counters. An uncertainty

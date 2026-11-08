@@ -5,6 +5,7 @@ import type { InputItem } from '../../../domain/entities/Message.js';
 import { MessageRole } from '../../../domain/entities/Message.js';
 import type { Content } from '../../../domain/entities/Content.js';
 import { ContentType } from '../../../domain/entities/Content.js';
+import { extractInstructions } from '../shared/extractInstructions.js';
 import type { LLMResponse, TokenUsage } from '../../../domain/entities/Response.js';
 import type { StreamEvent } from '../../../domain/entities/StreamEvent.js';
 import { StreamEventType } from '../../../domain/entities/StreamEvent.js';
@@ -36,6 +37,7 @@ function normalizeInteractionStatus(status: unknown): NormalizedInteractionStatu
 /** Current (May 2026+) Gemini Interactions `steps` schema adapter. */
 export class GoogleInteractionsConverter {
   async convertRequest(options: TextGenerateOptions): Promise<Record<string, unknown>> {
+    options = { ...options, ...extractInstructions(options.input, options.instructions) };
     const input = await this.convertInput(options.input);
     const vendor = options.vendorOptions ?? {};
     const request: Record<string, unknown> = {

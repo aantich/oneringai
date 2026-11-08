@@ -15,20 +15,22 @@ import { PRESET_REQUIRED_PLUGINS, type PresetPluginRequirements, type RequiredPr
  * AgentContextNextGen - Clean, Simple Context Manager
  *
  * Design Principles:
- * 1. Single system message with ALL context (prompt, instructions, plugin contents)
- * 2. Clear separation: system message | conversation | current input
+ * 1. Trusted instructions and legacy plugin views use developer messages
+ * 2. Clear separation: instructions | selected user data | conversation | current input
  * 3. Compaction happens ONCE, right before LLM call
  * 4. Each plugin manages its own token tracking
  * 5. Tool pairs (tool_use + tool_result) always removed together
  *
  * Context Structure:
  * ```
- * [Developer Message - All glued together]
+ * [Developer instruction prefix - layout may split stable and dynamic sections]
  *   # System Prompt
  *   # Persistent Instructions (if plugin enabled)
  *   # Plugin Instructions (for enabled plugins)
  *   # In-Context Memory (if plugin enabled)
  *   # Working Memory Index (if plugin enabled)
+ *
+ * [Optional JSON User Message - explicitly registered contributor data]
  *
  * [Conversation History]
  *   ... messages including tool_use/tool_result pairs ...

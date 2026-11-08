@@ -6,6 +6,8 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { StreamEventType } from '@/domain/entities/StreamEvent.js';
+import { MessageRole } from '@/domain/entities/Message.js';
+import { ContentType } from '@/domain/entities/Content.js';
 
 // Create mock functions with vi.hoisted for proper hoisting
 const { mockCreate, mockAnthropic } = vi.hoisted(() => {
@@ -107,6 +109,16 @@ describe('AnthropicTextProvider streamGenerate() cleanup', () => {
     provider = new AnthropicTextProvider({
       apiKey: 'test-key-stream',
     });
+  });
+
+  it('sends developer instructions in system and keeps context data in the streamed user input', async () => {
+    mockCreate.mockResolvedValue(createMockStreamResponse());
+    for await (const _event of provider.streamGenerate({ model: 'claude-3-5-sonnet-20241022', instructions: 'Host rules', input: [
+      { type: 'message', role: MessageRole.DEVELOPER, content: [{ type: ContentType.INPUT_TEXT, text: 'Plugin rules' }] },
+      { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: 'Context data' }] },
+    ] })) { /* Drain the provider stream. */ }
+    expect(mockCreate.mock.calls[0][0]).toMatchObject({ system: 'Host rules\n\nPlugin rules',
+      messages: [{ role: 'user', content: 'Context data' }] });
   });
 
   it('should call stream converter clear() on normal completion', async () => {

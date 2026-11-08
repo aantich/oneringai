@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Agent, AgentContextNextGen, Connector, Vendor, TaskStatePluginNextGen, ContentType, MessageRole } from 'oneringai';
+import { Agent, AgentContextNextGen, AgentRegistry, Connector, Vendor, TaskStatePluginNextGen, ContentType, MessageRole } from 'oneringai';
 import type { ITextProvider, AgentContextNextGenConfig } from 'oneringai';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';
 import { ContextCommand } from '../../../../apps/amos/src/commands/commands/ContextCommand.js';
@@ -25,7 +25,19 @@ describe('AMOS Stage 04 deterministic host task state',()=>{
   });
   it('does not print backend exceptions from rejected edits',async()=>{const p=new TaskStatePluginNextGen({scope:{ownerId:'owner',namespace:'amos-task'},taskId:'task'});const runner={isReady:()=>true,getTaskState:()=>p.getState(),updateTaskState:()=>{throw Error('SENSITIVE_BACKEND');}} as unknown as IAgentRunner;try{const result=await new ContextCommand().execute({app:{getAgent:()=>runner} as CommandContext['app'],args:['task','resolve','0','id'],rawInput:'/context task resolve 0 id'});expect(result.success).toBe(false);expect(result.message).not.toContain('SENSITIVE');}finally{p.destroy();}});
   it('roundtrips real runner sessions and never executes model-produced AMOS command text',async()=>{
+    const contexts: AgentContextNextGen[] = [];
+    const trackContext = ({ agent }: { agent: unknown }) => contexts.push((agent as Agent).context);
     const dir=await mkdtemp(join(tmpdir(),'amos-task-session-'));let calls=0;const provider:ITextProvider={name:'synthetic',capabilities:{text:true,images:false,audio:false,videos:false},validateConfig:async()=>true,listModels:async()=>[],getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:128000,maxOutputTokens:1024}),generate:async options=>{calls++;const text='/context task resolve 1 cap';expect(JSON.stringify(options.input)).toContain('At most 40 EUR');return{id:'r',object:'response',model:options.model,created_at:1,status:'completed',output_text:text,output:[{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text}]}],usage:{input_tokens:1,output_tokens:1,total_tokens:2}};},async*streamGenerate(){throw Error('not used');}};Connector.create({name:'amos-task',vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});const config=structuredClone(DEFAULT_CONFIG);config.taskState=taskConfig;config.session.autoSave=false;const runner=new AgentRunner(config,[],dir);
-    try{await runner.initialize('amos-task','gpt-4o-mini');runner.updateTaskState({notes:[{id:'cap',category:'constraint',text:'At most 40 EUR',source:{label:'Host'}}]},0);const id=await runner.saveSession();await runner.run('continue');expect(runner.getTaskState()?.revision).toBe(1);expect(runner.getTaskState()?.notes[0]?.resolved).toBeUndefined();await runner.loadSession(id);expect(runner.getTaskState()?.notes[0]?.text).toBe('At most 40 EUR');expect(calls).toBe(1);await runner.initialize('amos-task','gpt-4o-mini');expect(runner.getTaskState()?.revision).toBe(1);}finally{runner.destroy();await rm(dir,{recursive:true,force:true});}
+    try{AgentRegistry.on('agent:registered', trackContext);await runner.initialize('amos-task','gpt-4o-mini');runner.updateTaskState({notes:[{id:'cap',category:'constraint',text:'At most 40 EUR',source:{label:'Host'}}]},0);const id=await runner.saveSession();await runner.run('continue');expect(runner.getTaskState()?.revision).toBe(1);expect(runner.getTaskState()?.notes[0]?.resolved).toBeUndefined();await runner.loadSession(id);expect(runner.getTaskState()?.notes[0]?.text).toBe('At most 40 EUR');expect(calls).toBe(1);await runner.initialize('amos-task','gpt-4o-mini');expect(runner.getTaskState()?.revision).toBe(1);}finally{
+      AgentRegistry.off('agent:registered', trackContext);
+      runner.destroy();
+      // Destruction is synchronous; settle queued file writes before deleting the fixture.
+      await Promise.all(contexts.map(async context => {
+        const pending = context as unknown as { _sessionOperations: Promise<void> | null; _journalWriteQueue: Promise<void> };
+        await pending._sessionOperations;
+        await pending._journalWriteQueue;
+      }));
+      await rm(dir,{recursive:true,force:true});
+    }
   });
 });

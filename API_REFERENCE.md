@@ -1,6 +1,6 @@
 # oneringai - API Reference
 
-**Generated:** 2026-11-02
+**Generated:** 2026-11-08
 **Mode:** public
 
 This document provides a complete reference for the public API of `oneringai`.
@@ -18517,7 +18517,7 @@ export function canTaskExecute(task: Task, allTasks: Task[]): boolean
 
 ### createInContextMemoryContributor `function`
 
-📍 [`src/core/context-nextgen/assembly.ts:204`](src/core/context-nextgen/assembly.ts#L204)
+📍 [`src/core/context-nextgen/assembly.ts:209`](src/core/context-nextgen/assembly.ts#L209)
 
 Optional adapter: select whiteboard entries without deleting their stored source.
 
@@ -45271,7 +45271,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:167`](src/core/context-nextgen/AgentContextNextGen.ts#L167)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:169`](src/core/context-nextgen/AgentContextNextGen.ts#L169)
 
 Next-generation context manager for AI agents.
 
@@ -53082,7 +53082,7 @@ Agent configuration (needed for resume)
 
 ### AgentContextNextGenConfig `interface`
 
-📍 [`src/core/context-nextgen/types.ts:882`](src/core/context-nextgen/types.ts#L882)
+📍 [`src/core/context-nextgen/types.ts:891`](src/core/context-nextgen/types.ts#L891)
 
 AgentContextNextGen configuration
 
@@ -54086,7 +54086,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1178`](src/core/context-nextgen/types.ts#L1178)
+📍 [`src/core/context-nextgen/types.ts:1187`](src/core/context-nextgen/types.ts#L1187)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -54204,7 +54204,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1072`](src/core/context-nextgen/types.ts#L1072)
+📍 [`src/core/context-nextgen/types.ts:1081`](src/core/context-nextgen/types.ts#L1081)
 
 Result of compact() operation.
 
@@ -54562,7 +54562,7 @@ truncate profile generation. See feedback_no_output_limits.md. |
 
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1091`](src/core/context-nextgen/types.ts#L1091)
+📍 [`src/core/context-nextgen/types.ts:1100`](src/core/context-nextgen/types.ts#L1100)
 
 Result of consolidate() operation.
 
@@ -54581,7 +54581,7 @@ Result of consolidate() operation.
 
 ### ContextAssemblyConfig `interface`
 
-📍 [`src/core/context-nextgen/assembly.ts:36`](src/core/context-nextgen/assembly.ts#L36)
+📍 [`src/core/context-nextgen/assembly.ts:41`](src/core/context-nextgen/assembly.ts#L41)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -54627,7 +54627,7 @@ A host-selected data view. This never grants instruction or authorization author
 
 ### ContextBudget `interface`
 
-📍 [`src/core/context-nextgen/types.ts:634`](src/core/context-nextgen/types.ts#L634)
+📍 [`src/core/context-nextgen/types.ts:643`](src/core/context-nextgen/types.ts#L643)
 
 Token budget breakdown - clear and simple
 
@@ -54765,7 +54765,10 @@ contribute(request: ContextContributionRequest): ContextBlock[] | Promise&lt;Con
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `instructions?` | `instructions?: string | null;` | Explicit trusted host replacement for this plugin's usage instructions. |
+| `instructions?` | `instructions?: string | null;` | Trusted host replacement for this plugin's developer-role usage guidance.
+Omit this property to inherit getInstructions(); a string replaces it and
+null suppresses it. Presence is significant (explicit undefined also supplies
+no usage text). Never copy retrieved block text into this field. |
 
 </details>
 
@@ -54773,7 +54776,7 @@ contribute(request: ContextContributionRequest): ContextBlock[] | Promise&lt;Con
 
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1019`](src/core/context-nextgen/types.ts#L1019)
+📍 [`src/core/context-nextgen/types.ts:1028`](src/core/context-nextgen/types.ts#L1028)
 
 Events emitted by AgentContextNextGen
 
@@ -54851,7 +54854,7 @@ are opt-in. Pass `tiers: 'minimal'` to suppress tasks + events for perf. |
 
 ### ContextPreparation `interface`
 
-📍 [`src/core/context-nextgen/types.ts:700`](src/core/context-nextgen/types.ts#L700)
+📍 [`src/core/context-nextgen/types.ts:709`](src/core/context-nextgen/types.ts#L709)
 
 Diagnostic snapshot of the last successful prepare; token counts are estimates.
 
@@ -54874,7 +54877,7 @@ Diagnostic snapshot of the last successful prepare; token counts are estimates.
 
 ### ContextPrepareOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:681`](src/core/context-nextgen/types.ts#L681)
+📍 [`src/core/context-nextgen/types.ts:690`](src/core/context-nextgen/types.ts#L690)
 
 Optional request contributions, resolved again after compaction.
 
@@ -54898,7 +54901,7 @@ Optional request contributions, resolved again after compaction.
 
 ### ContextRolloverOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1129`](src/core/context-nextgen/types.ts#L1129)
+📍 [`src/core/context-nextgen/types.ts:1138`](src/core/context-nextgen/types.ts#L1138)
 
 Options for an explicit context rollover.
 
@@ -54918,7 +54921,7 @@ their results stay with their containing turn. Default: 8. |
 
 ### ContextRolloverResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1144`](src/core/context-nextgen/types.ts#L1144)
+📍 [`src/core/context-nextgen/types.ts:1153`](src/core/context-nextgen/types.ts#L1153)
 
 Result of an explicit context rollover.
 
@@ -54943,7 +54946,7 @@ Result of an explicit context rollover.
 
 ### ContextRolloverSummaryInput `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1109`](src/core/context-nextgen/types.ts#L1109)
+📍 [`src/core/context-nextgen/types.ts:1118`](src/core/context-nextgen/types.ts#L1118)
 
 Input passed to a context-rollover summarizer.
 
@@ -54967,7 +54970,7 @@ because they remain verbatim after rollover.
 
 ### ContextSelectionEntry `interface`
 
-📍 [`src/core/context-nextgen/assembly.ts:53`](src/core/context-nextgen/assembly.ts#L53)
+📍 [`src/core/context-nextgen/assembly.ts:58`](src/core/context-nextgen/assembly.ts#L58)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -54988,7 +54991,7 @@ because they remain verbatim after rollover.
 
 ### ContextSelectionManifest `interface`
 
-📍 [`src/core/context-nextgen/assembly.ts:62`](src/core/context-nextgen/assembly.ts#L62)
+📍 [`src/core/context-nextgen/assembly.ts:67`](src/core/context-nextgen/assembly.ts#L67)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -57912,7 +57915,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1242`](src/core/context-nextgen/types.ts#L1242)
+📍 [`src/core/context-nextgen/types.ts:1251`](src/core/context-nextgen/types.ts#L1251)
 
 Compaction strategy interface.
 
@@ -57984,7 +57987,7 @@ Transactional built-ins require source retention; legacy built-ins may degrade. 
 
 ### IContextPluginNextGen `interface`
 
-📍 [`src/core/context-nextgen/types.ts:187`](src/core/context-nextgen/types.ts#L187)
+📍 [`src/core/context-nextgen/types.ts:193`](src/core/context-nextgen/types.ts#L193)
 
 Context plugin interface for NextGen context management.
 
@@ -57998,10 +58001,16 @@ Context plugin interface for NextGen context management.
 
 ## Plugin Contributions
 
-Plugins provide three types of content to the system message:
+Plugins provide prompt content and tools:
 1. **Instructions** - static usage guide for the LLM (NEVER compacted)
 2. **Content** - dynamic plugin data/state (may be compacted)
 3. **Tools** - registered with ToolManager (NEVER compacted)
+
+By default both getInstructions() and getContent() enter the canonical
+developer instruction message. Explicit registerContextContributor() replaces
+that plugin's getContent() view with selected JSON user data; usage instructions
+remain trusted unless the host overrides/suppresses them through the companion.
+See docs/PLUGIN_PROMPT_AUTHORITY.md. No plugin-returned block chooses a role.
 
 ## Token Cache Lifecycle
 
@@ -58091,8 +58100,9 @@ class MyPlugin extends BasePluginNextGen {
 
 Get usage instructions for the LLM.
 
-Returns static text explaining how to use this plugin's tools
-and data. This is placed in the system message and is NEVER
+Returns trusted usage guidance explaining how to use this plugin's tools
+and data. Do not interpolate untrusted source text here. This is placed in
+the canonical developer instruction message and is NEVER
 compacted - it persists throughout the conversation.
 
 Instructions should include:
@@ -58108,11 +58118,13 @@ getInstructions(): string | null;
 
 #### `getContent()`
 
-Get formatted content to include in system message.
+Get the legacy formatted content view for the developer instruction message.
 
 Returns the plugin's current state formatted for LLM consumption.
 Should be Markdown with a `## Header`. This content CAN be compacted
 if `isCompactable()` returns true.
+An explicitly registered ContextContributor replaces this prompt view with
+selected JSON user data without replacing the source state or tools.
 
 **IMPORTANT:** Call `updateTokenCache()` with the content's token size
 before returning to keep budget calculations accurate.
@@ -59665,7 +59677,7 @@ Used to track where information came from and when it was last verified
 
 ### IStoreHandler `interface`
 
-📍 [`src/core/context-nextgen/types.ts:589`](src/core/context-nextgen/types.ts#L589)
+📍 [`src/core/context-nextgen/types.ts:598`](src/core/context-nextgen/types.ts#L598)
 
 Interface for plugins that provide CRUD storage.
 
@@ -60314,7 +60326,7 @@ For service accounts (Google, Salesforce)
 
 ### KnownContextFeatures `interface`
 
-📍 [`src/core/context-nextgen/types.ts:771`](src/core/context-nextgen/types.ts#L771)
+📍 [`src/core/context-nextgen/types.ts:780`](src/core/context-nextgen/types.ts#L780)
 
 Feature flags for enabling/disabling plugins
 
@@ -60339,7 +60351,7 @@ Feature flags for enabling/disabling plugins
 
 ### KnownPluginConfigs `interface`
 
-📍 [`src/core/context-nextgen/types.ts:845`](src/core/context-nextgen/types.ts#L845)
+📍 [`src/core/context-nextgen/types.ts:854`](src/core/context-nextgen/types.ts#L854)
 
 Plugin configurations for auto-initialization.
 When features are enabled, plugins are created with these configs.
@@ -61709,7 +61721,7 @@ Separate outer envelope prevents an old loader from silently dropping required o
 
 ### OversizedInputResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:740`](src/core/context-nextgen/types.ts#L740)
+📍 [`src/core/context-nextgen/types.ts:749`](src/core/context-nextgen/types.ts#L749)
 
 Result of handling oversized current input
 
@@ -62409,7 +62421,7 @@ source metadata aggregation rather than re-extracted into facts. |
 
 ### PreparedContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:717`](src/core/context-nextgen/types.ts#L717)
+📍 [`src/core/context-nextgen/types.ts:726`](src/core/context-nextgen/types.ts#L726)
 
 Result of prepare() - ready for a model call.
 
@@ -65215,7 +65227,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 ### StoreActionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:535`](src/core/context-nextgen/types.ts#L535)
+📍 [`src/core/context-nextgen/types.ts:544`](src/core/context-nextgen/types.ts#L544)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -65231,7 +65243,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 ### StoreDeleteResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:525`](src/core/context-nextgen/types.ts#L525)
+📍 [`src/core/context-nextgen/types.ts:534`](src/core/context-nextgen/types.ts#L534)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -65247,7 +65259,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 ### StoreEntrySchema `interface`
 
-📍 [`src/core/context-nextgen/types.ts:467`](src/core/context-nextgen/types.ts#L467)
+📍 [`src/core/context-nextgen/types.ts:476`](src/core/context-nextgen/types.ts#L476)
 
 Describes a store's schema for dynamic tool description generation.
 The `descriptionFactory` on each store tool uses this to build
@@ -65282,7 +65294,7 @@ If undefined or empty, this store has no actions. |
 
 ### StoreGetResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:509`](src/core/context-nextgen/types.ts#L509)
+📍 [`src/core/context-nextgen/types.ts:518`](src/core/context-nextgen/types.ts#L518)
 
 Result types for store operations.
 These are intentionally loose (Record-based) to accommodate
@@ -65304,7 +65316,7 @@ store-specific fields in responses.
 
 ### StoreListResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:530`](src/core/context-nextgen/types.ts#L530)
+📍 [`src/core/context-nextgen/types.ts:539`](src/core/context-nextgen/types.ts#L539)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -65320,7 +65332,7 @@ store-specific fields in responses.
 
 ### StoreSetResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:518`](src/core/context-nextgen/types.ts#L518)
+📍 [`src/core/context-nextgen/types.ts:527`](src/core/context-nextgen/types.ts#L527)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -67013,7 +67025,7 @@ type ContextCompactionTarget = 'all' | 'plugins' | 'history'
 
 ### ContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:805`](src/core/context-nextgen/types.ts#L805)
+📍 [`src/core/context-nextgen/types.ts:814`](src/core/context-nextgen/types.ts#L814)
 
 Feature flags for enabling/disabling plugins.
 Known keys provide autocomplete; arbitrary string keys are also accepted
@@ -67027,7 +67039,7 @@ type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefin
 
 ### ContextRolloverSummarizer `type`
 
-📍 [`src/core/context-nextgen/types.ts:1124`](src/core/context-nextgen/types.ts#L1124)
+📍 [`src/core/context-nextgen/types.ts:1133`](src/core/context-nextgen/types.ts#L1133)
 
 Host-supplied summarizer used by an explicit context rollover.
 
@@ -67872,7 +67884,7 @@ type PipelineConfig = TextPipelineConfig | RealtimePipelineConfig
 
 ### PluginConfigs `type`
 
-📍 [`src/core/context-nextgen/types.ts:877`](src/core/context-nextgen/types.ts#L877)
+📍 [`src/core/context-nextgen/types.ts:886`](src/core/context-nextgen/types.ts#L886)
 
 Plugin configurations for auto-initialization.
 Known keys provide autocomplete; arbitrary string keys accepted
@@ -68083,7 +68095,7 @@ type RemoteOutcomeEffect = 'read' | 'write' | 'unknown'
 
 ### ResolvedContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:813`](src/core/context-nextgen/types.ts#L813)
+📍 [`src/core/context-nextgen/types.ts:822`](src/core/context-nextgen/types.ts#L822)
 
 Resolved features retain the original required keys, plus optional additions
 and arbitrary external flags. Keep the required set stable so adding an opt-in
@@ -69819,7 +69831,7 @@ export function isMicrosoftFileUrl(source: string): boolean
 
 ### isStoreHandler `function`
 
-📍 [`src/core/context-nextgen/types.ts:612`](src/core/context-nextgen/types.ts#L612)
+📍 [`src/core/context-nextgen/types.ts:621`](src/core/context-nextgen/types.ts#L621)
 
 Type guard to check if a plugin implements IStoreHandler.
 
@@ -71102,7 +71114,7 @@ transports and are not represented as misleading URL aliases here.
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:986`](src/core/context-nextgen/types.ts#L986)
+📍 [`src/core/context-nextgen/types.ts:995`](src/core/context-nextgen/types.ts#L995)
 
 Default configuration values
 
@@ -71173,7 +71185,7 @@ Default configuration values
 
 ### DEFAULT_FEATURES `const`
 
-📍 [`src/core/context-nextgen/types.ts:821`](src/core/context-nextgen/types.ts#L821)
+📍 [`src/core/context-nextgen/types.ts:830`](src/core/context-nextgen/types.ts#L830)
 
 Default feature configuration for built-in plugins.
 

@@ -15,6 +15,16 @@ view over sources, not a new memory backend, model router or retrieval service.
 
 ## Select without deleting sources
 
+For new custom plugins, follow [Creating context plugins](../USER_GUIDE.md#creating-context-plugins):
+implement plugin and contributor on one class and register it in both roles on
+the agent. Its `getContent()` hook returns `null`; `contribute()` supplies data.
+
+For the exact instruction/data routing table, trusted usage overrides, message
+location, and corrected vendor mapping, read [Plugin prompt authority](PLUGIN_PROMPT_AUTHORITY.md).
+The existing contributor API is the placement control: registered block data is
+user context; ordinary `getContent()` remains instruction content. No new
+placement API is needed.
+
 ```typescript
 import {
   AgentContextNextGen, createInContextMemoryContributor,

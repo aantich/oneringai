@@ -15,6 +15,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { AgentContextNextGen } from '../../../src/core/context-nextgen/AgentContextNextGen.js';
+import { FilePersistentInstructionsStorage } from '../../../src/infrastructure/storage/FilePersistentInstructionsStorage.js';
 import type { WorkingMemoryPluginNextGen } from '../../../src/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.js';
 import type { InContextMemoryPluginNextGen } from '../../../src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.js';
 import type { PersistentInstructionsPluginNextGen } from '../../../src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.js';
@@ -26,22 +27,16 @@ import {
 
 const PERSIST_AGENT_ID = 'test-agent-instructions';
 
-async function clearPersistentInstructionsForAgent(agentId: string): Promise<void> {
-  const dir = path.join(os.homedir(), '.oneringai', 'agents', agentId);
-  await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
-}
-
 describe('AgentContextNextGen Plugins Integration (Mock)', () => {
   let ctx: AgentContextNextGen | null = null;
   let tempDir: string | null = null;
+  const persistentOptions = (agentId: string) => ({ agentId, plugins: { persistentInstructions: {
+    storage: new FilePersistentInstructionsStorage({ agentId, baseDirectory: tempDir! }),
+  } } });
 
   beforeEach(async () => {
     // Create temp directory for tests that need it
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'context-test-'));
-    process.env.ONERINGAI_DATA_DIR = tempDir;
-
-    // PersistentInstructions storage uses ~/.oneringai/agents/<agentId>/ — purge between tests
-    await clearPersistentInstructionsForAgent(PERSIST_AGENT_ID);
   });
 
   afterEach(async () => {
@@ -52,9 +47,6 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
       tempDir = null;
     }
-    delete process.env.ONERINGAI_DATA_DIR;
-
-    await clearPersistentInstructionsForAgent(PERSIST_AGENT_ID);
   });
 
   // ============================================================================
@@ -340,7 +332,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
     beforeEach(() => {
       ctx = createContextWithFeatures(
         { workingMemory: false, inContextMemory: false, persistentInstructions: true },
-        { agentId: PERSIST_AGENT_ID }
+        persistentOptions(PERSIST_AGENT_ID)
       );
     });
 
@@ -462,7 +454,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
 
   describe('Plugin Interactions', () => {
     it('should work with all plugins enabled', async () => {
-      ctx = createContextWithFeatures(FEATURE_PRESETS.full, { agentId: 'full-test-agent' });
+      ctx = createContextWithFeatures(FEATURE_PRESETS.full, persistentOptions('full-test-agent'));
 
       // Use working memory
       await ctx.memory!.store('key', 'desc', 'value');
@@ -473,7 +465,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
 
       // Use persistent instructions
       const pi = ctx.getPlugin<PersistentInstructionsPluginNextGen>('persistent_instructions')!;
-      await pi.set('Be creative.');
+      expect(await pi.set('style', 'Be creative.')).toBe(true);
 
       // Prepare context
       ctx.addUserMessage('test');
@@ -492,7 +484,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
     });
 
     it('should include plugin instructions for enabled plugins', async () => {
-      ctx = createContextWithFeatures(FEATURE_PRESETS.full, { agentId: 'instructions-test' });
+      ctx = createContextWithFeatures(FEATURE_PRESETS.full, persistentOptions('instructions-test'));
 
       ctx.addUserMessage('test');
       const { input, budget } = await ctx.prepare();

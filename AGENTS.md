@@ -295,6 +295,24 @@ Tool guidance:
 
 ## Context plugins
 
+For new custom plugins, implement `BasePluginNextGen` and `ContextContributor`
+on the same class. Keep trusted guidance in `getInstructions()`, return `null`
+from the required `getContent()` hook, and return data blocks from `contribute()`.
+Register both roles with `agent.context.registerPlugin(plugin)` and
+`agent.context.registerContextContributor(plugin.name, plugin)`. Advance
+`getRevision()` for source/policy changes. Follow
+[Creating context plugins](USER_GUIDE.md#creating-context-plugins) and the
+[offline authoring example](examples/custom-context-plugin.ts).
+
+Default `getInstructions()` **and** `getContent()` enter canonical developer
+instructions. For lower-authority data, explicitly register a `ContextContributor`:
+its blocks become a separate JSON user message, replacing only that source's
+legacy content view. Omit companion `instructions` to inherit plugin usage text,
+provide trusted text to replace it, or use `null` to suppress it. Unregister restores
+the legacy instruction view. Do not put retrieved text into a trusted instruction
+field. See [plugin prompt authority](docs/PLUGIN_PROMPT_AUTHORITY.md) for limits,
+protected sources, persistence, and the corrected Claude/Gemini/Vertex mapping.
+
 `AgentContextNextGen` assembles plugin instructions, plugin content, tools,
 conversation history, current input, token accounting, persistence, and
 compaction into one model request.

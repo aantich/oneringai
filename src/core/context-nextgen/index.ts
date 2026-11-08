@@ -2,8 +2,9 @@
  * AgentContextNextGen - Clean, Simple Context Management
  *
  * A complete rewrite of context management with:
- * - Single system message with all context components
- * - Clear separation: system | conversation | current input
+ * - Trusted plugin instructions and legacy content in developer messages
+ * - Optional contributor data in a separate JSON user message
+ * - Clear separation: instructions | selected data | conversation | current input
  * - Compaction happens ONCE, right before LLM call
  * - Each plugin manages its own token tracking
  * - Tool pairs always removed together

@@ -99,10 +99,16 @@ export interface ITokenEstimator {
  *
  * ## Plugin Contributions
  *
- * Plugins provide three types of content to the system message:
+ * Plugins provide prompt content and tools:
  * 1. **Instructions** - static usage guide for the LLM (NEVER compacted)
  * 2. **Content** - dynamic plugin data/state (may be compacted)
  * 3. **Tools** - registered with ToolManager (NEVER compacted)
+ *
+ * By default both getInstructions() and getContent() enter the canonical
+ * developer instruction message. Explicit registerContextContributor() replaces
+ * that plugin's getContent() view with selected JSON user data; usage instructions
+ * remain trusted unless the host overrides/suppresses them through the companion.
+ * See docs/PLUGIN_PROMPT_AUTHORITY.md. No plugin-returned block chooses a role.
  *
  * ## Token Cache Lifecycle
  *
@@ -191,8 +197,9 @@ export interface IContextPluginNextGen {
   /**
    * Get usage instructions for the LLM.
    *
-   * Returns static text explaining how to use this plugin's tools
-   * and data. This is placed in the system message and is NEVER
+   * Returns trusted usage guidance explaining how to use this plugin's tools
+   * and data. Do not interpolate untrusted source text here. This is placed in
+   * the canonical developer instruction message and is NEVER
    * compacted - it persists throughout the conversation.
    *
    * Instructions should include:
@@ -219,11 +226,13 @@ export interface IContextPluginNextGen {
   getInstructions(): string | null;
 
   /**
-   * Get formatted content to include in system message.
+   * Get the legacy formatted content view for the developer instruction message.
    *
    * Returns the plugin's current state formatted for LLM consumption.
    * Should be Markdown with a `## Header`. This content CAN be compacted
    * if `isCompactable()` returns true.
+   * An explicitly registered ContextContributor replaces this prompt view with
+   * selected JSON user data without replacing the source state or tools.
    *
    * **IMPORTANT:** Call `updateTokenCache()` with the content's token size
    * before returning to keep budget calculations accurate.

@@ -532,7 +532,9 @@
     "release:consumer": "node scripts/verify-release-consumer.mjs",
     "release:check": "npm run build && npm run typecheck && npm run lint && npm run test:unit -- --maxWorkers=4 && npm run examples:check && npm run test:agentic:compat && npm run examples:offline && npm run docs && npm run docs:full && npm run docs:check && npm run release:consumer",
     "example:routine-stores": "node --import tsx examples/routine-store-bridge.ts",
-    "examples:offline": "node scripts/check-offline-examples.mjs"
+    "examples:offline": "node scripts/check-offline-examples.mjs",
+    "example:plugin-authority": "node --import tsx examples/plugin-instructions-and-data.ts",
+    "example:custom-context-plugin": "node --import tsx examples/custom-context-plugin.ts"
   },
   "keywords": [
     "ai",
