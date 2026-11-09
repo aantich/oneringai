@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-27
+**Generated:** 2026-11-09
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -43736,7 +43736,7 @@ async list(params?: GoogleVoiceListParams): Promise&lt;GoogleVoiceListResponse&g
 **Parameters:**
 - `params`: `ListVoicesRequest | null | undefined` *(optional)*
 
-**Returns:** `Promise&lt;ListVoicesResponse&gt;`
+**Returns:** `Promise&lt;Voices.VoiceListResponse&gt;`
 
 #### `get()`
 

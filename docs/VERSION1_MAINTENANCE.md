@@ -9,13 +9,17 @@ runtime behavior remain unchanged by this branch setup.
 ## Source and package relationship
 
 - Legacy package: `@everworker/oneringai`; maintenance source: `version1`.
-- Future v2 package: unscoped `oneringai`; the user plans a later `version2` to
-  `main` merge and separate release. This setup performs neither action.
+- V2 beta: unscoped [`oneringai`](https://www.npmjs.com/package/oneringai),
+  published separately and developed on `main`. See the
+  [migration guide](https://github.com/aantich/oneringai/blob/main/docs/PACKAGE_MIGRATION.md).
+  V1 remains supported and is not deprecated; deprecation will wait until a
+  stable v2 release.
 - npm publishes immutable versioned snapshots, not live Git branches. A commit or
   push here does not publish a package or change installed consumers.
 - Future v1 package metadata points its repository/homepage at `version1`.
-  Metadata already published in 1.2.1 remains unchanged until a new maintenance
-  release is explicitly published. No version bump or deprecation is part of setup.
+  Metadata published in 1.2.1 is immutable; subsequent maintenance releases
+  carry the updated branch links. The original branch setup did not bump the
+  version or deprecate v1.
 
 ## Maintenance workflow
 

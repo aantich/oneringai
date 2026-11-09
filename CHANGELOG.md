@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] — 2026-11-09
+
+### Changed
+
+- Added a prominent README notice introducing the published unscoped v2 beta,
+  highlighting browser/Node.js agents, interchangeable harnesses, durable
+  evidence and task state, model budgets, and verified workflows, with links
+  to installation, migration, and adoption documentation.
+- Updated v1 maintenance documentation to reflect the published v2 beta and
+  its development on main. v1 remains supported and is not deprecated;
+  deprecation will wait until stable v2 is released.
+
 ## [1.2.1] — 2026-10-27
 
 ### Fixed
@@ -3395,7 +3407,9 @@ StorageRegistry.setContext({ userId: currentUser.id });
 [0.1.2]: https://github.com/aantich/oneringai/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/aantich/oneringai/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/aantich/oneringai/releases/tag/v0.1.0
-[Unreleased]: https://github.com/aantich/oneringai/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/aantich/oneringai/compare/v1.2.2...version1
+[1.2.2]: https://github.com/aantich/oneringai/compare/v1.2.1...v1.2.2
+[1.2.1]: https://github.com/aantich/oneringai/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/aantich/oneringai/compare/v1.1.8...v1.2.0
 [1.1.8]: https://github.com/aantich/oneringai/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/aantich/oneringai/compare/v1.1.6...v1.1.7

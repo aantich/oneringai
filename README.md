@@ -1,11 +1,43 @@
 # @everworker/oneringai
 
+> [!TIP]
+> **OneRingAI v2 beta is here — start your migration!**
+>
+> The next generation is published as **[`oneringai` on npm](https://www.npmjs.com/package/oneringai)**
+> (without the `@everworker/` scope). We recommend v2 for new projects and
+> encourage existing users to try the beta and start migrating.
+>
+> **What's new in v2:**
+>
+> - **Agents in browsers and Node.js:** use the same Agent API, context plugins,
+>   tools, and model budgets in browser pages, Workers, and servers.
+> - **Choose your agent harness:** define your agent and application tools once,
+>   then bind OneRingAI, local Codex/Claude SDKs, or managed OpenAI/Claude agents
+>   per session.
+> - **Stronger long-running agents:** durable evidence, protected task state,
+>   and selectable context strategies retain source observations and
+>   host-confirmed constraints through compaction.
+> - **Control model spending:** named model routes, dedicated helper models,
+>   and shared call/token/cost budgets give your application explicit control.
+> - **More reliable workflows:** inspectable tool outcomes, bounded recovery,
+>   host completion checks, and verified routines help you check actual results.
+>
+> Try the beta with `npm install oneringai@next` (currently
+> [`2.0.0-beta.2`](https://www.npmjs.com/package/oneringai/v/2.0.0-beta.2)).
+> Follow the **[v1 → v2 migration guide](https://github.com/aantich/oneringai/blob/main/docs/PACKAGE_MIGRATION.md)**
+> to replace the package and update imports; explore the
+> **[v2 README](https://github.com/aantich/oneringai#readme)** and
+> **[v2 adoption guide](https://github.com/aantich/oneringai/blob/main/docs/VERSION_2_GUIDE.md)**
+> for examples and feature support boundaries.
+>
+> **v1 remains supported and is not deprecated.** Any deprecation will wait
+> until a stable v2 release. The documentation below is for v1.
+
 **v1 maintenance:** `@everworker/oneringai` is maintained on the
-[`version1` branch](https://github.com/aantich/oneringai/tree/version1).
-This branch receives maintenance fixes during the v2 migration period. Keep
-using `npm install @everworker/oneringai` for v1. The unscoped v2 package and its
-future `main` release are separate; this setup publishes no new version and does
-not deprecate v1. See the [maintenance release guide](https://github.com/aantich/oneringai/blob/version1/docs/VERSION1_MAINTENANCE.md).
+[`version1` branch](https://github.com/aantich/oneringai/tree/version1),
+which receives maintenance fixes during the v2 migration period.
+Use `npm install @everworker/oneringai` to stay on v1. See the
+[maintenance release guide](https://github.com/aantich/oneringai/blob/version1/docs/VERSION1_MAINTENANCE.md).
 
 > **A unified AI agent library with multi-provider support for text generation, image/video generation, audio (TTS/STT), and agentic workflows.**
 
