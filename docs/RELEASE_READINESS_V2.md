@@ -1,5 +1,14 @@
 # OneRingAI v2 release readiness
 
+**Standing website requirement — 2026-11-09:** Every v2 npm publication,
+including prereleases, must be followed by the corresponding documentation
+and main-page update on `oneringai.io`. Complete the
+[required website handoff](../RELEASING.md#required-v2-website-handoff), including
+the homepage, quickstart, application pages, generated docs, checks and verified
+GitHub Pages deployment. Record the package version, source snapshot, website
+commit and deployment result; npm publication alone does not complete the
+release handoff. Earlier publication records below retain their historical scope.
+
 Beta.2 — 2026-11-08: `oneringai@2.0.0-beta.2` includes the shared browser/Node
 Agent API, browser schema compatibility corrections, AMOS EOF recovery and
 embedded dependency hardening. The [beta.2 record](evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json)

@@ -1,143 +1,112 @@
 # Releasing oneringai
 
-This document describes how to release new versions of the package to npm.
+This checklist governs the unscoped `oneringai` v2 package and its matching
+[website](https://oneringai.io). Every v2 npm release, including prereleases,
+requires both the documentation and main website pages to be updated and deployed.
+Keep legacy v1 maintenance on `version1`; develop v2 on `main`.
+
+Version selection, commits, pushes, npm publication and tag changes require
+applicable user authorization. This checklist does not initiate a release.
 
 ## Prerequisites
 
-1. **npm account** with access to the `@everworker` organization
-2. **npm token** configured (stored in `~/.npmrc`):
+- Authorized access to the unscoped npm package `oneringai`; verify with
+  `npm whoami`. Store credentials through npm's supported authentication flow.
+- Clean, committed library checkout with the intended release changes.
+- Access to the existing website repository, `aantich/oneringaiio`, normally
+  checked out beside this library at `../oneringaidotio`.
+- Node.js 22.13+ or 24+ and installed development dependencies.
+
+## Prepare and validate the package
+
+1. Update `CHANGELOG.md`, README, User Guide, relevant recipes/examples and the
+   Version 2 availability/adoption/handoff records. Keep package publication
+   distinct from source availability and provider-preview boundaries.
+2. Run `npm run release:check`. It builds and checks bundled dependencies,
+   types, lint, units, examples, public compatibility, offline examples,
+   generated public/internal API docs, documentation and installed consumers.
+   Review generated changes and commit the intended release tree.
+3. Complete the relevant AMOS, browser and other application gates described in
+   [release readiness](docs/RELEASE_READINESS_V2.md). Offline checks do not
+   establish live-provider support. Do not make billable calls without approval.
+4. Select the exact authorized version. The `release:patch`, `release:minor`
+   and `release:major` scripts run `npm version`; an explicit prerelease can
+   use `npm version <approved-version> -m 'Release %s'`. These run lifecycle
+   scripts: `preversion` builds/typechecks, `version` regenerates registries and
+   the public API reference, and `postversion` pushes with `--follow-tags`.
+   Running a version script therefore commits, tags and pushes.
+
+## Publish and verify
+
+`npm publish` runs `prepublishOnly`, which executes `release:check` and then
+`release:verify-tag`. The latter requires `v<package-version>` at the exact HEAD
+and a clean worktree. Do not bypass that gate. Choose the npm dist tag explicitly
+for the authorized release; for example, an approved prerelease may use
+`npm publish --tag next`. Moving `latest` is a separate deliberate release choice.
+
+After publication, verify the exact version and selected tags:
+
+```bash
+npm view oneringai@<published-version> version dist.integrity
+npm view oneringai dist-tags --json
+```
+
+Verify a fresh registry consumer and retain publication integrity and validation
+results in the release record. Never repeat an uncertain publication without
+first reconciling the registry state. Correct later documentation through normal
+commits; do not rewrite an already published release tag or force-push history.
+
+## Required v2 website handoff
+
+Persistent user instruction (2026-11-09): **every v2 npm publication, including
+prereleases, requires the corresponding website update and deployment. Both
+canonical documentation and main website pages must match the published release.**
+
+1. Finish and push any library documentation corrections. Use a clean library
+   commit whose package version matches the verified npm publication. The source
+   snapshot may include subsequent documentation-only corrections; record the
+   snapshot separately from the release tag. Do not advertise unreleased APIs
+   as part of the published version.
+2. In the website checkout, refresh the recorded library snapshot and generated
+   HTML. The sync script records the exact commit and version:
+
    ```bash
-   npm config set //registry.npmjs.org/:_authToken=YOUR_TOKEN
+   npm run docs:sync -- ../oneringai
+   npm run docs:generate
    ```
-3. **Clean git state** - no uncommitted changes
 
-## Release Process
+3. Review and update `src/home.html`, `src/pages/start.md`, application pages,
+   navigation, installation commands, release/changelog links, feature highlights,
+   preview/support boundaries and relevant metadata/social copy. Check all
+   advertised capabilities against that release. Shared `{{version}}` values
+   follow the pinned snapshot; authored claims still need review. A docs-only
+   sync is insufficient, including when a release has no new features.
+4. Run `npm run check` in the website checkout. Inspect representative desktop
+   and mobile pages, both themes, contents navigation, code copying, search,
+   examples and API links. Keep Analytics and the existing custom domain intact.
+5. Commit and push the website changes to its existing `main` deployment line.
+   Wait for the existing GitHub Actions **Build and deploy website** workflow
+   and GitHub Pages deployment to succeed. No new hosting service is needed.
+6. Verify the public homepage, quickstart, User Guide, Examples, API Reference
+   and AMOS cookbook at `oneringai.io`. Confirm the expected version/snapshot,
+   release highlights, local documentation links and generated search results.
+7. Record the npm version, publication/tag revision, library documentation
+   snapshot, website commit, successful deployment URL/run and verification
+   results in the release handoff. **Do not mark the release handoff complete
+   while the matching website is stale or deployment is unverified.** If npm
+   published but deployment failed, report those outcomes separately and repair
+   the website without republishing npm.
 
-### 1. Update CHANGELOG.md
+## Release references
 
-Before releasing, document changes in `CHANGELOG.md`:
+- [Release readiness and validation](docs/RELEASE_READINESS_V2.md)
+- [Version 2 availability and adoption](docs/VERSION_2_GUIDE.md)
+- [Package migration](docs/PACKAGE_MIGRATION.md)
+- [Changelog](CHANGELOG.md)
+- [npm package](https://www.npmjs.com/package/oneringai)
+- [Library source](https://github.com/aantich/oneringai)
+- [Website source](https://github.com/aantich/oneringaiio)
 
-```markdown
-## [Unreleased]
-
-## [X.Y.Z] - YYYY-MM-DD
-
-### Added
-- New feature description
-
-### Changed
-- Modified behavior description
-
-### Fixed
-- Bug fix description
-
-### Removed
-- Removed feature description
-```
-
-### 2. Choose Version Type
-
-Follow [Semantic Versioning](https://semver.org/):
-
-| Change Type | Version Bump | Example |
-|-------------|--------------|---------|
-| Bug fixes, patches | `patch` | 0.1.0 → 0.1.1 |
-| New features (backward compatible) | `minor` | 0.1.0 → 0.2.0 |
-| Breaking changes | `major` | 0.1.0 → 1.0.0 |
-
-### 3. Run Release Script
-
-```bash
-# Patch release (bug fixes)
-npm run release:patch
-
-# Minor release (new features)
-npm run release:minor
-
-# Major release (breaking changes)
-npm run release:major
-```
-
-This will:
-- Run build and typecheck
-- Bump version in `package.json`
-- Create git commit with message "Release vX.Y.Z"
-- Create git tag `vX.Y.Z`
-- Push commit and tag to GitHub
-
-### 4. Publish to npm
-
-```bash
-npm publish
-```
-
-This runs `prepublishOnly` which:
-- Builds the package (`npm run build`)
-- Runs typecheck (`npm run typecheck`)
-- Runs unit tests (`npm run test:unit`)
-
-Then publishes to npm registry.
-
-### 5. Verify
-
-```bash
-# Check npm
-npm view oneringai
-
-# Check install works
-npm install oneringai
-```
-
-## Quick Reference
-
-```bash
-# Full release flow (example: patch)
-# 1. Edit CHANGELOG.md
-# 2. Run:
-npm run release:patch
-npm publish
-
-# Verify
-npm view oneringai version
-```
-
-## Package Info
-
-| Field | Value |
-|-------|-------|
-| **Package** | `oneringai` |
-| **npm** | https://www.npmjs.com/package/oneringai |
-| **GitHub** | https://github.com/aantich/oneringai |
-| **Registry** | https://registry.npmjs.org/ |
-
-## Troubleshooting
-
-### "Two-factor authentication required"
-
-Use a granular access token with "Bypass 2FA for automation" enabled:
-1. Go to https://www.npmjs.com/settings/USERNAME/tokens
-2. Generate new token with automation bypass
-3. Configure: `npm config set //registry.npmjs.org/:_authToken=TOKEN`
-
-### "Scope not found"
-
-The `@everworker` organization must exist on npm. Create at https://www.npmjs.com/org/create
-
-### Forgot to update CHANGELOG
-
-You can amend after the fact:
-```bash
-# Edit CHANGELOG.md
-git add CHANGELOG.md
-git commit --amend --no-edit
-git push --force origin main
-```
-
-## Files Published
-
-The `files` field in `package.json` controls what's published:
-- `dist/` - Built JavaScript and TypeScript declarations
-- `README.md` - Package documentation (shown on npm)
-- `LICENSE` - MIT license
-
-Run `npm pack --dry-run` to preview what will be included.
+The package's `files` allowlist owns the published contents. Use
+`npm pack --dry-run` to inspect the actual inventory; do not infer it from this
+checklist. Referenced API docs are generated, never hand-edited.

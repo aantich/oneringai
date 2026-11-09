@@ -5,6 +5,19 @@ Do not create new branches or switch to another branch unless the user explicitl
 instructs you to do so. Preserve existing work. Merging, deleting, committing, and
 pushing require their own applicable authorization; this rule grants none.
 
+Persistent user instruction (2026-11-09): every v2 npm publication, including
+prereleases, must include the corresponding update and deployment of
+`oneringai.io` from `/Users/aantich/dev/oneringaidotio`. Refresh the pinned
+documentation snapshot and generated HTML, and review/update the homepage,
+quickstart, application pages, installation/version text, release links and
+feature/support claims for that exact published version. Documentation sync
+alone does not complete the website update. Follow [Releasing](RELEASING.md),
+run the website checks and desktop/mobile QA, deploy through its existing GitHub
+Pages workflow, and verify the public pages. Record the npm version, library
+snapshot, website commit and successful deployment in the release handoff.
+Do not call a v2 release handoff complete while the matching website is stale.
+This standing requirement does not itself authorize another npm publication.
+
 Consumer C5's explicitly selected collections-v1 API is documented in
 [whole collection pages](docs/CONNECTOR_COLLECTION_PAGES.md). Use source/account
 registration and actual selected identity filters before run/session loading.
