@@ -1,31 +1,18 @@
 # Claude Code instructions
 
-`AGENTS.md` is the canonical OneRingAI guide for every coding agent.
+@AGENTS.md
 
-Before planning or changing OneRingAI code, read `./AGENTS.md` completely and
-follow it. It contains the architecture invariants, integration recipes,
-capability routing, documentation map, repository conventions, and validation
-commands.
+The imported [AGENTS.md](AGENTS.md) is the canonical OneRingAI v2 API and
+development guide. Keep this entry point thin so Claude, Codex and other coding
+agents receive the same instructions. If imports are unavailable, read that file
+before planning or changing code.
 
-When OneRingAI is installed as a dependency rather than opened as its source
-repository, read:
+When consuming an installed package, read `node_modules/oneringai/AGENTS.md` and
+its matching public API docs. Repository plans under `.claude/plans/` and local
+auto-memory are historical context; verify API, package, branch, validation and
+release claims against the current guide and source. Do not copy old v1 release
+commands or assume a remembered failing test is still a valid baseline.
 
-```text
-node_modules/oneringai/AGENTS.md
-```
-
-Do not maintain a separate Claude-specific copy of the API guidance here. This
-small file intentionally delegates to `AGENTS.md` so Codex, Claude Code, and
-custom agents use the same source of truth.
-
-The essential invariant is:
-
-```text
-named Connector -> Agent -> provider
-                     |
-                     +-> AgentContextNextGen plugins -> shared ToolManager
-```
-
-Use public package exports in consumer code, keep credentials in named
-connectors, and verify uncertain APIs against `API_REFERENCE.md`, the relevant
-specialist guide, and runnable examples.
+API guidance belongs in `AGENTS.md` and the linked specialist recipes, rather
+than a separate Claude-specific API catalog. Do not import all specialist docs
+here; read the relevant recipe when the task needs it.

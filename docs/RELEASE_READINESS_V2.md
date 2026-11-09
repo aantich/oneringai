@@ -9,6 +9,13 @@ GitHub Pages deployment. Record the package version, source snapshot, website
 commit and deployment result; npm publication alone does not complete the
 release handoff. Earlier publication records below retain their historical scope.
 
+**Beta.3 — 2026-11-09:** The `oneringai@2.0.0-beta.3` handoff includes current
+coding-agent instructions, Claude's canonical-guide import, typed browser/plugin
+example corrections and expanded documentation checks. There are no runtime/API
+changes. The [beta.3 record](evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.json)
+owns current validation, registry publication and matching website deployment;
+the earlier records below are historical.
+
 Beta.2 — 2026-11-08: `oneringai@2.0.0-beta.2` includes the shared browser/Node
 Agent API, browser schema compatibility corrections, AMOS EOF recovery and
 embedded dependency hardening. The [beta.2 record](evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json)

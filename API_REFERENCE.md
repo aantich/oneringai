@@ -1,6 +1,6 @@
 # oneringai - API Reference
 
-**Generated:** 2026-11-08
+**Generated:** 2026-11-09
 **Mode:** public
 
 This document provides a complete reference for the public API of `oneringai`.

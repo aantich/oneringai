@@ -1,7 +1,8 @@
 # Agents in browsers and Node.js
 
-**Package availability: `oneringai@2.0.0-beta.2` (2026-11-08).** The earlier
-beta.1 does not include this browser target.
+**First available in `oneringai@2.0.0-beta.2` (2026-11-08).** The earlier
+beta.1 does not include this browser target. The current beta.3 examples include
+the `context.model` field required by the public TypeScript configuration type.
 
 Agents use the **same API in the browser and in Node.js**. Import `Agent`,
 `Connector`, plugins, tools and supporting types from `oneringai`. Construction
@@ -12,6 +13,7 @@ no `BrowserAgent`, runtime flag or initialization call.
 ## Shared application code
 
 ```typescript
+// Documentation check: complete example
 import { Agent, Connector, Vendor } from 'oneringai';
 import type { ToolFunction } from 'oneringai';
 
@@ -23,7 +25,8 @@ export function createAppAgent(gatewayURL: string, appTools: ToolFunction[]) {
   });
   return Agent.create({
     connector: 'app-model', model: 'gpt-4o-mini', tools: appTools,
-    context: { features: { workingMemory: true, inContextMemory: true } },
+    context: { model: 'gpt-4o-mini',
+      features: { workingMemory: true, inContextMemory: true } },
   });
 }
 ```
@@ -74,6 +77,7 @@ features, not a closed list of allowed plugins. A developer can register a
 factory and select it with the same context configuration:
 
 ```typescript
+// Documentation check: complete example
 import { Agent, PluginRegistry } from 'oneringai';
 import { AppContextPlugin } from '../examples/browser-node/shared.js';
 
@@ -85,6 +89,7 @@ PluginRegistry.register('app_context', config =>
 const agent = Agent.create({
   connector: 'app-model', model: 'gpt-4o-mini',
   context: {
+    model: 'gpt-4o-mini',
     features: { workingMemory: true, inContextMemory: true, appContext: true },
     plugins: { appContext: { currency: 'EUR' } },
   },

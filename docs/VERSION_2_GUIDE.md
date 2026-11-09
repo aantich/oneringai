@@ -11,6 +11,13 @@ website commit and successful GitHub Pages deployment before completing the
 release handoff. This is a standing delivery requirement, not authorization to
 publish another package version.
 
+**Beta.3 — 2026-11-09:** `oneringai@2.0.0-beta.3` refreshes the canonical coding-agent
+guide, Claude's shared entry point and typed browser/plugin examples. The package's
+documentation checker now covers these instructions and the browser guide. Agent
+APIs, runtime behavior and support boundaries are unchanged from beta.2. The
+[beta.3 record](evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.json) tracks validation,
+npm publication and the required matching website deployment separately.
+
 **Beta.2 — 2026-11-08:** `oneringai@2.0.0-beta.2` includes browser/Node portability,
 the provider instruction-authority correction, AMOS input closure recovery,
 and embedded MCP dependency hardening. The four final browser schema review
@@ -20,7 +27,7 @@ the release gates and publication status. Earlier dated beta.1/stage records bel
 remain historical; external harness and live-provider boundaries are unchanged.
 
 **Verified publication:** beta.2 is published under `aantich` from
-`v2.0.0-beta.2` / `4934f066`. Both `latest` and `next` select it. Registry integrity
+`v2.0.0-beta.2` / `4934f066`. At its publication both `latest` and `next` selected it. Registry integrity
 matches the validated tarball; fresh registry consumers pass on Node 22/24,
 including ESM/CJS, strict declarations, document formats and MCP redirects.
 The registry-installed browser build passes strict-CSP pages and Workers in

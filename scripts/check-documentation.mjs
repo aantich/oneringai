@@ -63,12 +63,14 @@ for (const file of files) {
 }
 // Documented checkout commands must exist; this never executes them.
 const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
-for (const file of ['README.md', 'USER_GUIDE.md', 'examples/README.md']) {
+const instructionFiles = ['AGENTS.md', 'CLAUDE.md'];
+const usageFiles = ['README.md', 'USER_GUIDE.md', 'docs/BROWSER_AGENTS.md', ...instructionFiles];
+for (const file of [...usageFiles, 'examples/README.md']) {
   for (const match of document(file).source.matchAll(/npm run ([\w:-]+)/g)) {
     if (!(match[1] in manifest.scripts)) failures.push(`${file}: unknown npm script ${match[1]}`);
   }
 }
-// Parse every current README/guide TS block and verify all named package imports.
+// Parse current guide/instruction TS blocks and verify named package imports.
 // Selected complete examples are additionally typechecked against built public declarations.
 const packageFile = path.join(root, 'dist/index.d.ts');
 if (!existsSync(packageFile)) failures.push('Build first: dist/index.d.ts is required for public-import validation.');
@@ -79,7 +81,7 @@ else {
   const sourceFile = declarationProgram.getSourceFile(packageFile);
   const publicNames = new Set(checker.getExportsOfModule(checker.getSymbolAtLocation(sourceFile)).map(symbol => symbol.name));
   const complete = new Map(); let blocks = 0;
-  for (const file of ['README.md', 'USER_GUIDE.md']) {
+  for (const file of usageFiles) {
     for (const match of document(file).source.matchAll(/^```(?:typescript|ts)\s*\n([\s\S]*?)^```/gm)) {
       const line = document(file).source.slice(0, match.index).split('\n').length;
       const content = match[1]; blocks++;
@@ -94,7 +96,7 @@ else {
         }
       }
       if (file === 'README.md' || content.includes('// Documentation check: complete example')) {
-        complete.set(path.join(root, `documentation-snippet-${complete.size}.mts`), content + '\nexport {};\n');
+        complete.set(path.join(root, path.dirname(file), `documentation-snippet-${complete.size}.mts`), content + '\nexport {};\n');
       }
     }
   }

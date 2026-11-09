@@ -1,6 +1,6 @@
 {
   "name": "oneringai",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "description": "Unified TypeScript AI agent library with multi-vendor models, tools, memory, media, and pluggable OneRingAI/Codex agent runtimes",
   "type": "module",
   "main": "./dist/index.js",
@@ -131,6 +131,7 @@
     "docs/evaluations/BROWSER_NODE_VALIDATION_2026_11_08.json",
     "docs/evaluations/BETA_READINESS_FIXES_2026_11_08.json",
     "docs/evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json",
+    "docs/evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.json",
     "examples/browser-node",
     "docs/CONTEXT_PREPARATION.md",
     "docs/evaluations/STAGE_01_LIVE_VALIDATION.json",

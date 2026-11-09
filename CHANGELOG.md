@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0-beta.3] — 2026-11-09
+
+- Refresh the canonical coding-agent guide for the current v2 APIs, browser/Node
+  boundaries, custom plugin registration and five harness bindings. Remove
+  superseded planning/branch instructions, import the guide from Claude's entry
+  point, and include instruction/browser-guide examples in documentation checks.
+  Correct browser/plugin examples to supply the context model required by the
+  published TypeScript API.
+
 ## [2.0.0-beta.2] — 2026-11-08
 
 - Match native schema resource normalization (including `#/`), metadata ID

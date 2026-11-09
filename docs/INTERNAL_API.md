@@ -1,6 +1,6 @@
 # oneringai - Internal API Reference
 
-**Generated:** 2026-11-08
+**Generated:** 2026-11-09
 **Mode:** full
 
 This document provides a complete reference for ALL APIs in `oneringai`, including internal implementations.

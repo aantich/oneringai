@@ -1,0 +1,233 @@
+{
+  "package": "oneringai@2.0.0-beta.3",
+  "date": "2026-11-09",
+  "branch": "main",
+  "sourceBase": "cee8993d23c23696b81dc123fff5ae3f2a0bf3fd",
+  "authorization": "commit push and release and npm update",
+  "status": "validated-ready-for-publication",
+  "publicationPerformed": false,
+  "liveModelCalls": 0,
+  "scope": "Canonical v2 coding-agent instructions, Claude shared import, typed browser/plugin examples and documentation checker coverage; no runtime/API changes",
+  "checks": {
+    "releaseCheck": {
+      "status": "pass",
+      "completedAt": "2026-11-09T10:47:28.286Z",
+      "components": [
+        "build and ESM/CJS export identity",
+        "bundled provenance and dependency audit",
+        "typecheck",
+        "lint",
+        "unit tests",
+        "example types",
+        "Stage 00 built public compatibility",
+        "offline examples",
+        "generated public/internal API docs",
+        "documentation check",
+        "clean default and optional-SDK consumers"
+      ]
+    },
+    "unit": {
+      "passed": 9478,
+      "files": 435,
+      "node": "24.20.0"
+    },
+    "examples": {
+      "typecheck": "pass",
+      "offline": 30,
+      "publicCompatibility": "pass"
+    },
+    "documentation": {
+      "typescriptBlocks": 508,
+      "completeExamples": 17,
+      "markdownFiles": 160,
+      "status": "pass",
+      "instructionAndBrowserExamplesIncluded": true
+    },
+    "consumer": {
+      "status": "pass",
+      "node": "v24.20.0",
+      "probe": {
+        "node": "v24.20.0",
+        "sdkModules": [],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+      "audit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      },
+      "optionalSdkVersions": {
+        "@openai/codex-sdk": "0.149.1",
+        "@anthropic-ai/claude-agent-sdk": "0.3.319"
+      },
+      "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+      "optionalSdkProbe": {
+        "node": "v24.20.0",
+        "sdkModules": [
+          "@openai/codex-sdk",
+          "@anthropic-ai/claude-agent-sdk"
+        ],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "optionalSdkAudit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      }
+    },
+    "browser": {
+      "passed": true,
+      "engines": [
+        {
+          "engine": "chromium",
+          "version": "158.0.8127.18",
+          "page": true,
+          "worker": true,
+          "errors": [],
+          "cspViolations": []
+        },
+        {
+          "engine": "firefox",
+          "version": "159.0",
+          "page": true,
+          "worker": true,
+          "errors": [],
+          "cspViolations": []
+        },
+        {
+          "engine": "webkit",
+          "version": "27.2",
+          "page": true,
+          "worker": true,
+          "errors": [],
+          "cspViolations": []
+        }
+      ]
+    },
+    "tarball": {
+      "passed": true,
+      "node": [
+        {
+          "node": "v24.20.0",
+          "esm": true,
+          "cjs": true,
+          "protectedBuffer": true
+        },
+        {
+          "node": "v22.13.1",
+          "esm": true,
+          "cjs": true,
+          "protectedBuffer": true
+        }
+      ],
+      "declarations": [
+        {
+          "host": "page",
+          "files": 72,
+          "nodeAmbient": false
+        },
+        {
+          "host": "worker",
+          "files": 71,
+          "nodeAmbient": false
+        },
+        {
+          "host": "node",
+          "files": 745,
+          "nodeAmbient": true
+        }
+      ],
+      "portableExports": {
+        "shared": {
+          "declarations": 53,
+          "runtime": 27
+        },
+        "types": {
+          "declarations": 599,
+          "runtime": 147
+        }
+      },
+      "bundledDependencies": {
+        "packages": 60,
+        "artifacts": 95
+      }
+    },
+    "amos": {
+      "typecheck": "pass",
+      "build": "pass",
+      "offlineExamples": 14,
+      "compiledEOFExitCode": 0
+    },
+    "liveProviders": "not run; existing live-suite authorization boundary preserved"
+  },
+  "publication": null,
+  "website": {
+    "repository": "aantich/oneringaiio",
+    "status": "pending"
+  }
+}

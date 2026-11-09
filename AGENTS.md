@@ -1,5 +1,12 @@
 # OneRingAI Agent Guide
 
+This is the canonical API and development guide for Codex, Claude Code, other
+coding agents, and humans using or modifying `oneringai`. Claude's
+[entry point](CLAUDE.md) imports this file; keep API guidance here rather than
+maintaining a second copy.
+
+## Persistent repository instructions
+
 Persistent user instruction (2026-11-08): develop OneRingAI v2 directly on `main`.
 Do not create new branches or switch to another branch unless the user explicitly
 instructs you to do so. Preserve existing work. Merging, deleting, committing, and
@@ -18,269 +25,257 @@ snapshot, website commit and successful deployment in the release handoff.
 Do not call a v2 release handoff complete while the matching website is stale.
 This standing requirement does not itself authorize another npm publication.
 
-Consumer C5's explicitly selected collections-v1 API is documented in
-[whole collection pages](docs/CONNECTOR_COLLECTION_PAGES.md). Use source/account
-registration and actual selected identity filters before run/session loading.
-Returned count, provider pagination end and corpus coverage are independent;
-cursor keys survive catalog/rollover/scopes but not new managers/processes/clear.
-Evidence is separately opt-in. Keep execution-v1's C4 static semantics unchanged.
-The [capacity inventory](docs/CONSUMER_CAPACITY_INVENTORY.md) distinguishes source,
-prompt, parser, storage and work bounds; do not raise them indiscriminately.
+The current API baseline is **`oneringai@2.0.0-beta.3`**. v2 uses the unscoped
+package `oneringai`; `@everworker/oneringai` belongs to the legacy v1 line.
+Read [package migration](docs/PACKAGE_MIGRATION.md) before upgrading a consumer.
+Historical plans, local agent memories, old branch names and dated test counts
+are not current API or release instructions. Verify against the checked-out or
+installed package, its public exports, and the current usage recipes below.
+Implementation availability, npm publication, and live-provider verification
+are separate claims; see the [Version 2 Guide](docs/VERSION_2_GUIDE.md) and
+[beta.3 release evidence](docs/evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.json).
 
-Consumer C4 is complete on branch under the full sequential authorization. Use
-`ConnectorTools.enhanced(name, { profile: 'execution-v1' })` explicitly and follow
-[the recipe](docs/ENHANCED_CONNECTORS.md) for exact static identity/source/account
-registration and host approvals. Legacy factories/defaults remain unchanged;
-catalog/page support is C5. [Delivery](docs/designs/CONSUMER_C4_DELIVERY.md) records
-review fixes and validation. Continue the [ledger](docs/designs/CONSUMER_DELIVERY_LEDGER.md)
-without a routine selection stop; this is not a release or consumer upgrade.
+## Fast facts and operating mode
 
-This is the canonical, vendor-neutral guide for coding agents that use or
-modify `oneringai`. It is written for OpenAI Codex, Claude Code,
-custom coding agents, and humans delegating integration work to them.
+- Language: strict TypeScript; Node.js 22.13+ or 24+; ESM and CJS outputs.
+- Agents also run in modern secure browser pages and dedicated Workers since
+  beta.2, with the **same Agent API and root imports**. The agentic loop and
+  context plugins share their implementation across environments.
+- Public imports use `oneringai` unless a documented subpath is required.
+- Architecture: named connectors, context plugins, one shared ToolManager.
 
-Read this file before generating OneRingAI code. For exhaustive detail, follow
-the documentation links near the end instead of guessing an API.
+When using the package as a dependency:
 
-## Fast facts
+- Read its installed `README.md`, `AGENTS.md`, `USER_GUIDE.md`, and
+  `API_REFERENCE.md` under `node_modules/oneringai/` when available.
+- Import public exports only. Do not import `src/**`, `dist/**`, or undocumented
+  implementation paths. Use runnable examples instead of inventing method names.
+- Check the installed version before adopting a newer recipe. Updating this
+  library does not authorize upgrades or edits in another application.
 
-- Package: `oneringai`
-- Runtime: Node.js 22.13+ or 24+
-- Agent runtime also supports modern secure browser pages and dedicated Workers
-  since 2.0.0-beta.2, using the **same Agent API and root imports**. Read
-  [Browser Agents](docs/BROWSER_AGENTS.md) for TypeScript conditions, supplied
-  storage/auth, compatible tools, lifecycle and published-version boundaries.
-- Language: strict TypeScript
-- Package format: ESM with ESM and CJS build outputs
-- Public API: import from `oneringai` unless a documented subpath is
-  explicitly required
-- Architecture: connector-first, plugin-first context, one shared tool manager
+When modifying this repository:
 
-## Determine your operating mode
+- Inspect the branch and working tree first; preserve existing changes.
+- Relative TypeScript imports include `.js`. Use `export type` for types and
+  `export` for runtime values. Use `src/domain/errors/AIErrors.ts` where applicable.
+- Regenerate registries and API documentation; do not hand-edit generated files.
+- Keep changes focused, update affected usage docs/examples, and run the relevant
+  checks in [Repository validation](#repository-validation).
 
-### Using OneRingAI as a dependency
-
-- Import only from the package's public exports.
-- Do not import `src/**`, `dist/**`, or undocumented implementation paths.
-- Read the installed package's `README.md`, `AGENTS.md`, `USER_GUIDE.md`, and
-  `API_REFERENCE.md` when they are available under
-  `node_modules/oneringai/`.
-- Prefer runnable patterns from `examples/` in the repository over invented
-  method names or provider-specific SDK calls.
-
-### Modifying the OneRingAI repository
-
-- Preserve the connector-first and plugin-first invariants below.
-- Relative TypeScript imports include the `.js` extension.
-- Use `export type { X }` for types and `export { X }` for runtime values.
-- Use errors from `src/domain/errors/AIErrors.ts` where applicable.
-- Do not hand-edit generated registries. Run the relevant generator.
-- Keep changes focused and validate them with the commands at the end.
-
-## The mental model
+## Architecture invariants
 
 ```text
-Application
-  -> named Connector (credentials + service identity)
-  -> Agent (model + instructions + tools + context)
-  -> provider implementation
-
-AgentContextNextGen
-  -> context plugins (state, memory, catalog, workspace)
-  -> one ToolManager shared by agent and context
-  -> compaction and persistence
+Application -> named Connector -> Agent -> provider
+                                  |
+                                  +-> AgentContextNextGen plugins
+                                  +-> one shared ToolManager
 ```
 
-Non-negotiable rules:
-
-1. `Connector` is the single source of truth for authentication.
-2. Connectors are named so multiple accounts or keys can coexist.
-3. AI-provider connectors declare an explicit `Vendor`; do not infer a vendor
-   from a model string.
-4. External-service connectors use `serviceType` and may expose tools through
-   `ConnectorTools.for(connectorName)`.
-5. `agent.tools === agent.context.tools`; do not build a second tool pipeline.
-6. Context capabilities are plugins. Disabled features add no prompt content
-   or tools.
-7. Use model and capability registries rather than assuming a model supports a
-   feature.
+1. `Connector` is the source of truth for authentication; named connectors allow
+   multiple credentials/accounts to coexist.
+2. AI connectors declare an explicit `Vendor`. Do not infer vendor from model names.
+   External-service connectors use `serviceType`.
+3. `agent.tools === agent.context.tools`. Register tools on this manager; do not
+   build a parallel tool pipeline or replace it after construction.
+4. Context capabilities are plugins. Disabled features add no prompt content or tools.
+5. Feature flags are extensible; built-in flags are not a closed plugin list.
+6. Use model/capability registries and endpoint-specific metadata. Unknown support
+   stays unknown; a registry entry does not establish live account entitlement.
+7. Host code owns authorization, tenant/user/account scope, completion checks and
+   storage policy. Model arguments and saved sessions do not grant that authority.
 
 ## Minimal working agent
 
+This Node example obtains credentials from the host environment. Browser hosts
+supply credentials or an authenticated model gateway explicitly.
+
 ```typescript
+// Documentation check: complete example
 import { Agent, Connector, Vendor } from 'oneringai';
 
 Connector.create({
   name: 'openai-main',
   vendor: Vendor.OpenAI,
-  auth: {
-    type: 'api_key',
-    apiKey: process.env.OPENAI_API_KEY!,
-  },
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
 });
-
-const instructions = 'Be accurate, concise, and explicit about uncertainty.';
 
 const agent = Agent.create({
   connector: 'openai-main',
   model: 'gpt-5.6-terra',
-  instructions,
+  instructions: 'Be accurate, concise, and explicit about uncertainty.',
 });
-
-const response = await agent.run('Explain connector-first architecture.');
-console.log(response.output_text);
+try {
+  const response = await agent.run('Explain connector-first architecture.');
+  console.log(response.output_text);
+} finally {
+  agent.destroy();
+}
 ```
 
-Switching providers changes connector and model—not the agent's tools or task
-logic:
+Switching providers changes the named connector and model. Tools, plugin authoring
+and task logic retain the same APIs; provider capabilities still need checking.
 
-```typescript
-Connector.create({
-  name: 'anthropic-main',
-  vendor: Vendor.Anthropic,
-  auth: { type: 'api_key', apiKey: process.env.ANTHROPIC_API_KEY! },
-});
+## Browser and Worker setup
 
-const claudeAgent = Agent.create({
-  connector: 'anthropic-main',
-  model: 'claude-sonnet-4-6',
-  instructions,
-});
+Read [Browser Agents](docs/BROWSER_AGENTS.md) and the
+[shared application example](examples/browser-node/shared.ts) before browser work.
+There is no `BrowserAgent`, runtime switch, or bootstrap call. Browser-aware
+bundlers select conditional exports for `oneringai`, `oneringai/agents`,
+`oneringai/shared` and `oneringai/types`. Use browser declarations explicitly:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "customConditions": ["browser"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": [],
+    "skipLibCheck": false
+  }
+}
 ```
+
+- Workers use `ES2022`/`WebWorker` libraries. Create connectors, plugins and agents
+  inside that realm; bridge UI actions through explicit application messages.
+- Browser tools can call APIs or use capabilities allowed by their host. CORS,
+  provider credential support and browser permissions still apply. Keep privileged
+  credentials in a trusted host; browser code can read credentials supplied to it.
+- The browser catalog includes compatible JSON/routine tools and generic API plus
+  GitHub/Slack connector factories. Node retains its full tool catalog. Filesystem,
+  shell/desktop tools, document parsers (including `web_fetch`), file storage/logging,
+  OAuth/JWT credential acquisition, Vertex ADC, media generation, realtime Agent
+  sessions and `oneringai/agent-runtime` harness implementations remain host-only.
+- Browser MemorySystem/InMemoryAdapter work with compatible supplied dependencies;
+  Mongo and connector-backed memory construction remain Node integrations.
+- Supply existing storage interfaces or `StorageRegistry` factories for durable
+  sessions and features with disk defaults. Working memory and enabled evidence
+  default to memory; no IndexedDB backend or automatic durability is supplied.
+- No Node globals or application source aliases are required. Use HTTPS/localhost
+  for Web Crypto. Dynamic helper/collection schemas work under strict CSP.
+- Inference remains at the provider. Large histories require local preparation,
+  serialization and memory; a million-token model window is not a universal browser
+  performance guarantee. A Worker can keep preparation away from the page UI.
+- ModelTask budgets are explicit and realm-local; use host enforcement for spending
+  boundaries. Save checkpoints and destroy agents during teardown.
 
 ## Choose the right surface
 
-| Goal | Preferred API |
-|------|---------------|
+| Goal | Preferred API / recipe |
+| --- | --- |
 | Stateful, tool-using assistant | `Agent.create()` + `agent.run()` |
-| Token/event streaming | `agent.stream()` |
-| One direct model call without managed context | `agent.runDirect()` / `streamDirect()` |
-| Structured JSON | `responseFormat` on `run()` or `runDirect()` |
-| Authenticated external API | `Connector` + `ConnectorTools.for()` or `Connector.fetch()` |
-| Web search | Serper/Brave/Tavily connector tools or `SearchProvider` |
-| Web scraping | ZenRows/Jina/Firecrawl/ScrapingBee connector tools or `ScrapeProvider` |
-| Dynamic large tool sets | `ToolCatalogPluginNextGen` via `context.features.toolCatalog` |
-| Long-term knowledge | `MemorySystem` and memory context plugins |
-| Image generation/editing | `ImageGeneration` |
-| Video generation | `VideoGeneration` |
-| Text-to-speech / speech-to-text | `TextToSpeech` / `SpeechToText` |
-| Embeddings | `Embeddings` |
-| Multiple cooperating agents | `createOrchestrator()` |
-| External MCP servers | `MCPRegistry` |
-| Interchangeable OneRingAI/Codex/Claude harnesses | `oneringai/agent-runtime`; `createAgent(definition)` plus session execution binding, inspect then observe `run.events()` |
+| Typed token/event streaming | `agent.stream()` |
+| Direct model call without managed context | `agent.runDirect()` / `streamDirect()` |
+| Structured JSON | `responseFormat`; read `output_parsed` |
+| Authenticated external service | Named `Connector`, `ConnectorTools.for()` or `Connector.get(name).fetch()` |
+| Explicit operational failure with unchanged raw result | `createOutcomeTool()`; [outcomes](docs/OUTCOME_AWARE_TOOLS.md) |
+| Large dynamic tool sets | `context.features.toolCatalog`; [tool catalog](docs/CONNECTOR_TOOL_CATALOG.md) |
+| Custom context data | `BasePluginNextGen` + explicit `ContextContributor` registration |
+| Host-confirmed task view | `context.features.taskState`; [task state](docs/TASK_STATE.md) |
+| Bounded recovery and host completion checks | `loopPolicy`; [loop policies](docs/AGENT_LOOP_POLICIES.md) |
+| Verified routine execution | `createRoutineRunner({ verify })`; [routines](docs/VERIFIED_ROUTINES.md) |
+| Multiple cooperating Agents | `await createOrchestrator()` / `createOrchestratorWithFactory()` |
+| Interchangeable OneRingAI/Codex/Claude harnesses | `oneringai/agent-runtime`; [runtime bindings](#agent-runtime-and-harness-bindings) |
+| Scoped recoverable tool results | Evidence plugin; [durable evidence](docs/DURABLE_EVIDENCE.md) |
+| Helper models and aggregate model budgets | `modelExecution.helpers`, `ModelTask`; [helpers](docs/MODEL_TASKS_AND_HELPERS.md) |
+| Host-selected model routes | `modelExecution.routing`; [routing](docs/MODEL_ROUTING.md) |
+| Opt-in research/workflow defaults | `createAgentPreset()`; [presets](docs/AGENT_PRESETS.md) |
+| Long-term entity/fact knowledge | `MemorySystem`; [memory](docs/MEMORY_GUIDE.md) |
+| External MCP servers in Node | `MCPRegistry`; [MCP integration](MCP_INTEGRATION.md) |
 
-## Connectors and external tools
+## Agent execution and completion
 
-Create one named connector for each credential/account. Pass connector names,
-not service-type names, to agents and tool factories.
-
-```typescript
-import {
-  Agent,
-  Connector,
-  ConnectorTools,
-  Services,
-  Vendor,
-  tools,
-} from 'oneringai';
-
-Connector.create({
-  name: 'serper-research',
-  serviceType: Services.Serper,
-  auth: { type: 'api_key', apiKey: process.env.SERPER_API_KEY! },
-  baseURL: 'https://google.serper.dev',
-});
-
-Connector.create({
-  name: 'zenrows-research',
-  serviceType: Services.Zenrows,
-  auth: { type: 'api_key', apiKey: process.env.ZENROWS_API_KEY! },
-  baseURL: 'https://api.zenrows.com/v1',
-});
-
-const researchAgent = Agent.create({
-  connector: 'openai-main',
-  model: 'gpt-5.6-terra',
-  identities: [
-    { connector: 'serper-research' },
-    { connector: 'zenrows-research' },
-  ],
-  tools: [
-    ...ConnectorTools.for('serper-research'),
-    ...ConnectorTools.for('zenrows-research'),
-    tools.webFetch,
-  ],
-});
-```
-
-Important distinctions:
-
-- The 50 service templates configure authentication and endpoint defaults.
-- A configured connector with `baseURL` gets a generic authenticated API tool.
-- Selected services add specialized tools, such as GitHub, Slack, Microsoft,
-  Google Workspace, Telegram, Twilio, Zoom, Serper, and ZenRows.
-- `identities` limits which connector categories an agent may discover; it is
-  not a substitute for host authorization.
-- Never place API keys in prompts, tool arguments, or source files.
-
-## Agent execution
-
-- `run(input, options?)` uses managed context, tools, compaction, and plugins.
-- `stream(input, options?)` emits typed streaming events.
-- `runDirect(input, options?)` bypasses context management for a direct model
-  call; tools are excluded unless `includeTools` is enabled.
-- `thinking`, `temperature`, and `vendorOptions` are per-call overrides.
-- Read text from `response.output_text`. Structured responses also expose
-  `output_parsed` after successful coercion.
+- `run(input, options?)` uses context, tools, plugins and bounded preparation.
+  `stream(input, options?)` emits typed events; drain or close the iterator properly.
+- `runDirect()` / `streamDirect()` bypass managed context. Tools are excluded unless
+  `includeTools` is enabled. Direct calls do not acquire managed task/loop protections.
+- `thinking`, `temperature`, `vendorOptions`, `responseFormat` and `modelTask` are
+  per-call options. Managed cancellation uses `agent.cancel()`; do not invent a
+  `RunOptions.signal`. Direct/helper/composition APIs expose their own signal options.
+- When supplying a context configuration object, include its required `model`
+  field as well as the Agent's model. Omitting the entire context option uses the
+  Agent's default context construction.
+- Native Agent responses use `output_text` and optional `output_parsed`. Runtime
+  harness results use `outputText`; these are different public result contracts.
+- Use `run()` when prompt-fallback structured output must combine with tools: its
+  final tool-free repair is bounded. Streaming does not gain that repair pass.
+- `loopPolicy` is opt-in; a per-call `null` disables it. A host `completion` callback
+  verifies actual scoped state/evidence. Model/provider completion alone is not
+  business completion. Inspect `response.loop` or `agent.getLoopDiagnostics()`.
+- Recovery allowances share existing iteration/task bounds. Declare read/write
+  effects accurately. Repeated writes/unknown effects stop before unsafe replay;
+  cancellation never proves whether an external action happened.
+- `createAgentPreset('research' | 'workflow', config)` returns ordinary AgentConfig
+  without I/O. It requires explicit matching host scope/storage; workflow also
+  requires task state. Permissions, helpers, hard budgets and completion stay explicit.
 
 ```typescript
 const response = await agent.run('Return the two highest priorities.', {
   responseFormat: {
-    type: 'json_schema',
-    name: 'priorities',
-    strict: true,
+    type: 'json_schema', name: 'priorities', strict: true,
     schema: {
       type: 'object',
-      properties: {
-        items: { type: 'array', items: { type: 'string' } },
-      },
-      required: ['items'],
-      additionalProperties: false,
+      properties: { items: { type: 'array', items: { type: 'string' } } },
+      required: ['items'], additionalProperties: false,
     },
   },
 });
 ```
 
-Use `run()` rather than streaming when prompt-fallback structured output and
-tools must be combined; the non-streaming path can perform the final repair
-pass.
+## Connectors and tools
 
-## Tool system
-
-Tools come from five places:
-
-1. Application-supplied `ToolFunction`s.
-2. The 39 generated connector-free built-ins in eight populated categories.
-3. Context plugins, including `store_*`, `memory_*`, and catalog tools.
-4. Connector-generated generic and specialized tools.
-5. MCP servers.
-
-Minimal custom tool:
+Pass connector names, not service-type names, to agents and tool factories.
+AI connectors use `vendor`; service connectors use `serviceType` and endpoint/auth
+configuration. The service templates configure defaults; selected services add
+specialized tools. See [the complete catalog](docs/CONNECTOR_TOOL_CATALOG.md).
 
 ```typescript
+import { Connector, ConnectorTools, Services } from 'oneringai';
+
+Connector.create({
+  name: 'serper-research', serviceType: Services.Serper,
+  auth: { type: 'api_key', apiKey: process.env.SERPER_API_KEY! },
+  baseURL: 'https://google.serper.dev',
+});
+// Include this selection in Agent.create({ connector, model, ... }).
+const researchConfig = {
+  identities: [{ connector: 'serper-research' }],
+  tools: ConnectorTools.for('serper-research'),
+};
+```
+
+- Tools come from application functions, generated built-ins, context plugins,
+  connectors, and MCP. Tool names must be unique; return serializable data and
+  add `describeCall` for human-readable UI activity.
+- Search/scrape tools come from configured service connectors or `SearchProvider` /
+  `ScrapeProvider`. Never put credentials in prompts, tool arguments or source.
+- `identities` restricts which connector categories an Agent may discover; it does
+  not replace host approval.
+  Use `PermissionPolicyManager` and user rules for sensitive/destructive tools.
+- `agent.tools.execute()` preserves raw returns; `executeWithOutcome()` exposes
+  diagnostics. Application `success: false`/`error` fields are not framework failures.
+  Use `createOutcomeTool()` to report an invocation-owned operational failure.
+- Forward `ToolContext.signal` to requests. Admission captures connector/permission
+  ownership; later re-registration must not rebind an admitted action.
+- Late outcomes retain original call/run IDs and remain diagnostic. Inspect outcome
+  and evidence separately; storage/projection failure never authorizes action replay.
+  Read [outcomes and cancellation](docs/TOOL_OUTCOMES_AND_CANCELLATION.md).
+
+Minimal custom tool (compatible with both Agent environments):
+
+```typescript
+// Documentation check: complete example
 import type { ToolFunction } from 'oneringai';
 
 const getWeather: ToolFunction = {
   definition: {
     type: 'function',
     function: {
-      name: 'get_weather',
-      description: 'Get current weather for a city.',
+      name: 'get_weather', description: 'Get current weather for a city.',
       parameters: {
-        type: 'object',
-        properties: { city: { type: 'string' } },
-        required: ['city'],
-        additionalProperties: false,
+        type: 'object', properties: { city: { type: 'string' } },
+        required: ['city'], additionalProperties: false,
       },
     },
   },
@@ -289,395 +284,425 @@ const getWeather: ToolFunction = {
 };
 ```
 
-Tool guidance:
+### Selected connector and remote extensions
 
-- Tool names must be unique within an agent.
-- Return serializable data; throw meaningful errors for failed execution.
-- Use root `createOutcomeTool()` for explicit invocation-owned operational failures
-  with unchanged raw returns. See [the recipe](docs/OUTCOME_AWARE_TOOLS.md); existing
-  tools remain unchanged and rich remote parity remains C7.
-- Use `agent.tools.executeWithOutcome()` for semantic diagnostics; `execute()`
-  preserves raw returns. An application `success: false` field is not a framework
-  failure. Observe `ToolContext.signal` and forward it to connector requests.
-- Cancellation/timeouts do not establish whether an external write happened.
-  Late outcomes retain original call/run IDs and are diagnostic-only. See
-  [tool outcomes](docs/TOOL_OUTCOMES_AND_CANCELLATION.md) for defaults, deadlines,
-  retry boundaries, and support limitations.
-- Invocation connector access and selected tool/permission metadata are captured
-  at admission; re-registration affects future calls. Internal background delivery
-  checks scope again. Stream counters settle before completion events.
-- Add `describeCall` when a UI should display a human-readable action.
-- Use `PermissionPolicyManager` and user rules for destructive or sensitive
-  tools. The evaluation order is user rules, parent delegation, then policy
-  chain.
-- Use the tool catalog for large tool sets instead of sending every definition
-  to the model on every turn.
-- Use `agent.tools` to register MCP or late-bound tools; do not replace the
-  manager.
+- `ConnectorTools.enhanced(name, { profile: 'execution-v1' })` explicitly selects
+  enhanced execution. Use exact static identity/source/account registration and
+  host approvals from [Enhanced Connectors](docs/ENHANCED_CONNECTORS.md). Existing
+  factories/defaults remain unchanged.
+- `collections-v1` additionally requires the manager-local catalog gate and actual
+  selected identity filters before run/session loading. Returned count, provider
+  pagination end and corpus coverage are independent. Cursor keys survive catalog,
+  rollover and scopes, but not new managers/processes/clear. Evidence is separately
+  opt-in. Follow [whole collection pages](docs/CONNECTOR_COLLECTION_PAGES.md) and
+  the [capacity inventory](docs/CONSUMER_CAPACITY_INVENTORY.md); do not raise unrelated limits.
+- Remote outcome parity uses the separate negotiated C7 APIs, including
+  `AgentPackageOutcomeServer`, `createAgentPackageOutcomeTools()` and
+  `hydrateAgentPackageWithOutcomes()`. Protocol v2 remains unchanged. Scope evidence
+  and authorize all transport operations; reconcile uncertain writes using original
+  source receipts. Reuse the same evidence storage handle and shared ToolManager.
+  See [Remote Tool Outcomes](docs/REMOTE_TOOL_OUTCOMES.md).
 
-## Context plugins
+## Context plugins: built-in and custom
 
-For new custom plugins, implement `BasePluginNextGen` and `ContextContributor`
-on the same class. Keep trusted guidance in `getInstructions()`, return `null`
-from the required `getContent()` hook, and return data blocks from `contribute()`.
-Register both roles with `agent.context.registerPlugin(plugin)` and
-`agent.context.registerContextContributor(plugin.name, plugin)`. Advance
-`getRevision()` for source/policy changes. Follow
-[Creating context plugins](USER_GUIDE.md#creating-context-plugins) and the
-[offline authoring example](examples/custom-context-plugin.ts).
+Feature flags are open string keys. External developers do not need core changes
+to add plugins. `PluginRegistry` registers factories for automatic initialization;
+`agent.context.registerPlugin(instance)` supports manual initialization. Select one
+path per plugin instance/name, then explicitly register its data contributor.
 
-Default `getInstructions()` **and** `getContent()` enter canonical developer
-instructions. For lower-authority data, explicitly register a `ContextContributor`:
-its blocks become a separate JSON user message, replacing only that source's
-legacy content view. Omit companion `instructions` to inherit plugin usage text,
-provide trusted text to replace it, or use `null` to suppress it. Unregister restores
-the legacy instruction view. Do not put retrieved text into a trusted instruction
-field. See [plugin prompt authority](docs/PLUGIN_PROMPT_AUTHORITY.md) for limits,
-protected sources, persistence, and the corrected Claude/Gemini/Vertex mapping.
-
-`AgentContextNextGen` assembles plugin instructions, plugin content, tools,
-conversation history, current input, token accounting, persistence, and
-compaction into one model request.
-
-| Feature flag | Default | Purpose |
-|--------------|---------|---------|
-| `workingMemory` | `true` | External tiered scratch storage |
-| `inContextMemory` | `true` | Small high-value state directly in the prompt |
+| Built-in feature | Default | Purpose |
+| --- | --- | --- |
+| `workingMemory` | `true` | Tiered scratch storage outside the full prompt |
+| `inContextMemory` | `true` | Small high-value state in context |
 | `persistentInstructions` | `false` | Deprecated keyed instruction store |
-| `userInfo` | `false` | Deprecated user store and TODO tools |
+| `userInfo` | `false` | Deprecated user store/TODO tools |
 | `toolCatalog` | `false` | Discover/load/unload tool categories |
-| `sharedWorkspace` | `false` | Versioned multi-agent coordination board |
+| `sharedWorkspace` | `false` | Versioned multi-agent coordination |
 | `memory` | `false` | Long-term memory injection plus six read tools |
 | `memoryWrite` | `false` | Six write tools; requires `memory` |
-| `evidence` | disabled | Scoped evidence, bounded retrieval and opt-in tool projections |
-| `taskState` | `false` | Host-controlled task view with revision-checked notes/receipts |
+| `evidence` | disabled | Scoped evidence and opt-in result projections |
+| `taskState` | `false` | Host-controlled task view and revision-checked notes/receipts |
+
+For new data plugins, extend `BasePluginNextGen` and implement `ContextContributor`
+on the same class. Keep trusted usage guidance in `getInstructions()`, return
+`null` from required `getContent()`, expose host inspection via `getContents()`,
+and return data blocks from `contribute()`. Advance `getRevision()` for source,
+scope, permission and selection-policy changes; invalidate the base token cache
+when state changes. This is not a request for TTL caches or cross-plugin plumbing.
+
+Given your `AppContextPlugin` implementation, manual registration is:
 
 ```typescript
-const catalogAgent = Agent.create({
-  connector: 'openai-main',
-  model: 'gpt-5.6-terra',
-  identities: [{ connector: 'serper-research' }],
-  context: {
-    model: 'gpt-5.6-terra',
-    features: { toolCatalog: true },
-    toolCategories: ['filesystem', 'web'],
-    plugins: {
-      toolCatalog: {
-        pinned: ['filesystem'],
-        autoLoadCategories: ['web'],
-      },
-    },
-  },
-});
+const plugin = new AppContextPlugin();
+agent.context.registerPlugin(plugin);
+agent.context.registerContextContributor(plugin.name, plugin);
 ```
 
-Preparation runs one bounded compaction pass before the LLM call, then rebuilds
-contributions and counts the sanitized request. Connected tool-call/result groups
-are preserved or removed together; pending results and outstanding native async
-calls protect their dependencies. Duplicate final results are invalid protocol.
-Final dispatch checks cover synchronous request listeners, actual model capacity,
-schemas/native tools, and replay signatures. Managed JSON repair checks fit without
-replacing the main context diagnostic. Spill stores all connected native/message
-results and attachments before removal; failed writes preserve history.
-Known request constraints and provider capacity guide the initial compaction pass.
-Spill allocation includes already stored keys, including after save/load, and
-function-result errors are counted before preparation and dispatch.
-Do not pre-compact the same turn in application code. Inspect `lastPreparation`
-for the selected revision and estimated budget instead of preparing again.
-The notes index and keyless `store_get({ store: "notes" })` contain metadata only.
-Retrieve each source with its exact index key, including tier/collision suffix,
-before using its contents. `store_list` discovers entries omitted from the index.
-See [context preparation](docs/CONTEXT_PREPARATION.md) for fit errors and race handling.
+Alternatively, register a factory **before** creating the Agent. This checkout
+uses the exported class from the shared example below; in your application,
+import your own plugin implementation. The host first configures `app-model`.
 
-## Durable evidence
+```typescript
+// Documentation check: complete example
+import { Agent, PluginRegistry } from 'oneringai';
+import { AppContextPlugin } from './examples/browser-node/shared.js';
 
-Enable `context.features.evidence` explicitly. Use a host-owned stable scope and
-`FileEvidenceStorage` (or a custom acknowledged backend) for restart recovery;
-the enabled default is a new process-local in-memory store. Keep tenant/owner
-selection outside model arguments. `output.summarize` receives a detached redacted
-copy; preserve essential IDs/status. Raw tool returns and execution events stay raw.
-Inspect `outcome.evidence` independently of execution status. Storage/projection
-failure must never trigger repetition of an external action. Unacknowledged raw
-results are protected from compaction/truncation/rollover; oversized/async delivery
-can stop explicitly. Recover by storing the retained observation, then host-only
-`context.acknowledgeToolEvidence(callId, reference)`. Use `evidence_read({ id })` with bounded
-offsets and `evidence_list` for omitted references. Read the [evidence guide](docs/DURABLE_EVIDENCE.md)
-for scope, JSON limitations, redaction, retention, snapshots, and actual durability.
-Authentic deliveries retain recovery correlation when optional `outcome` is omitted.
-Protected pending groups survive new/async input and are copied into session snapshots
-without committing live input or adding required session fields. Save interrupted
-observations before destroying the context; recovery never reruns their action.
-Early stream closure and fail-fast exits retain settled unstored batches. A stored
-receipt without a result cannot release raw protection, including async delivery.
-Loading a checkpoint reconciles matching function/custom call and execution IDs
-across receipt changes; the checkpoint owns matching invocations.
-Acknowledgement requires a result-bearing record. Failed async delivery retains
-queued completions for host repair and explicit continuation. Bundled stores expose
-an optional `serializationLimitBytes` hint; configure `maxSerializationBytes` for
-custom backends or deliberately larger sources reduced by host redaction. Final
-backend quotas still apply; existing adapters need no new required members.
+export function createAppAgent(model: string) {
+  if (!PluginRegistry.has('appContext')) {
+    PluginRegistry.register('app_context', config =>
+      new AppContextPlugin('app_context', String(config?.currency ?? 'EUR')),
+      { featureKey: 'appContext' });
+  }
+  const agent = Agent.create({
+    connector: 'app-model', model,
+    context: {
+      model,
+      features: { workingMemory: true, inContextMemory: true, appContext: true },
+      plugins: { appContext: { currency: 'EUR' } },
+    },
+  });
+  const plugin = agent.context.getPlugin<AppContextPlugin>('app_context')!;
+  agent.context.registerContextContributor(plugin.name, plugin);
+  return agent;
+}
+```
 
-## Explicit helper models and task budgets
+The feature/config key is `appContext`; the instance name is `app_context`.
+`PluginRegistry.has()` takes the feature key. Register once per realm; dependencies
+must be enabled. A contributor is not discovered by structural method detection.
+The [complete authoring walkthrough](USER_GUIDE.md#creating-context-plugins),
+[offline custom plugin](examples/custom-context-plugin.ts) and
+[shared browser/Node example](examples/browser-node/shared.ts) include implementations,
+updates, tools, revisions, state validation and cleanup.
 
-Optional `modelExecution.helpers` configures `compactor`, `extractor`, and `verifier`
-through named connectors. `agent.invokeHelper(role, textOrBuilder, { schema, modelTask })`
-is stateless and tool-free; defaults are 512 output tokens and one local-schema
-repair. The main model stays fixed. A configured compactor is used by explicit
-between-execution `rolloverContext()` or an explicitly selected
-`StructuredSummaryStrategy` during bounded pre-call preparation; transfer to another connector requires
-`allowContextTransfer: true`.
+### Prompt authority and selective data
 
-Share a host-owned `ModelTask` across managed/direct calls and helpers to share
-process-local call/token/deadline/model token-cost reservations. Sharing is
-explicit: a helper without `modelTask` owns an independent task even
-during another execution. Its schema compiler is scoped to that invocation.
-Google GenerateContent/Vertex thinking is inclusive in ledger output/cost counts;
-keep the legacy response/event fields intact. Missing/partial external usage
-stays unknown, and failed/cancelled outcomes are recorded separately from usage.
-Tracked request records are captured before admission. Google/Vertex candidate
-count multiplies output reservations and the aggregate per-call cap. Repair keeps
-the selected evidence and fails before dispatch on overflow. Mixed external pricing
-uncertainty survives final snapshots. Capacity-based reservations can be much larger
-than the prompt. Read `task.snapshot()` or
-`agent.getModelUsage()` alongside unknown-usage/cost counters; registry costs are
-estimates, external fees are excluded. Helpers/tasks are disabled by default;
-saved context does not restore task authority or role configuration. See the
-[complete recipe](docs/MODEL_TASKS_AND_HELPERS.md) before configuring hard limits,
-custom providers, cross-connector history transfer, or external usage reports.
+Legacy `getInstructions()` **and `getContent()` enter canonical developer
+instructions**. Do not put retrieved or lower-authority data in either field.
+An explicitly registered contributor replaces only that plugin's legacy content
+view with JSON user-context data. Omit contributor `instructions` to inherit usage
+text, supply trusted text to replace it, or `null` to suppress it; explicit
+`undefined` also supplies no usage text. Unregistering restores the legacy view.
+See [Plugin Prompt Authority](docs/PLUGIN_PROMPT_AUTHORITY.md).
+
+Optional `context.assembly` controls data budgets, stable-prefix layout and headroom;
+`createInContextMemoryContributor()` selects whiteboard entries without deleting
+source state. Protected task/evidence/instruction sources cannot be replaced.
+Observe contributor cancellation/deadlines, full dependency closures and revisions;
+registration does not grant authorization. Inspect `lastPreparation.selection`
+for metadata and local estimates, with provider usage/cache counters unknown when
+unreported. Layout does not guarantee provider cache hits or cost/quality gains.
+Read [Context Assembly](docs/CONTEXT_ASSEMBLY.md).
+
+### Preparation, compaction and persistence
+
+- Preparation runs one bounded compaction pass before dispatch, rebuilds the request,
+  then checks sanitized capacity/scope/replay constraints. Do not pre-compact the
+  same managed turn in application code; inspect `lastPreparation` instead.
+- Tool-call/result dependency groups stay together. Pending/async results and
+  unacknowledged evidence remain protected. Spill writes complete before removal;
+  failures preserve history. Retrieve notes with exact index keys (including suffixes):
+  the index and keyless `store_get({ store: "notes" })` contain metadata only.
+  `store_list` discovers omitted entries. See [preparation](docs/CONTEXT_PREPARATION.md).
+- Algorithmic compaction remains the default. `ObservationMaskingStrategy` and
+  `StructuredSummaryStrategy` are opt-in and require built-in scoped evidence.
+  Preserve writes/unknown effects, exact protected history and recoverable sources;
+  model summaries are data, not authority. See [strategies](docs/CONTEXT_STRATEGIES.md).
+- Native composition uses `new ContextCompactionStrategy(...)` in the existing
+  `context.compactionStrategy` instance field, with `plugins: 'auto' | 'off'` and
+  `history: 'native' | 'off'` (or the documented history object). Do not invent
+  another registry name or top-level config. `agent.compactContext({ target })`
+  supports `all`, `plugins`, `history`; `automatic: false` permits manual scheduling.
+  Native history requires scoped built-in evidence and a verified main-provider
+  adapter; it does not use the helper compactor. Preserve exact provider/endpoint/
+  account ownership and signed/opaque state. See [native compaction](docs/NATIVE_CONTEXT_COMPACTION.md).
+- Save/load with `agent.context.save()` / `load()`. Recreate/register plugins and
+  contributors **before loading** checkpoints. They restore data, not executable
+  factories, callbacks, credentials, policies or ModelTask authority. Manual plugin
+  registration after `Agent.resume()` cannot recover state already skipped at load.
+- Loads require idle host execution/edits. Rejected restoration preserves original
+  state/configuration; rollback failure blocks saving until actual repair or rebuild.
+  Preserve JSON serialization contracts. See [restoration](docs/AGENT_PRESETS.md#session-restoration-and-cleanup).
+
+## Evidence, task state and verified routines
+
+- Enable `context.features.evidence` explicitly. Default evidence is process-local
+  memory; use a stable host scope and acknowledged backend for restart recovery
+  (`FileEvidenceStorage` in Node, or a supplied backend).
+- Raw returns/events stay raw; projections receive detached redacted data. Inspect
+  `outcome.evidence` separately from execution. Failed storage/projection is not a
+  failed external action. Preserve observations, repair storage, then use host-only
+  `context.acknowledgeToolEvidence(callId, reference)` with result-bearing proof.
+  `evidence_read` is bounded; `evidence_list` discovers omitted references.
+- Interrupted results and queued async completions need checkpoint/recovery before
+  teardown. A receipt without a result cannot release raw protection. Custom stores
+  need realistic serialization/backend limits. See [durable evidence](docs/DURABLE_EVIDENCE.md)
+  and [backend conformance](docs/EVIDENCE_CONFORMANCE.md).
+- `features.taskState` requires `plugins.taskState` with host-selected task/scope.
+  `TaskStatePluginNextGen.updateHost(delta, revision)` records confirmed notes;
+  model proposals remain unconfirmed. `recordAction()` is explicit; settled
+  submission does not prove remote completion. `confirmAction()` records that
+  separate host check. Prune only eligible confirmed/resolved state after archiving
+  proof as needed. No mutation tools or automatic duplicate-effect prevention are
+  added. Read [Task State](docs/TASK_STATE.md).
+- `createRoutineRunner({ verify })` is opt-in; legacy `executeRoutine` and
+  `createRoutineTool` remain. Verify readiness and final post-step state with host
+  evidence. Renewed authorization resumes opaque same-process single-use handles;
+  durable workflow/cursor recovery is not implemented. Nested work shares its task,
+  deadlines and ToolManager. Retain waiting children/unacknowledged evidence; never
+  replay an action to repair bookkeeping. See [verified routines](docs/VERIFIED_ROUTINES.md).
+
+## Helpers, budgets and managed model routing
+
+- `modelExecution.helpers` configures named `compactor`, `extractor`, `verifier`
+  connectors. `agent.invokeHelper(role, textOrBuilder, { schema, modelTask })` is
+  stateless/tool-free, with documented defaults of 512 output tokens and one repair.
+  Optional `validationSchema` adds independent local constraints within that same
+  repair allowance. Both schemas must pass; no outer retry is required.
+- Share an explicit host-owned `ModelTask` across main/direct/helper calls to share
+  call/token/deadline/model token-cost reservations. A helper without that task owns
+  an independent task. Missing/partial provider usage stays unknown; costs are
+  registry estimates, not external fees. Read `task.snapshot()` / `getModelUsage()`.
+- Helpers and routing are opt-in. Context transfer to other connectors/accounts
+  requires `allowContextTransfer: true`; saved sessions never restore task authority.
+  Read [Model Tasks and Helpers](docs/MODEL_TASKS_AND_HELPERS.md).
+- `modelExecution.routing` defines named routes and bounded host selection;
+  `RunOptions.routing` supplies hints/route or `null` opt-out. One managed execution
+  keeps its selected owner/task through retries, repair, compaction and suspension.
+  Public defaults stay unchanged. Inspect optional `routing` diagnostics; selection
+  alone does not establish dispatch/completion.
+- Provider-bound state retains its exact owner, including when routing is omitted.
+  Reconcile/cancel outstanding async work before replacing ownership. Preserve the
+  original route/task/options on rejected resume; failed finalization retains the
+  accepted observation for checkpoint repair. Never replay writes on another route.
+  Helpers/direct/explicit maintenance retain their own documented bindings.
+  Read [Model Routing](docs/MODEL_ROUTING.md).
 
 ## Long-term memory
 
-The memory layer is a standalone entity/fact knowledge system, not chat history
-and not only a vector store. It supports provenance, confidence, importance,
-graph traversal, fact and document embeddings, ranked recall, entity
-resolution, bitemporal queries, profiles, signal ingestion, and permissions.
+`MemorySystem` is an entity/fact knowledge system supporting provenance, graphs,
+embeddings, ranked recall, entity resolution, bitemporal queries, profiles and
+permissions. It is distinct from conversation history and context scratch storage.
 
-The agent integration has 12 tools:
-
-- Six reads: `memory_recall`, `memory_graph`, `memory_search`,
-  `memory_search_documents`, `memory_find_entity`, `memory_list_facts`.
-- Six writes: `memory_remember`, `memory_link`, `memory_upsert_entity`,
-  `memory_forget`, `memory_restore`, `memory_set_agent_rule`.
-
-```typescript
-import {
-  Agent,
-  InMemoryAdapter,
-  createMemorySystemWithConnectors,
-} from 'oneringai';
-
-const memory = createMemorySystemWithConnectors({
-  store: new InMemoryAdapter(),
-  connectors: {
-    embedding: {
-      connector: 'openai-main',
-      model: 'text-embedding-3-small',
-      dimensions: 1536,
-    },
-    profile: {
-      connector: 'anthropic-main',
-      model: 'claude-sonnet-4-6',
-    },
-  },
-  visibilityPolicy: () => ({ group: 'read', world: 'none' }),
-});
-
-const memoryAgent = Agent.create({
-  connector: 'anthropic-main',
-  model: 'claude-sonnet-4-6',
-  userId: 'user-123',
-  context: {
-    model: 'claude-sonnet-4-6',
-    agentId: 'assistant-1',
-    features: { memory: true, memoryWrite: true },
-    plugins: { memory: { memory } },
-  },
-});
-```
-
-Memory safety rules:
-
-- Every entity and fact needs an owner; pass a trusted `userId`/scope.
-- `groupId`, principals, and visibility policy come from the host authorization
-  layer, never from LLM-controlled tool arguments.
-- The library default is public-read for backwards compatibility. Production
-  multi-tenant applications should set an explicit `visibilityPolicy`.
-- Prefer retrieval-only agents (`memory: true`) plus
-  `SessionIngestorPluginNextGen` when the LLM should not mutate memory.
-- Task state changes are host-driven via `transitionTaskState`; do not encode
-  state/due dates as parallel facts.
-- For Mongo, run adapter and vector-index migration helpers exactly as described
-  in `docs/MEMORY_GUIDE.md` and `docs/MEMORY_PERMISSIONS.md`.
-
-## Multimodal and specialized APIs
-
-Use the dedicated high-level class rather than calling vendor SDKs directly:
-
-| Capability | Class / registry |
-|------------|------------------|
-| Images | `ImageGeneration`, `IMAGE_MODELS` |
-| Video | `VideoGeneration`, `VIDEO_MODELS` |
-| Text-to-speech | `TextToSpeech`, `TTS_MODELS` |
-| Speech-to-text | `SpeechToText`, `STT_MODELS` |
-| Embeddings | `Embeddings`, `EMBEDDING_MODELS` |
-| Realtime voice agent | `OpenAIRealtimeAgentSession` (Agent lifecycle, context, local tools, hosted MCP) |
-| Raw Realtime transport | `OpenAIRealtimeSession` (advanced WebSocket protocol access) |
-| Documents | `DocumentReader`, `readDocumentAsContent`, filesystem tools |
-
-Inspect registry metadata for lifecycle, modality, capability, endpoint,
-pricing, and replacement information. `isActive` means callable;
-`lifecycle` describes recommendation/migration state. Token limits may be
-`null`; use `resolveMaxContextTokens()` when a number is required.
+- `features.memory` requires `plugins.memory.memory` with a MemorySystem instance
+  and enables six read tools. `memoryWrite` adds six write tools and requires
+  memory, host user identity and agent identity. Prefer read-only memory plus
+  `SessionIngestorPluginNextGen` when the model should not mutate knowledge.
+- Supply trusted owner/user/group/principal scope. The legacy visibility default
+  is public-read; production multitenant apps should set `visibilityPolicy`
+  explicitly. Never derive authorization from LLM-controlled tool arguments.
+- Task transitions use `transitionTaskState` under host authorization; do not create
+  parallel facts for workflow status/due dates. Use the documented iterator/page
+  APIs when complete corpus traversal is required rather than treating capped prompt
+  slices as exhaustive results.
+- Node can use `createMemorySystemWithConnectors()` and Mongo integrations; browser
+  hosts supply compatible dependencies. Run Mongo/vector migrations as documented.
+- Follow [Memory Guide](docs/MEMORY_GUIDE.md), [API](docs/MEMORY_API.md),
+  [permissions](docs/MEMORY_PERMISSIONS.md), [predicates](docs/MEMORY_PREDICATES.md)
+  and [signals](docs/MEMORY_SIGNALS.md).
 
 ## Orchestration and MCP
 
-`createOrchestrator()` returns a regular `Agent` with `SharedWorkspace` and five
-tools: `assign_turn`, `delegate_interactive`, `send_message`, `list_agents`, and
-`destroy_agent`. `assign_turn` is asynchronous; results arrive as follow-up
-messages. Use `delegate_interactive` only when the specialist needs a direct
-conversation with the user.
+`await createOrchestrator(config)` returns a regular Agent with SharedWorkspace
+and five tools: `assign_turn`, `delegate_interactive`, `send_message`, `list_agents`,
+`destroy_agent`. `assign_turn` is asynchronous; results arrive as follow-up messages.
+There is no `assign_parallel` tool. Use interactive delegation only when the
+specialist needs a user conversation. `autoDescribe: true` makes a model call at
+creation; ordinary construction does not require generated descriptions.
 
-For MCP:
+`await createOrchestratorWithFactory(config, options)` supports complete plain
+`OrchestratedAgentConfig` from required `configureAgent` before initialization.
+Resolve parent/workers independently, preserve library-owned hierarchy/workspace/
+tools, and pass ModelTask per operation. Borrowed resources are not destroyed;
+retained work/evidence blocks unsafe reuse. Old constructors/callbacks remain.
+Read [the factory recipe](docs/ORCHESTRATOR_FACTORY.md).
 
-```typescript
-import { MCPRegistry } from 'oneringai';
+For MCP in Node, create/connect an `MCPRegistry` client, then
+`client.registerTools(agent.tools)`. Keep it connected while tools can execute;
+`await client.disconnect()` and registry removal/destruction belong to host teardown.
+Follow [MCP integration](MCP_INTEGRATION.md). Do not import the Node MCP client into
+browser builds; use host-provided compatible tools/transports instead.
 
-const client = MCPRegistry.create({
-  name: 'filesystem',
-  transport: 'stdio',
-  transportConfig: { command: 'npx', args: ['-y', 'mcp-server'] },
-});
+## Agent runtime and harness bindings
 
-await client.connect();
-client.registerTools(agent.tools);
-```
+This Node/host layer is separate from the portable `Agent` loop. Prefer reusable
+`runtime.createAgent(definition)` with exact host-resolved tool names, followed by
+`assistant.inspect(options)` and `assistant.openSession(options)`. Bind the
+`execution: { driver, connector, model }` per session alongside trusted context,
+environment and policy. The older `runtime.agent(spec)` API remains supported.
 
-Keep MCP clients alive for as long as their tools can execute, and close them
-during application shutdown.
+| Harness | Public import | Driver ID |
+| --- | --- | --- |
+| OneRingAI Agent | `OneRingAIDriver` from `oneringai/agent-runtime` | `oneringai.agent` |
+| Local Codex SDK | `CodexSdkDriver` from `oneringai/agent-runtime/codex` | `openai.codex.sdk` |
+| Local Claude SDK | `ClaudeAgentSdkDriver` from `oneringai/agent-runtime/claude` | `anthropic.agent.sdk` |
+| Managed OpenAI | `OpenAIManagedDriver` from `oneringai/agent-runtime/openai-managed` | `openai.agents.api` |
+| Managed Claude | `ClaudeManagedDriver` from `oneringai/agent-runtime/claude-managed` | `anthropic.managed.api` |
 
-## Persistence, tenancy, and cleanup
+- `const run = await session.run(input, options)` yields a handle: observe
+  `run.events()` and await `run.result`; inspect its status and `outputText`.
+  Observation is not permission to replay an uncertain task/tool invocation.
+- Register desired drivers at `LocalExecutionBackend` construction and use its
+  host resolver/ToolManager policies. Local Claude's tools-only profile disables
+  ambient/native filesystem/shell/web configuration. Do not bypass it through raw SDK options.
+- Use `FileRuntimeSessionStorage` or `StorageRegistry.runtimeSessions` for durable
+  control state. Persist `session.reference()` and resume through
+  `runtime.resumeSession(reference, { context })` with trusted original scope.
+  References are locators, never credentials or workflow/task authority.
+- Uncertain input/tool effects require original source reconciliation. Managed
+  OpenAI creation includes first input; never resend an uncertain creation. Native
+  idle is not root-turn completion. Managed Claude waiting/budget states remain
+  waiting, and runtime schema output is unsupported there.
+- Native custom `configureAgent` requires `configurationRevision` for recovery
+  compatibility. File control storage requires acknowledged POSIX single-host
+  primitives; Windows needs a custom adapter.
+- `session.uploadFile()` / `downloadArtifact()` require explicitly enabled backend
+  `fileTransfer(context)` roots, MIME allowlists and byte bounds. Cleanup uses
+  `await runtime.destroy()`; detach, cancel and delete have distinct semantics.
+- Read [runtime recipes](USER_GUIDE.md#reusable-definitions-and-harness-bindings),
+  [recovery](USER_GUIDE.md#runtime-recovery-and-control-storage),
+  [file boundaries](USER_GUIDE.md#explicit-files-and-artifacts) and the
+  [offline five-driver example](examples/agent-runtime-swappable.ts).
+  Offline conformance does not establish native/provider live support.
+- AMOS `--runtime-host` and additive `--runtime-resume` use the same APIs and trusted
+  host scopes, and gate native context/routine/helper mutation commands. Follow
+  [the cookbook](apps/amos/docs/AGENT_RUNTIME.md) and
+  [host example](apps/amos/examples/runtime-host.ts). Standard AMOS stays a Node terminal app.
 
-- Set `userId` on the agent; it flows into tool execution and session metadata.
-- Restrict visible external identities with `identities`.
-- Configure backend factories through `StorageRegistry` rather than hard-coding
-  storage inside plugins.
-- Save/load context through `agent.context.save()` and `load()` when sessions
-  must survive restarts.
-- Call `destroy()` on disposable agents, contexts, plugins, and clients during
-  teardown.
+## Model metadata and specialized APIs
 
-## Documentation routing
+Use the library's high-level capabilities instead of bypassing connectors with
+vendor SDK calls. Check the environment's actual public export surface first.
+
+| Capability | API / registry |
+| --- | --- |
+| Images | `ImageGeneration`, `IMAGE_MODELS` |
+| Video | `VideoGeneration`, `VIDEO_MODELS` |
+| Text-to-speech / transcription | `TextToSpeech` / `SpeechToText`, `TTS_MODELS` / `STT_MODELS` |
+| Embeddings | `Embeddings`, `EMBEDDING_MODELS` |
+| Node realtime voice Agent / raw transport | `OpenAIRealtimeAgentSession` / `OpenAIRealtimeSession` |
+| Browser realtime WebRTC peer | `OpenAIRealtimeWebRTCPeer` from `oneringai/realtime-browser` |
+| Node document reading | `DocumentReader`, `readDocumentAsContent`, filesystem tools |
+
+`isActive` means callable; `lifecycle` describes recommendation/migration. Token
+limits can be `null`; use `resolveMaxContextTokens()` when a number is required.
+Pure root/shared `getRealtimeModelCapabilities()`, `getTranscriptionCapabilities()`
+and `assessModelParameters()` distinguish supported/unsupported/unknown endpoint
+facts. Optional `parameterPolicy` affects selected OpenAI requests; old defaults
+and raw provider controls remain strict. `VENDOR_PRESENTATIONS` /
+`getVendorPresentation()` are presentation metadata, never auth/ownership authority.
+Read [endpoint capabilities](docs/ENDPOINT_CAPABILITIES.md),
+[parameter policy](docs/PARAMETER_POLICY.md) and
+[vendor presentation](docs/VENDOR_PRESENTATION.md). Browser realtime credential/
+WebRTC setup is in [the User Guide](USER_GUIDE.md#browser-and-mobile-webrtc-credentials);
+it does not make the Node realtime Agent part of the browser root.
+
+## Storage, tenancy and cleanup
+
+- Set trusted `userId` on Agents and explicit identity/account scope where required.
+- Use existing `StorageRegistry` slots and interfaces rather than hard-coding
+  backends in plugins. Preserve legacy optional-identity/default-storage contracts;
+  selected multitenant features still require their documented host scope.
+- Preserve raw caller data; do not introduce silent lossy normalization, clipping
+  or output caps. Distinguish source completeness, prompt selection, parser/storage
+  bounds and model budgets. Existing documented opt-in limits/defaults remain part
+  of v2 compatibility; changing them requires its own scoped review.
+- Preserve errors with useful redacted diagnostics. Never print credentials to
+  diagnose authentication, tool or storage failures.
+- Call `destroy()` on disposable Agents, contexts and plugins. Await asynchronous
+  client/runtime teardown; do not destroy borrowed resources. Save recoverable
+  observations first. Cleanup/cancellation is not proof that a remote write failed.
+
+## Documentation and source routing
 
 | Need | Read |
-|------|------|
-| First integration | `README.md`, then `examples/README.md` |
-| Complete usage guide | `USER_GUIDE.md` |
-| Public signatures | `API_REFERENCE.md` |
-| Connectors and every tool source | `docs/CONNECTOR_TOOL_CATALOG.md` |
-| Protected task state, host corrections and pending actions | `docs/TASK_STATE.md` |
-| Selective context data, companion registration and cache-aware layout | `docs/CONTEXT_ASSEMBLY.md` |
-| Bounded run/stream recovery and host completion checks | `docs/AGENT_LOOP_POLICIES.md` |
-| Durable tool evidence, projections and recovery | `docs/DURABLE_EVIDENCE.md` |
-| Named managed model routes, host selection, native ownership and diagnostics | `docs/MODEL_ROUTING.md` |
-| Explicit helper models, shared model budgets and purpose usage | `docs/MODEL_TASKS_AND_HELPERS.md` |
-| Tool outcomes, cancellation, and connector deadlines/retries | `docs/TOOL_OUTCOMES_AND_CANCELLATION.md` |
-| Long-term memory | `docs/MEMORY_GUIDE.md` |
-| Memory API / security / predicates / ingestion | `docs/MEMORY_API.md`, `docs/MEMORY_PERMISSIONS.md`, `docs/MEMORY_PREDICATES.md`, `docs/MEMORY_SIGNALS.md` |
-| Release migration | `CHANGELOG.md` and the upgrade section in `USER_GUIDE.md` |
-| Runnable examples | `examples/README.md` and `examples/*.ts` |
-| Pre-built agent runtime usage | `USER_GUIDE.md#agent-runtime-preview`, `examples/agent-runtime-swappable.ts` and `examples/README.md` |
-| Agent runtime architecture and server roadmap | `docs/designs/AGENT_RUNTIME.md` |
-| Server/desktop Agent packages, remote tools, and WebRTC ownership | `docs/designs/DISTRIBUTED_AGENT_EXECUTION.md` |
-| Staged agentic architecture evolution, evaluation, and compatibility requirements | `docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md` |
-| Consumer-validated routine, connector, orchestration and remote execution gaps; proposed hardening slices | `docs/designs/CONSUMER_EXECUTION_HARDENING.md` |
-| Stage 16A approved API and delivery record | `docs/designs/STAGE_16A_NATIVE_COMPACTION_API.md` |
-| Version 2 adoption, stage availability, and standard-documentation handoff | `docs/VERSION_2_GUIDE.md` |
-| Stage 00 offline/live evaluation, completion gates, compatibility fixtures, and measured pilot | `docs/AGENTIC_BASELINE_EVALUATION.md` |
-
-When documentation and source disagree, verify the public export and tests,
-then fix the stale documentation in the same change.
-
-## Repository map
+| --- | --- |
+| First integration / runnable examples | [README](README.md), [examples](examples/README.md), [User Guide](USER_GUIDE.md) |
+| Public signatures / internal implementation inventory | Generated [API Reference](API_REFERENCE.md) / [Internal API](docs/INTERNAL_API.md) |
+| Current v2 availability and adoption | [Version 2 Guide](docs/VERSION_2_GUIDE.md) |
+| Browser export/build/storage boundaries | [Browser Agents](docs/BROWSER_AGENTS.md) |
+| Custom plugin authoring and authority | [Authoring](USER_GUIDE.md#creating-context-plugins), [authority](docs/PLUGIN_PROMPT_AUTHORITY.md) |
+| Release / migration | [Releasing](RELEASING.md), [migration](docs/PACKAGE_MIGRATION.md), [changelog](CHANGELOG.md) |
+| Runtime architecture / delivery | [Architecture](docs/designs/AGENT_RUNTIME.md), [harness ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md) |
+| Remote/server/desktop execution boundaries | [Distributed execution](docs/designs/DISTRIBUTED_AGENT_EXECUTION.md) |
+| Staged architecture and compatibility requirements | [Roadmap](docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) |
+| Consumer C1–C9 contracts and delivered scope | [API design](docs/designs/CONSUMER_COMPATIBLE_APIS.md), [delivery ledger](docs/designs/CONSUMER_DELIVERY_LEDGER.md) |
+| Native compaction approved scope | [Stage 16A API](docs/designs/STAGE_16A_NATIVE_COMPACTION_API.md) |
+| Offline/live baseline and compatibility fixtures | [Evaluation guide](docs/AGENTIC_BASELINE_EVALUATION.md) |
 
 ```text
-src/core/                    Agent, Connector, context, tools, permissions,
-                             orchestration, MCP, storage
-src/core/context-nextgen/    Context manager and plugins
-src/memory/                  Entity/fact memory system and adapters
-src/capabilities/            Search, scrape, images, video, speech, embeddings
-src/infrastructure/          Providers, resilience, storage implementations
-src/tools/                   Built-in and connector tool implementations
-src/connectors/              OAuth, vendor templates, connector storage
-src/agent-runtime/           Vendor-neutral sessions, local backend, drivers
+src/core/                    Agent, Connector, tools, permissions, orchestration, storage
+src/core/context-nextgen/    Context manager, plugins, assembly and compaction
+src/agent-runtime/           Vendor-neutral sessions, backend and harness drivers
+src/memory/                  Entity/fact system and adapters
+src/capabilities/            Search, scrape, media, speech, embeddings
+src/infrastructure/          Providers, runtime platform seams and persistence
+src/browser/                 Generated compatible browser exports
+src/tools/                   Built-in and connector tools / generated catalogs
+src/connectors/              Auth, service templates and connector storage
 examples/                    Runnable integration examples
-apps/amos/                   Terminal agent reference application
+apps/amos/                   Node terminal reference application
 ```
 
-## Staged architecture development
+When source and documentation disagree, verify the public export and tests, then
+fix the stale usage documentation in the same change. Dated delivery/review records
+retain historical evidence; use current recipes for API signatures and release
+receipts for publication, rather than treating old planning restrictions as an
+unfinished implementation queue.
 
-Persistent scope instruction (2026-10-22): the user selected **Stage 16A only**
-and approved revision 2 of its API by saying “proceed with implementation” after
-the compatibility-first presentation. Read
-[the API proposal](docs/designs/STAGE_16A_NATIVE_COMPACTION_API.md) and the updated
-roadmap first. Its `ContextCompactionStrategy` and `compactContext()` signatures
-are implemented and validated on branch; read [the native recipe](docs/NATIVE_CONTEXT_COMPACTION.md) for current usage and support. Preserve existing strategy APIs/defaults and use
-the existing `compactionStrategy` instance extension point for optional plugin/history
-composition. No replacement configuration or mandatory migration is authorized.
-Stage 16B retention research remains deferred and unauthorized.
-The recorded approval covers 16A only and does not waive the separate breaking-change approval rule.
+## Staged development and compatibility
 
-Persistent user instructions (2026-10-07): develop the agentic architecture in
-stages, with extensive test coverage and good examples for every stage. Update
-AMOS to illustrate relevant new capabilities. The detailed roadmap and stage
-records live in
-[Agentic Architecture Evolution](docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md).
-Maintain the outward-facing [Version 2 Guide](docs/VERSION_2_GUIDE.md) as stages
-progress, and use its handoff ledger to update the README, User Guide, API reference,
-examples, AMOS documentation, and release notes without losing delivered details.
-These instructions govern changes to OneRingAI itself, not ordinary applications
-using OneRingAI as a dependency.
+Persistent user instruction (2026-10-07): develop authorized architecture changes
+in stages with extensive meaningful tests, runnable examples and relevant AMOS
+updates. Follow the roadmap's dependency-valid core order. Conditional work is
+not a prerequisite. Reuse existing facilities before adding abstractions.
 
-- Implement the requested stage and complete its validation before proceeding.
-  Do not treat the roadmap as authorization to implement all stages. If the user
-  explicitly authorizes multiple stages, follow that scope.
-- Follow the roadmap's dependency-valid core delivery sequence. Conditional work
-  is not a prerequisite for core stages; record the smallest requested scope and
-  deferred extensions. Reuse current facilities before adding new abstractions.
-- Include meaningful regression, failure, lifecycle, and compatibility tests,
-  plus mock integration coverage when a stage crosses subsystem boundaries.
-  Cover cancellation, persistence, concurrency, budgets, and authorization where
-  relevant; do not substitute shallow implementation-mirroring tests for coverage.
-- Ship runnable examples with documented setup, expected behavior, and cleanup.
-  Prefer deterministic offline demonstrations plus explicitly opt-in live modes.
-  Update `examples/README.md` and relevant public documentation.
-- Update AMOS when users can use or inspect the new capability. Test the app's
-  adapter/configuration/commands as appropriate. Otherwise record why an AMOS
-  change is not applicable in the stage completion record.
-- Keep the stage table and execution records current with actual validation
-  results, compatibility evidence, examples, limitations, and the next stage.
-- Before marking each stage complete, update the Version 2 Guide's availability,
-  adoption record, and documentation handoff. Record verified public APIs/options,
-  defaults, support boundaries, examples, usage, persistence, failure behavior,
-  compatibility, and limitations; explicitly record internal-only changes. Separate
-  branch availability from a verified package release. Update affected existing
-  usage docs in the delivering stage, and regenerate generated API documentation
-  rather than hand-editing it. Pending release-wide edits remain tracked in the ledger.
+The approved Stage 16A API, Stage 14A, consumer C1–C9-C and harness H0–H6 are delivered;
+the linked records own their validation/support limits. Earlier planning-only and
+single-slice selection statements were superseded by the recorded implementation
+authorizations. They do not require reimplementing completed work or authorize
+consumer upgrades, another release, or later stages. Stage 14B, Stage 16B retention,
+C3-R durable workflow recovery and production cursor backends remain deferred.
+Preserve Stage 16A's existing strategy extension point/defaults; no replacement
+configuration or mandatory migration is authorized.
+
+For new authorized stage work:
+
+- Implement the selected scope and complete its review/fixes/validation before
+  continuing. A roadmap is not authorization for every stage; an explicitly
+  authorized sequence should proceed without routine reapproval stops.
+- Include regression, failure, lifecycle and compatibility coverage, plus mock
+  integration when crossing subsystems. Cover cancellation, persistence,
+  concurrency, budgets and authorization where relevant.
+- Ship runnable examples with setup, expected behavior and cleanup; favor offline
+  demonstrations and explicitly opt-in live modes. Update `examples/README.md`.
+- Update AMOS when the capability can be used/inspected there and test the affected
+  adapters/config/commands. Otherwise record why no AMOS change applies.
+- Update the roadmap, Version 2 availability/adoption/handoff, affected public docs,
+  examples, AMOS docs and release notes. Record defaults, support limits, persistence,
+  failure behavior, compatibility and internal-only changes. Generate API docs.
+  Distinguish current checks from historical totals and source from package availability.
 
 **Backward compatibility is required wherever possible.** Prefer additive APIs,
-optional configuration, legacy adapters, and opt-in behavior. Preserve supported
-public signatures, defaults, extension contracts, return/event shapes, and saved
-configuration/session loading. Assess behavioral as well as TypeScript compatibility.
+optional configuration, legacy adapters and opt-in behavior. Preserve supported
+signatures/defaults, extension contracts, raw returns, statuses/events, saved config/
+session loading and protocol-v2 literal types/allowlists. Assess behavior and types.
+For consumer hardening, breaking old agents is explicitly unacceptable: preserve
+paired frozen-legacy/new-path gates and redesign a failing new path.
 
-**If proposing a breaking API change, stop the affected work, explain the logic,
-the specific proposed change, affected consumers, alternatives, and migration,
-and obtain the user's explicit approval before implementing it.** Do not treat a
-new branch, major-version label, stage authorization, or this roadmap as approval
-for a break. Record the specific approval and its scope in the stage record.
+**If proposing a breaking change, stop the affected work**, explain the exact
+change, reasoning, affected consumers, alternatives and migration, and obtain the
+user's explicit approval before implementation. A major version, stage/branch
+creation or general roadmap approval does not grant that approval. Record its scope.
+
+Live LLM suites remain paused unless separately authorized. The completed bounded
+Codex/light OpenAI validation on 2026-11-01 is historical and grants no standing
+permission for additional billable tests. Read its
+[record](docs/evaluations/LIVE_VALIDATION_2026_11_01.md) before making live-support claims.
 
 ## Repository validation
 
-Use the smallest relevant checks while iterating, then broaden in proportion to
-risk:
+Use the smallest relevant checks while iterating, then broaden in proportion to risk:
 
 ```bash
 npm run build
@@ -685,511 +710,39 @@ npm run typecheck
 npm run lint
 npm run test:unit
 npm run examples:check
+npm run docs:check
 ```
 
-Integration tests require real credentials and are not the default validation
-path. Never add or print secrets to make them pass.
-
-For stages that affect agent/context/tool contracts, preserve the Stage 00
-baselines described in [the evaluation guide](docs/AGENTIC_BASELINE_EVALUATION.md).
-After building, `npm run test:agentic:compat` checks a consumer against the built
-public package. `npm run example:agentic-baseline` runs offline; the separately
-opt-in `npm run test:agentic:live` makes real billable LLM calls. Record unavailable
-providers explicitly rather than silently treating skipped tests as validation.
-
-## Final checklist for coding agents
-
-- Did you use a named connector rather than direct SDK credentials?
-- Did you use only public package exports in consumer code?
-- Did you choose `run`, `stream`, or `runDirect` intentionally?
-- Are tools scoped, permissioned, uniquely named, and serializable?
-- Are connector identities and memory scope derived from trusted host state?
-- Did you avoid deprecated `PersistentInstructions`/`UserInfo` for new designs?
-- Did you use registries rather than guessing model capabilities?
-- Did you follow the specialist guide for memory, OAuth, or MCP work?
-- Did you run the relevant build, type, and test checks?
-
----
-
-Documentation version: 2.0.0-beta.2 | Runtime: Node.js 22.13+ or 24+ | Architecture: Connector-first +
-NextGen context
-
-## Experimental context strategies
-
-`ObservationMaskingStrategy` and `StructuredSummaryStrategy` are opt-in; algorithmic
-remains the default. Both require the enabled built-in evidence plugin and retain
-acknowledged scoped source snapshots before replacing older read bodies. Exact user
-messages, action arguments/metadata, write/unknown effects, pending dependencies
-and opaque/multimodal state remain protected. Summaries are assistant data with
-locally validated bounded sections/references; they do not acquire host authority
-or prove semantic truth. Managed summaries share the configured compactor and
-active ModelTask, including repair/cancellation limits. Read
-[Context Strategies](docs/CONTEXT_STRATEGIES.md) before selecting a policy; inspect
-`lastPreparation.compaction` with actual task usage. The bounded live comparison
-is a functional pilot, not a general quality/cost claim. Preserve existing explicit
-rollover and custom strategy contracts.
-
-
-## Protected host task state
-
-Enable `context.features.taskState` explicitly with `plugins.taskState` containing
-a host-selected scope/taskId and optional immutable association/lifecycle binding.
-Use `TaskStatePluginNextGen.updateHost(delta, revision)` for confirmed notes;
-`propose`/`assume` keep model interpretations unconfirmed. No mutation/store tools
-are exposed. `recordAction(actualOutcome, revision)` is explicit; enabling the
-plugin does not observe every tool automatically. A succeeded/settled submission
-does not prove remote completion; `confirmAction` records a separate host check.
-Capacity/revision errors never justify replaying an external action.
-
-The bounded full view is noncompactable and protected at final managed dispatch,
-including JSON repair; direct calls bypass managed task state. Optional version-1
-snapshots preflight task/scope/association; legacy snapshots clear enabled notes.
-Task/routine statuses are cached authority views; linked memory tasks are read via
-`refreshMemoryTask` under host scope and transitioned through MemorySystem itself.
-Automatic extraction, duplicate-effect prevention and a new workflow engine are
-outside this stage. Read [Task State](docs/TASK_STATE.md) for limits, trusted
-checkpoint assumptions, pruning, exact APIs, examples and AMOS host commands.
-
-
-Task-state capacity recovery is explicit and atomic: `updateHost` accepts optional
-`confirmActions` (executionId/status/source) and `prune` (noteIds/executionIds), applied
-after notes/resolutions and admitted against the final fitting snapshot. Inputs
-remain bounded and only host-confirmed terminal actions/resolved or superseded
-notes can be pruned. Archive proof first where needed; never repeat a write to
-repair state. Reusing a pruned ID detaches obsolete correction/conflict links while
-keeping historical predecessors inactive. Final managed task guards also run after
-budget observers. AMOS exposes explicit `task prune`, `resolve-prune`, `prune-action`
-and `confirm-prune` host commands; see the task-state recipe for arguments.
-
-## Bounded managed-loop policies
-
-`loopPolicy` is opt-in on managed run/stream; a per-call `null` disables it.
-Recovery limits share one allowance and existing iteration/ModelTask bounds.
-Declare read effects accurately. Repeated admitted writes/unknown effects stop
-before replay, and uncertain completion requires host inspection. Application
-`success:false` data is not a framework failure. A host `completion` callback
-must verify actual scoped state/evidence; its success appears in optional `loop`
-diagnostics, separately from model/provider completion. No checker means no
-workflow completion assertion. Check packets are bounded/frozen, timed, cancelled
-and stale-view checked. Callbacks/counters are not restored from sessions.
-
-Configured streaming uses shared `before:tool` preparation; unconfigured hook
-traces stay unchanged. Provisional chunks cannot be retracted; JSON repair stays
-run-only. Direct, realtime and external SDK loops keep their existing owner.
-See [Loop Policies](docs/AGENT_LOOP_POLICIES.md) before enabling a policy and inspect
-`response.loop`, existing stream metadata or `agent.getLoopDiagnostics()`.
-AMOS `/context loop` displays these notices separately from assistant prose.
-
-Stage 10 review corrections preserve admitted async effects across re-registration
-and import authentic queued observations before receiving policy dispatch/checks.
-Legacy uncorrelated deliveries use receipt effect or unknown, never current tool
-metadata; missing action outcomes block conservatively. Normal policy stops commit
-settled input without duplicate journal entries; stopped-turn JSON formatting
-appends its final answer while retaining exact calls/results. Class/prototype
-callbacks keep the original host receiver; thresholds/callbacks are captured per
-execution. These helpers/correlation are internal and not saved authority.
-
-
-Helper `validationSchema` optionally adds local constraints to the portable native
-`schema`; both must pass inside the existing repair allowance. Automatic structured
-summaries use it to repair all-empty/blank/overlong content before apply. Do not add
-an outer retry or replay source actions. Pending loop checks also bind tool
-principal/account/identity/role/session and connector scope, rejecting stale verdicts.
-
-## Minimal opt-in presets
-
-`createAgentPreset('research' | 'workflow', config)` returns ordinary AgentConfig
-without IO/model calls. Research defaults to observation masking/12 iterations;
-workflow to algorithmic compaction + task state/8. Both enable scoped evidence
-and existing bounded recovery. Require host userId + matching explicit evidence
-scope/storage, and workflow taskId/scope. Explicit settings override defaults;
-null loopPolicy disables recovery. Helpers, hard budgets, permissions and host
-completion predicates remain explicit. Disabled evidence requires a compatible
-strategy. Use `agent.inspectCapabilities()` for actual managed settings/provider
-support, `RuntimeAgent.inspect()` for drivers; neither proves semantic completion.
-Preset names are not authority in portable/session metadata. Foreign scoped state
-must reject restoration, never silently rebind. AMOS `/preset` selects the next
-agent, with active/saved inspection and unchanged live history. Read
-[Agent presets](docs/AGENT_PRESETS.md) before composing or transferring policy.
-
-Preset corrections: undefined context identity cannot erase the validated host
-principal. Enabled protections require matching built-in plugin instances at
-creation/dispatch; compatible factories are allowed and ordinary custom plugin
-contracts remain unchanged. Opaque/accessor plugin configurations keep receivers.
-Inspection projects declared getter-backed capability fields and omits provider
-extras. Failed resume destroys the candidate and preserves the load error; AMOS
-commits replacement after successful loading/checkpointing and keeps descriptive
-metadata through autosave. See the preset recipe for support boundaries.
-
-Stage 12 second corrections (2026-10-16) preserve caller-owned permission/prompt/
-callback/role bindings on rejected resume, commit high-level load targets only after
-validated restoration, serialize checkpoints with autosave and normalize getter
-scopes. Teardown attempts all reachable owned resources despite plugin errors.
-`context.save` additively accepts a deferred snapshot builder; `loadRaw` retains its
-advanced unvalidated ID-selection behavior. Custom rollback failure blocks saving
-until actual restoration of every damaged plugin or context rebuild. Restore hooks must not await checkpoint IO on their own
-context; loads require idle host execution/edits. See the
-[restoration recipe](docs/AGENT_PRESETS.md#session-restoration-and-cleanup) and
-[latest completion](docs/designs/STAGE_12_SECOND_REVIEW_AND_FIX_PLAN.md#second-corrective-completion--2026-10-16).
-
-
-Stage 12 third corrections (2026-10-16) include construction and synchronous loaded
-notification in shared-resume rollback. Restore original policy/tools/roles/prompt/
-compaction callback/history/session ID before candidate cleanup; partial candidates
-release initialized framework resources while retaining the original error. Ordinary
-managed notification failure also rolls back state/ID. Snapshots use JSON semantics,
-including `toJSON`/Date, without a structured-clone requirement. Failed rollback
-keeps saves blocked until every damaged plugin instance actually restores via a
-valid checkpoint or trusted host `context.restoreState`; missing legacy keys or
-ignored restore hooks do not repair it. Individual plugin methods are not tracked
-as context recovery; rebuild if unrecoverable. Internal admission/binding/capture/
-identity tracking adds no portable authority or required API/session/storage fields.
-Preserve existing JSON serialization and event/exception contracts; narrowing them
-requires explicit approval. Read the [latest completion](docs/designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16)
-and [restoration recipe](docs/AGENT_PRESETS.md#session-restoration-and-cleanup).
-
-
-## Selective context assembly
-
-Stage 05 and all review corrections are complete on branch (2026-10-22). See the
-[latest completion](docs/designs/STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22)
-and [validation](docs/evaluations/STAGE_05_SECOND_CORRECTIONS_VALIDATION.json):
-8,340 units, 190 live tests / 202 scenarios, 28 examples and 92 public controls pass.
-Selected structured runs format before consolidation; selected structured suspension
-formats before session/correlation persistence, with host freshness guards intact.
-On formatting/storage failure, checkpoint the retained accepted observation before
-destruction; never replay its action. Uncertainty includes native image/file result
-arrays and tool signatures; AMOS shows a source-free notice. No release.
-
-Effective accountId/connectorAccounts/taskId and registry-instance scope join existing
-identity guards. Managed submitted-input edits get one bounded refresh in the same
-contributor allowance; hooks/compaction are not replayed and source history is not
-implicitly rewritten. Repair permits answer commits while checking the current host
-prompt and earlier input. Selected-store guidance reflects partial visibility;
-frozen/class schemas keep their native objects/getter receivers. Wrap-ups observe
-last-request usage and consolidation fetches no contributors. Custom in-place scope
-changes must still advance source revisions; internal tokens/frames add no authority.
-
-Stage 05 uses optional `context.assembly` and explicit
-`registerContextContributor(pluginName, contributor)`, not structural method detection.
-Existing plugin interfaces/layout/observation hooks stay unchanged. Use
-`createInContextMemoryContributor` for whiteboard selection without source deletion;
-critical entries are protected. New blocks are JSON user data, never instructions or
-authorization. Protected task/evidence/instruction plugins cannot be replaced.
-
-Contributors are trusted host code. Maintain getRevision for all source/scope/task
-changes, observe signal, and attach only to enabled authorized plugins. Component/
-source budgets, full dependency closures, expiry, deadlines and final revision/input/
-scope guards fail closed. Reattach callbacks after session load; sessions never
-restore policy authority. JSON repair keeps the frozen selected prefix without
-another compaction, preserving main diagnostics. Context.responseReserve and optional
-reasoningReserveTokens provide explicit headroom without enabling thinking.
-
-`lastPreparation.selection` reports metadata only, local estimates and actual provider
-usage/cache counters with null for unknown. Stable-prefix layout and tool sorting are
-opt-in; no provider-cache hit/key or model quality/cost improvement is implied. AMOS
-contextAssembly/selectWhiteboard and breakdown show the distinction. Read
-[Context Assembly](docs/CONTEXT_ASSEMBLY.md) before configuring contributors, native/
-opaque state or persistence. Internal formatting-prefix/snapshot bookkeeping is not
-a new public storage/workflow authority.
-
-## Optional plugin/native history composition (Stage 16A)
-
-Use public `ContextCompactionStrategy` through the existing `context.compactionStrategy`
-instance field with explicit `plugins: 'auto' | 'off'` and `history: 'native' | 'off'`
-(or `{ mode: 'native', preserveRecentTurns }`). Do not invent a registry name or a
-new top-level context config. `plugins: 'off'` preserves enabled plugin features/tools.
-`agent.compactContext({ target: 'all' | 'plugins' | 'history' })` owns the execution
-slot; `automatic: false` keeps explicit scheduling. Native requires built-in scoped
-evidence and a verified main-provider adapter; it does not use the helper compactor.
-Use the complete provider window, provider counts and shared ModelTask accounting.
-Never infer native token cost from ciphertext length, discard signed fields, or
-recover by replaying actions. Native snapshots bind model/connector/endpoint and
-host/evidence scope; incompatible switches require trusted checkpoint/fresh-context
-recovery. Read [Native Context Compaction](docs/NATIVE_CONTEXT_COMPACTION.md) for
-models, protected tails, usage, limits, examples and AMOS commands. No breaking
-change or Stage 16B implementation was authorized.
-
-Stage 16A review corrections keep transport identity at provider construction,
-share OpenAI generation/count normalization, and reject known hosted/server-owned
-controls before reduction/archival/billing. Unknown raw input controls fail on the
-opted-in native path; legacy/direct escapes retain their supported behavior.
-Composition reuses its initial frame, rebuilds after mutations and carries one
-assembly cancellation signal/allowance throughout. Plugin-only mode must ignore
-an old native driver. Use a new Agent for changed endpoint/account selection;
-do not relabel an existing SDK by rebinding. See the
-[review/correction record](docs/designs/STAGE_16A_REVIEW_AND_FIX_PLAN.md).
-
-At the pre-compaction hook boundary, a plugin memory write or companion revision
-change gets one bounded frame refresh under the existing contribution allowance.
-Preserve documented `beforeCompaction` facts without weakening source/authority
-guards or rerunning hooks. Read-only native evidence proofs honor cancellation and
-ModelTask deadlines; late reads cannot dispatch/commit. Admitted writes and mutating
-plugins still hold ownership until settled. Anthropic native admission rejects
-top-level Responses reasoning before I/O instead of silently dropping it; retain
-OpenAI reasoning and supported Anthropic signed thinking. See the
-[second review/correction record](docs/designs/STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md)
-and `npm run example:native-hooks`.
-
-
-Stage 16A third corrections validate provider-specific nested thinking replay before
-counting/reduction/archive, preserving ordinary converters. Explicit compaction uses
-the existing preservation lifecycle once, including `automatic: false`, with bounded
-refresh/events and protected scope checks before hook execution. Anthropic fixed
-thinking gets matching native wire/source/reservation headroom (budget + 4096 by
-default, bounded by model output capacity); explicit host caps are respected and
-known conflicts reject before archival. Main settings remain unchanged. Native
-streaming is internal and cancellation closes it; unusable summaries retain billed
-iteration usage. Use `npm run example:native-hooks-manual` for the explicit path,
-with `-- --live=anthropic` to exercise an 8192-token fixed budget.
-
-
-## Optional managed model routing (Stage 14A)
-
-The user authorized 14A implementation on 2026-10-22 by replying “proceed” to the
-[API proposal](docs/designs/STAGE_14_ROUTING_AND_DELEGATION_API.md). Stage 14B is
-still deferred; this approval does not permit a breaking change or release.
-
-Use optional `modelExecution.routing` with named `routes` and a bounded host
-`select`, and `RunOptions.routing` for hints, explicit route or `null` opt-out.
-`default` means the configured main model. Selection is before input/preparation;
-one execution keeps its selected connector/model, existing plugins/tools and
-active ModelTask through retries, repair and compaction. Public defaults are not
-mutated. Inspect optional response/stream completion `routing` and task usage;
-selection alone does not prove dispatch or completion.
-
-Other connectors/accounts require `allowContextTransfer: true`. Provider-bound
-state keeps its exact owner; native checkpoint restore resolves only host-configured
-authorized routes and verified scope. Do not replay failed writes on another route.
-Phase continuity requires this exact shared ModelTask and latest phase; callbacks,
-pins and authority are not restored from sessions. Async/suspended work retains its
-original binding/task. Complete/cancel queued work before replacing its owner;
-`hasPendingAsyncTools(true)` includes queued current deliveries.
-
-Helpers/direct/external/explicit maintenance keep their existing owners. Managed
-JSON repair retains the admitted evidence/instructions and remains tool-free;
-streaming repair is still unsupported. Read [routing](docs/MODEL_ROUTING.md) for
-settings, budget/capability checks, cross-vendor options and native cap limitations.
-
-Stage 14A corrective contracts: saved opaque state retains exact-owner guards
-even when routing is omitted; actual post-hook admission owns newly observed
-opaque output. Portable legacy model hooks remain supported. A suspended routed
-`run(event)` inherits its effective format/route/task and performs bounded parsing/
-repair plus the host completion check. Local JSON coercion remains parse-only;
-streaming does not gain repair. Supported explicit resume overrides apply without
-relaxing data prohibitions. Native binding waits for route selection; explicit
-idle maintenance retains its configured owner. See the routing recipe and
-`example:routing-suspension`.
-
-Stage 14A second corrections (2026-10-23) preserve ordered repair replay items and
-their admitted owner even without routing. Repeated rejected resumes retain the
-original task/route/options until successful completion or explicit host `cancel`.
-Cancellation never undoes an action. Structured suspension finalizes before saving
-and publishing success; failed finalization checkpoints the actual wait/correlation
-with optional `metadata.suspensionFinalization` diagnostics. Preserve observations
-when storage fails, and never rerun a registration to repair bookkeeping. Both
-checkpoint and finalization errors survive as an AggregateError when necessary.
-Snapshots do not restore task authority. See the
-[second corrective record](docs/designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md)
-and `example:routing-suspension -- --failed-finalization`. Supported provider/storage
-contracts, public content-only replacement, defaults and no-repair streaming remain.
-No later stage, breaking change or release is authorized.
-
-The Stage 14A live cost gate also corrected Google GenerateContent explicit thinking
-opt-out: `thinking.enabled: false` sends zero budget on Gemini 2.5 Flash/Flash-Lite
-and preview aliases through the shared Google/Vertex converter. Omitted defaults,
-enabled settings and explicit vendor overrides retain their behavior. Do not infer
-that Pro, 3.x, image/unknown models or Interactions can disable thinking; those paths
-are unchanged. The original pilot quality/cost thresholds remain in force.
-
-## Consumer execution hardening — planning checkpoint
-
-The 2026-10-23 consumer report has been independently checked against the current
-library and selected ICOS consumers. Read the
-[validated plan](docs/designs/CONSUMER_EXECUTION_HARDENING.md) and
-[review evidence](docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json)
-before extending routine completion, composite accounting, connector execution,
-worker construction or remote outcomes. The current user request authorizes
-investigation and a plan only. C1–C8 are proposed delivery slices, not implementation
-approval; API and breaking-change review requirements still apply. Existing
-protocol v2 rejects unknown response fields, so optional remote metadata requires
-an explicitly compatible negotiation/version design. Preserve the distinction
-between managed-Agent support and support across every composed runtime.
-
-Persistent consumer-hardening instruction (2026-10-23): **breaking old agents is
-unacceptable**. Read the [compatibility-first API design](docs/designs/CONSUMER_COMPATIBLE_APIS.md).
-The new APIs must adapt to existing contracts; no breaking option or later default
-flip is proposed for this work. Keep old signatures, status unions, callbacks,
-tool schemas/results, events, saved state/storage contracts, protocol-v2 literal
-types/allowlists and default behavior unchanged. Use separate opt-in entry points
-and result/checkpoint/wire types where needed. Do not add fields to old ToolContext
-or infer new semantics from arbitrary payloads. Require paired frozen legacy and
-new-path acceptance gates for each slice. A failed compatibility gate requires
-redesign, not a migration note or a request to accept a break. The plan/API redesign
-does not authorize C1–C8 runtime implementation or consumer upgrades.
-
-Revision 3 of that plan has been holistically reviewed; read the
-[final decisions](docs/designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md) before implementation.
-C2/C3 have one public facade release boundary. C3 requires phase-aware host
-verification and supports same-process single-use handles only; durable workflow
-resume is deferred C3-R. Waiting owned children/leases and unacknowledged evidence
-must survive until safe terminal cleanup. Current RunOptions has no signal: use a
-private selected-path execution binding, not ignored options or cancellation of
-an unrelated Agent. Bind orchestration tasks per operation, not constructor lifetime.
-C4/C5 use fixed private profiles; no new public factory registry/universal inspector.
-C7 uses hydration vocabulary and separate proxy/server observations with explicit
-lookup/cancel semantics; its wire schema is a stage-entry review. No runtime,
-consumer change, breaking change or release follows from plan approval alone.
-
-Revision 4 incorporates the additional
-[ICOS registry follow-up](docs/designs/CONSUMER_REGISTRY_FOLLOWUP.md). C6's proposed
-`configureAgent` returns complete parent/worker configuration before plugin/tool/
-lifecycle initialization; do not return a built Agent and retrofit its configuration.
-Keep documented whole-config precedence, mandatory workspace/tool ownership,
-provider/account isolation, zero/false/absence and no-memory reserve/strategy.
-Old constructors/callbacks remain unchanged. Independent C9-A/B/C plan endpoint-
-specific capability companions, opt-in effective-request temperature policy and
-browser-safe vendor presentation; exact C9 APIs require stage-entry review.
-Preserve raw old registry/session validation/defaults and generic custom-service
-ownership. Reasoning unions/STT streaming do not prove per-model endpoint support;
-keep unknown explicit. Current temperature strictness is intentional, and native
-counting skips that validator; do not change legacy defaults to reconcile them.
-Retain consumer safeguards until new contracts are delivered and adopted. No C6/C9
-runtime, consumer pin/app change, database design or release is authorized here.
-
-
-Revision 5 is the current plan approval candidate. Read the
-[final simplicity review](docs/designs/CONSUMER_PLAN_FINAL_SIMPLICITY_REVIEW.md)
-and follow the canonical document-ownership map instead of historical signatures.
-Reuse direct-call signal/modelTask options; the private cancellation bridge is for
-managed calls. Enhanced factories do not automatically replace identity/catalog
-legacy tools: require explicit source-tagged static registration and the separate
-C5 manager-local catalog gate. C6's API table owns configuration/authority/board
-precedence; new-path forbidden keys need runtime checks and variable-safe types.
-Failed continuation admission must not consume the only paused handle; use bounded
-observation views and existing evidence. Unresolved required gates block completion.
-This remains documentation/planning only; no runtime, app, dependency or release
-implementation is authorized by this review.
-
-
-## Consumer C1 implementation selection — 2026-10-23
-
-The user approved revision 5 and said “proceed with full implementation” after the
-C1 recommendation. This selects C1 under the staged-development rule, superseding
-the historical planning-only scope above for that slice. Read
-[C1 delivery](docs/designs/CONSUMER_C1_DELIVERY.md) and
-[usage](docs/OUTCOME_AWARE_TOOLS.md). C1 is complete on branch with all recorded
-unit/live/public/example/documentation gates passing. C2–C9 remain planned; no later runtime stage, consumer upgrade, breaking
-API, commit/push or release is included. New APIs/types use root public exports;
-legacy ToolContext/ToolFunction, raw results, defaults and protocol v2 remain.
-
-## Consumer hardening — full sequential authorization, 2026-10-23
-
-The user explicitly requested: “implement all slices in order without stopping.
-Review them, fix issues after each slice, but do not stop”. This supersedes the
-earlier one-slice selection limit for C2–C8 and C9-A/B/C. Implement them in the
-plan's dependency order; review and fix each slice, complete its validation and
-documentation, then continue without another routine approval question. Stage-entry
-designs remain required for C5 catalog, C7 wire and C9 APIs; make them concrete and
-review them against the approved compatibility constraints before implementation.
-The breaking-change approval rule remains in force. No consumer app/pin upgrade,
-commit/push/publication, durable routine/cursor backend, Stage 14B or 16B is included.
-Track progress in [the delivery ledger](docs/designs/CONSUMER_DELIVERY_LEDGER.md),
-updating the Version 2 guide and affected public guides as each slice is delivered.
-
-## Consumer C3 — opt-in verified routines
-
-`createRoutineRunner({ verify })` is the additive root-exported facade; preserve legacy
-`executeRoutine`/`createRoutineTool` contracts. Read [verified routines](docs/VERIFIED_ROUTINES.md)
-before using it. Verification gates task readiness and final post-step state; only
-renewed host authorization can resume its opaque same-process continuation. All
-nested calls share the selected execution binding, with absolute deadlines and one
-shared ToolManager. Borrowed Agents/tasks are never destroyed. Recover oversized or
-late sources through host-only reads/acknowledgements and existing storage, without
-action replay or waiving actual context tool-evidence protection. No durable cursor
-or C3-R backend is implemented. Continue the authorized remaining sequence through
-C9 after each slice's passing review/validation/documentation checkpoint.
-
-## Complete orchestration factory
-
-For complete authorized root/worker configuration before initialization, use `createOrchestratorWithFactory` with a required `configureAgent` returning a complete plain `OrchestratedAgentConfig`. Preserve library-owned hierarchy/workspace/tools and resolve each worker independently. Pass ModelTask per operation; inspect child outcomes separately from business verification. Retained worker work/evidence blocks reuse/destruction. Read [the recipe](docs/ORCHESTRATOR_FACTORY.md); old createOrchestrator and synchronous callbacks remain supported.
-
-## Negotiated portable outcomes
-
-For explicit source/proxy parity, use the separate C7 APIs in
-[Remote Tool Outcomes](docs/REMOTE_TOOL_OUTCOMES.md). Old protocol 2 remains unchanged.
-Use scoped evidence and trusted host authorization on all five transport operations.
-Unknown writes require receipt/source reconciliation before managed continuation;
-never allocate a fresh request to retry an uncertain action. Tools-first C6
-construction shares the exact evidence storage handle with its one ToolManager.
-Checkpoints are evidence recovery, not workflow or ModelTask authority.
-Selected generic connector redirects must stay on their admitted origin. Remote
-execution without authoritative outcome metadata stays unknown after handoff;
-never infer not-started from missing instrumentation. Receipt reconciliation reuses
-valid evidence, and failed shutdown completion must release settled ownership.
-
-## Endpoint metadata and selected parameter policy
-
-C9's pure root/shared `getRealtimeModelCapabilities`, `getTranscriptionCapabilities`
-and `assessModelParameters` distinguish supported, unsupported and unknown facts.
-Do not infer vendor from a model name or replace unknown effort sets with generic
-unions. Optional `parameterPolicy` applies to selected OpenAI requests; old defaults
-and raw provider controls remain strict. Policy is host-local and omitted from old
-portable v2 snapshots. Read [endpoint capabilities](docs/ENDPOINT_CAPABILITIES.md)
-and [parameter policy](docs/PARAMETER_POLICY.md).
-`VENDOR_PRESENTATIONS`/`getVendorPresentation` are optional presentation only;
-they never grant LLM/service ownership or authentication authority. Read
-[vendor presentation](docs/VENDOR_PRESENTATION.md). Live LLM testing was explicitly
-paused by the user on 2026-10-28; do not resume it without authorization.
-
-
-H1 adds `AgentRuntime.createAgent(definition)` with per-session execution binding and exact host-resolved tools. Preserve `.agent(spec)` compatibility. See [runtime recipes](USER_GUIDE.md#reusable-definitions-and-harness-bindings) and [H-stage ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md). Live LLM testing remains paused.
-
-
-Local Claude harness: `ClaudeAgentSdkDriver` from `oneringai/agent-runtime/claude`, driver ID `anthropic.agent.sdk`. Read [the tools-only profile](USER_GUIDE.md#local-claude-agent-sdk); do not enable native filesystem/shell/web or ambient configuration through raw SDK options.
-
-
-Runtime recovery: configure FileRuntimeSessionStorage or the optional StorageRegistry.runtimeSessions factory. Persist session.reference(), then resume with trusted original scope. Uncertain input/tool effects require original source reconciliation, never action replay. Read [the recovery guide](USER_GUIDE.md#runtime-recovery-and-control-storage). Native configureAgent requires a configurationRevision for checkpoint compatibility.
-
-
-Managed OpenAI: use OpenAIManagedDriver from the documented openai-managed subpath, a named API-key connector, and durable runtime control storage. Native creation includes first input; never resend an uncertain task. See [managed setup](USER_GUIDE.md#openai-managed-agents-api). Native idle is not root-turn completion.
-
-
-Managed Claude: use ClaudeManagedDriver from agent-runtime/claude-managed, durable control storage and provider-managed placement. Native toolset defaults are explicitly disabled. Budget/requires-action idle is waiting, not completion. Model/reasoning are session-bound; runtime schema output is unsupported. See [the canonical guide](USER_GUIDE.md#claude-managed-agents-api).
-
-
-Runtime H6 adds rich definition inspection, explicit `RuntimeSession.uploadFile` /
-`downloadArtifact`, and AMOS `--runtime-host` mode. Read [file and desktop boundaries](USER_GUIDE.md#explicit-files-and-artifacts)
-before exposing transfers/IPC. Backend `fileTransfer(context)` selects host-owned roots,
-exact MIME allowlists and byte bounds; it is disabled by default. Session references
-are scoped locators, never credentials. File storage requires POSIX acknowledged
-single-host primitives; Windows needs a custom adapter. AMOS runtime mode gates native
-context/routine/helper/tool mutation commands. All five adapters have offline conformance;
-new native/live vendor verification remains pending under the existing live pause.
-
-
-AMOS runtime commands and setup are documented in [the cookbook](apps/amos/docs/AGENT_RUNTIME.md).
-Use the trusted [host example](apps/amos/examples/runtime-host.ts) for offline-first
-five-driver selection and atomic locator persistence. Commands delegate per-run
-options, results/activity, scoped references, upload/download and explicit deletion
-to existing runtime APIs. Native-only commands remain in standard AMOS. Preserve
-`--runtime-host`, additive `--runtime-resume`, host scope ownership and the live pause.
-
-Bounded live validation — 2026-11-01: the user authorized the updated OpenAI `.env`
-key and requested subscription-first Codex tests with very light API usage. The
-[validation record](docs/evaluations/LIVE_VALIDATION_2026_11_01.md) supersedes earlier
-pause statements for that completed bounded run only. Production Codex/AMOS auth
-remains API-key-only; the subscription suite uses an explicit test-only SDK seam.
-Only the private `onering_host` MCP bridge delegates native approval to the host
-ToolManager; its host permissions still apply. Other live gates remain pending;
-this is not standing authorization for an unrestricted live suite or a release.
-
-Runtime review corrections — 2026-11-01: native definition tools must pass both
-resolver and Agent policies through their one ToolManager; resolver policies remain
-borrowed. Structured Claude output is sanitized before schema validation. Managed
-OpenAI state must retain approved vault/desktop/tool configuration. Repair ambiguous
-control acknowledgements through the retained result, never a new action. Late
-recovery detaches observation after runtime destruction; stop/exit interrupt stalled
-read-only admission without authorizing replay of accepted actions. Read the
-[correction record](docs/evaluations/VERSION2_REVIEW_2026_11_01.md) and run the
-[offline safety example](examples/agent-runtime-safety.ts) for these boundaries.
+- `test:unit` scopes Vitest to unit tests; a bare Vitest sweep also includes live
+  integrations. Never supply/print secrets to make integration tests pass, or excuse
+  new failures using an old agent memory's claimed baseline.
+- `npm run docs` / `npm run docs:full` regenerate public/internal API references.
+  `docs:check` checks links/anchors, scripts and public imports; selected complete
+  instruction/guide examples are typechecked against built declarations.
+- For agent/context/tool contracts, build first, then run `npm run test:agentic:compat`
+  and `npm run example:agentic-baseline`. `npm run examples:offline` exercises the
+  complete deterministic example set; no provider credentials are required.
+- Browser-sensitive changes also need `npm run example:browser-node`,
+  `npm run test:browser:types`, `npm run test:browser` and, for published packaging,
+  `npm run test:browser:package`. These cover page/Worker consumers and offline
+  strict-CSP engines. Read the browser guide for Playwright prerequisites.
+- Test affected AMOS types/build/units and documented offline examples using
+  [its package scripts](apps/amos/package.json). Native terminal validation is
+  separate from browser Agent validation. Record provider gates that were not run.
+- Release work follows [Releasing](RELEASING.md), including `release:check`, the exact
+  clean-tag publication gate, registry verification and the mandatory website handoff.
+  Version/release scripts have commit/tag/push side effects; do not run them just to validate.
+
+## Final checklist
+
+- Named connectors, public imports and model/endpoint metadata verified?
+- Shared ToolManager, unique tools and trusted host scope/permissions preserved?
+- Browser-safe dependencies/storage/auth supplied for the selected environment?
+- Plugin data separated from instructions, registered before checkpoint loading?
+- Evidence/uncertain actions recoverable without replay; completion host-verified?
+- Supported defaults, return/events and saved state still compatible?
+- Relevant documentation/examples/AMOS and checks updated, with actual limits recorded?
+- Branch, live-call, commit/push and publication authorization respected?
+
+Reviewed against the v2 beta.3 public API on 2026-11-09; Agent behavior is unchanged
+from beta.2.
