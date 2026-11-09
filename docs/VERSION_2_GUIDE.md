@@ -18,6 +18,11 @@ APIs, runtime behavior and support boundaries are unchanged from beta.2. The
 [beta.3 record](evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.json) tracks validation,
 npm publication and the required matching website deployment separately.
 
+**Verified beta.3 publication:** npm `latest` and `next` select beta.3 from
+`v2.0.0-beta.3` / `be8ccaa1`. Its registry integrity matches the validated tarball;
+fresh Node 22/24 consumers pass all public ESM/CJS entries and nine document formats.
+The release record tracks the corresponding website deployment separately.
+
 **Beta.2 — 2026-11-08:** `oneringai@2.0.0-beta.2` includes browser/Node portability,
 the provider instruction-authority correction, AMOS input closure recovery,
 and embedded MCP dependency hardening. The four final browser schema review

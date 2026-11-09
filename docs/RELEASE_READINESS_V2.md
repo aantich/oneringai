@@ -16,13 +16,18 @@ changes. The [beta.3 record](evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.jso
 owns current validation, registry publication and matching website deployment;
 the earlier records below are historical.
 
+**Verified beta.3 publication:** `latest` and `next` select the exact validated
+`v2.0.0-beta.3` / `be8ccaa1` artifact. Fresh registry Node 22/24 ESM/CJS consumers,
+document readers and packed coding-agent guides pass. Website deployment remains
+a separate required handoff in the beta.3 record.
+
 Beta.2 — 2026-11-08: `oneringai@2.0.0-beta.2` includes the shared browser/Node
 Agent API, browser schema compatibility corrections, AMOS EOF recovery and
 embedded dependency hardening. The [beta.2 record](evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json)
 separates candidate validation from verified publication. The user explicitly
 authorized fixing, committing on main, pushing and publishing beta.2.
 
-**Verified publication:** beta.2 is now available under both `latest` and `next`,
+**Prior publication:** beta.2 was released under both `latest` and `next`,
 from `v2.0.0-beta.2` / `4934f066`. Its registry integrity matches the validated
 tarball. Fresh registry consumers and all three browser page/Worker hosts pass;
 the beta.2 record contains the source revision, checksums, audits and runtime results.

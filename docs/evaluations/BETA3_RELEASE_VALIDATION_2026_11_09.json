@@ -4,8 +4,8 @@
   "branch": "main",
   "sourceBase": "cee8993d23c23696b81dc123fff5ae3f2a0bf3fd",
   "authorization": "commit push and release and npm update",
-  "status": "validated-ready-for-publication",
-  "publicationPerformed": false,
+  "status": "published-and-registry-install-verified",
+  "publicationPerformed": true,
   "liveModelCalls": 0,
   "scope": "Canonical v2 coding-agent instructions, Claude shared import, typed browser/plugin examples and documentation checker coverage; no runtime/API changes",
   "checks": {
@@ -225,9 +225,170 @@
     },
     "liveProviders": "not run; existing live-suite authorization boundary preserved"
   },
-  "publication": null,
+  "publication": {
+    "version": "2.0.0-beta.3",
+    "tag": "v2.0.0-beta.3",
+    "commit": "be8ccaa1f5cb90509c1b82a4477ec3be15f13411",
+    "npmUser": "aantich",
+    "distTags": {
+      "latest": "2.0.0-beta.3",
+      "next": "2.0.0-beta.3"
+    },
+    "integrity": "sha512-OkWIiOj8DemBuLvB/BMQTPVAeVBvDwcjbyqs+ulGIisEerXhVxbDlggN8ruPCWxVTYX+OzgQZXHHi4Z0DEiGQQ==",
+    "shasum": "9dbb6deb0f981fc7dfe1ef5adb39c3fb99fcbb99",
+    "tarball": "https://registry.npmjs.org/oneringai/-/oneringai-2.0.0-beta.3.tgz",
+    "files": 558,
+    "packedBytes": 20578493,
+    "unpackedBytes": 104533888,
+    "verifiedAt": "2026-11-09T11:05:03.904183+00:00",
+    "registryConsumer": {
+      "package": "oneringai@2.0.0-beta.3",
+      "startedAt": "2026-11-09T11:03:36Z",
+      "work": "/tmp/oneringai-beta3-registry-twwf5g77",
+      "status": "pass",
+      "nodes": [
+        {
+          "node": "v24.20.0",
+          "sdkModules": [],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        {
+          "node": "v22.13.1",
+          "sdkModules": [],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        }
+      ],
+      "mcpRedirects": [
+        {
+          "node": "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "result": {
+            "esm": {
+              "sameOrigin": "connected",
+              "crossOrigin": "blocked",
+              "forwardedRequests": 0
+            },
+            "cjs": {
+              "sameOrigin": "connected",
+              "crossOrigin": "blocked",
+              "forwardedRequests": 0
+            }
+          }
+        },
+        {
+          "node": "/Users/aantich/.nvm/versions/node/v22.13.1/bin/node",
+          "result": {
+            "esm": {
+              "sameOrigin": "connected",
+              "crossOrigin": "blocked",
+              "forwardedRequests": 0
+            },
+            "cjs": {
+              "sameOrigin": "connected",
+              "crossOrigin": "blocked",
+              "forwardedRequests": 0
+            }
+          }
+        }
+      ],
+      "documentation": {
+        "AGENTS.md": "ad0c2f25c9c48ea3da4b57e587e771e85b0f922b38dae16a644abcb3b1c5fc93",
+        "CLAUDE.md": "fb7b5f7fdd256e7f270e6e15a2491dd54628e06ad5f551683226ff52e2bf6680",
+        "docs/BROWSER_AGENTS.md": "b85309d3c5f828aed58a4d9a39a6b7fe3a86d2bcd7c1da884b5aa98984572e41",
+        "README.md": "8828b6811119932548a7b0017031fd75d0fd5f2a05ae740ef310b7143ae628af",
+        "USER_GUIDE.md": "7aa766b899a41a9408fddf0112982cc83a7f591bfa38de05b1094d2b3caac2fb",
+        "docs/evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.json": "38f22feaa6429458183b909c3fd480f2b74a1a96632e32b438e65fdff4ec74e3"
+      },
+      "integrity": "sha512-OkWIiOj8DemBuLvB/BMQTPVAeVBvDwcjbyqs+ulGIisEerXhVxbDlggN8ruPCWxVTYX+OzgQZXHHi4Z0DEiGQQ==",
+      "audit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      },
+      "finishedAt": "2026-11-09T11:04:03Z"
+    }
+  },
   "website": {
     "repository": "aantich/oneringaiio",
-    "status": "pending"
+    "status": "local-validation-complete-awaiting-deployment",
+    "localChecks": {
+      "generatedPages": 826,
+      "sourceDocuments": 73,
+      "searchRecords": 3237,
+      "referenceWarnings": 0,
+      "tests": 16,
+      "browserRouteChecks": 40,
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "interactions": [
+        "five harness choices",
+        "clipboard",
+        "search and keyboard navigation",
+        "mobile navigation",
+        "guide contents",
+        "404"
+      ],
+      "visualInspection": "desktop and mobile light/dark homepage and canonical agent guide"
+    }
   }
 }
