@@ -4,7 +4,7 @@
   "branch": "main",
   "sourceBase": "cee8993d23c23696b81dc123fff5ae3f2a0bf3fd",
   "authorization": "commit push and release and npm update",
-  "status": "published-and-registry-install-verified",
+  "status": "published-registry-verified-and-website-deployed",
   "publicationPerformed": true,
   "liveModelCalls": 0,
   "scope": "Canonical v2 coding-agent instructions, Claude shared import, typed browser/plugin examples and documentation checker coverage; no runtime/API changes",
@@ -364,7 +364,7 @@
   },
   "website": {
     "repository": "aantich/oneringaiio",
-    "status": "local-validation-complete-awaiting-deployment",
+    "status": "deployed-and-publicly-verified",
     "localChecks": {
       "generatedPages": 826,
       "sourceDocuments": 73,
@@ -389,6 +389,59 @@
         "404"
       ],
       "visualInspection": "desktop and mobile light/dark homepage and canonical agent guide"
+    },
+    "commit": "60d0ea41afe20dfd43d44f04e7f9a0e67c1613bd",
+    "librarySnapshot": "aae5db4e7f77d5772d5dff4b6c4791a9167ea475",
+    "version": "2.0.0-beta.3",
+    "workflow": {
+      "id": 42606280191,
+      "url": "https://github.com/aantich/oneringaiio/actions/runs/42606280191",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "build",
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "deploymentURL": "https://oneringai.io/",
+    "publicVerification": {
+      "verifiedAt": "2026-11-09T11:15:29.138816+00:00",
+      "browserRouteChecks": 40,
+      "routes": [
+        "/",
+        "/applications/",
+        "/compare/",
+        "/docs/agents/index.html",
+        "/docs/amos-cookbook/",
+        "/docs/api-reference/",
+        "/docs/browser-agents/index.html",
+        "/docs/examples/",
+        "/docs/start/",
+        "/docs/user-guide/"
+      ],
+      "devices": [
+        "desktop",
+        "mobile"
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "versionAndSnapshot": "verified on every checked route",
+      "interactions": [
+        "five harness choices",
+        "clipboard",
+        "search and keyboard navigation",
+        "mobile navigation",
+        "guide contents",
+        "404"
+      ],
+      "errors": []
     }
   }
 }

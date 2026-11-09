@@ -18,8 +18,9 @@ the earlier records below are historical.
 
 **Verified beta.3 publication:** `latest` and `next` select the exact validated
 `v2.0.0-beta.3` / `be8ccaa1` artifact. Fresh registry Node 22/24 ESM/CJS consumers,
-document readers and packed coding-agent guides pass. Website deployment remains
-a separate required handoff in the beta.3 record.
+document readers and packed coding-agent guides pass. The matching website
+(`60d0ea4`, library snapshot `aae5db4e`) passed its Pages deployment and public
+desktop/mobile checks. The beta.3 record retains the complete handoff.
 
 Beta.2 — 2026-11-08: `oneringai@2.0.0-beta.2` includes the shared browser/Node
 Agent API, browser schema compatibility corrections, AMOS EOF recovery and

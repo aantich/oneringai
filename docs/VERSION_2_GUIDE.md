@@ -21,7 +21,10 @@ npm publication and the required matching website deployment separately.
 **Verified beta.3 publication:** npm `latest` and `next` select beta.3 from
 `v2.0.0-beta.3` / `be8ccaa1`. Its registry integrity matches the validated tarball;
 fresh Node 22/24 consumers pass all public ESM/CJS entries and nine document formats.
-The release record tracks the corresponding website deployment separately.
+The matching website is deployed from `60d0ea4`, pinning documentation snapshot
+`aae5db4e`. The [Pages workflow](https://github.com/aantich/oneringaiio/actions/runs/42606280191)
+and public desktop/mobile version/snapshot checks pass; the release record retains
+the complete package-and-website handoff.
 
 **Beta.2 — 2026-11-08:** `oneringai@2.0.0-beta.2` includes browser/Node portability,
 the provider instruction-authority correction, AMOS input closure recovery,
