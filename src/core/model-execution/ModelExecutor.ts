@@ -59,6 +59,8 @@ export class HelperOutputError extends AIError {
 }
 
 function registryPriceBound(connector: Connector, options: TextGenerateOptions): ModelPriceBound | undefined {
+  // API price estimates do not describe a subscriber's plan allowance or credits.
+  if (connector.getOptions().openaiAuthMode === 'chatgpt-plan') return undefined;
   const info = getModelInfo(options.model);
   if (!info || info.provider !== connector.vendor || vendorContainers(options).some(container =>
     ['speed', 'serviceTier', 'service_tier', 'inference_geo'].some(key => container[key] !== undefined))) return undefined;

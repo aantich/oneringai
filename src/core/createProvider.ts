@@ -67,11 +67,13 @@ export function capturedProviderEndpoint(provider: ITextProvider): string | unde
 function configuredNativeEndpoint(connector: Connector): string {
   const options = connector.getOptions();
   const openai = connector.vendor === Vendor.OpenAI;
+  const plan = openai && options.openaiAuthMode === 'chatgpt-plan';
   const envURL = openai ? env('OPENAI_BASE_URL') : connector.vendor === Vendor.Anthropic ? env('ANTHROPIC_BASE_URL') : undefined;
   return createHash('sha256').update(JSON.stringify({ vendor: connector.vendor,
-    baseURL: connector.baseURL || envURL || getVendorDefaultBaseURL(connector.vendor ?? ''),
-    ...(openai ? { organization: options.organization === undefined ? env('OPENAI_ORG_ID') ?? null : options.organization,
-      project: options.project === undefined ? env('OPENAI_PROJECT_ID') ?? null : options.project } : {}),
+    baseURL: plan ? getVendorDefaultBaseURL(Vendor.OpenAI) : connector.baseURL || envURL || getVendorDefaultBaseURL(connector.vendor ?? ''),
+    ...(openai ? { organization: plan ? null : options.organization === undefined ? env('OPENAI_ORG_ID') ?? null : options.organization,
+      project: plan ? null : options.project === undefined ? env('OPENAI_PROJECT_ID') ?? null : options.project,
+      ...(options.openaiAuthMode === 'chatgpt-plan' ? { openaiAuthMode: options.openaiAuthMode, openaiAccountId: options.openaiAccountId } : {}) } : {}),
     ...(connector.vendor === Vendor.Anthropic ? { apiVersion: options.anthropicVersion } : {}),
   })).digest('hex');
 }
@@ -124,6 +126,7 @@ function createProviderInstance(connector: Connector): ITextProvider {
     case Vendor.OpenAI:
       return new OpenAITextProvider({
         ...config,
+        openaiAuthMode: connector.getOptions().openaiAuthMode as 'api-key' | 'chatgpt-plan' | undefined,
         organization: connector.getOptions().organization as string | undefined,
         project: connector.getOptions().project as string | undefined,
       });

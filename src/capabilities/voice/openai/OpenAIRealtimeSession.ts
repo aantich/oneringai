@@ -1,3 +1,4 @@
+import { assertOpenAIAPIKeyConnector } from '../../../infrastructure/providers/openai/OpenAIAuth.js';
 import { EventEmitter } from 'events';
 import { Connector } from '../../../core/Connector.js';
 import { Vendor } from '../../../core/Vendor.js';
@@ -83,6 +84,7 @@ export class OpenAIRealtimeSession extends EventEmitter {
     this.connector = typeof options.connector === 'string'
       ? Connector.get(options.connector)
       : options.connector;
+    assertOpenAIAPIKeyConnector(this.connector, 'OpenAIRealtimeSession');
     if (this.connector.vendor !== Vendor.Grok) {
       assertOpenAIRealtimePCMRates(options.session);
     }

@@ -20,6 +20,7 @@ import { OpenAIResponsesStreamConverter } from './OpenAIResponsesStreamConverter
 import { applyOpenAIParameterPolicy } from './parameterPolicy.js';
 import { openAISamplingConstraint } from '../../../capabilities/metadata/parameters.js';
 import { validateOpenAIResponsesRequest } from './OpenAIRequestValidator.js';
+import { CHATGPT_PLAN_BASE_URL, chatGPTPlanRequest, checkedChatGPTPlanStream } from './chatGPTPlan.js';
 import * as ResponsesAPI from 'openai/resources/responses/responses.js';
 import { getModelInfo } from '../../../domain/entities/Model.js';
 import { resolveModelCapabilities } from '../base/ModelCapabilityResolver.js';
@@ -60,6 +61,7 @@ function getOpenAINativeTools(model: string): AdvancedTextCapabilities['nativeTo
 }
 
 export class OpenAITextProvider extends BaseTextProvider {
+  private readonly chatGPTPlan: boolean;
   private readonly verifiedCompactionModels = new Set<string>();
   readonly compaction: ITextCompactionProvider = {
     compact: options => this.compactNative(options),
@@ -67,6 +69,7 @@ export class OpenAITextProvider extends BaseTextProvider {
   };
 
   private assertNativeOptions(options: TextGenerateOptions): void {
+    if (this.chatGPTPlan) throw new ProviderCapabilityNotSupportedError(this.name, options.model, 'native compaction with ChatGPT plan access');
     if (this.nativeToolVendor !== 'openai') throw new ProviderCapabilityNotSupportedError(this.name, options.model, 'native compaction');
     assertNativeCompactionOptions(options, this.name);
     const supported = new Set(['instructions', 'text', 'tool_choice', 'parallel_tool_calls', 'reasoning', 'personality',
@@ -133,6 +136,15 @@ export class OpenAITextProvider extends BaseTextProvider {
 
   constructor(config: OpenAIConfig) {
     super(config);
+    if (config.openaiAuthMode !== undefined && !['api-key', 'chatgpt-plan'].includes(config.openaiAuthMode)) {
+      throw new InvalidConfigError('Invalid OpenAI authentication mode');
+    }
+    this.chatGPTPlan = config.openaiAuthMode === 'chatgpt-plan';
+    if (this.chatGPTPlan) this.capabilities = { ...this.capabilities, audio: false };
+    if (this.chatGPTPlan && ((config.baseURL && config.baseURL.replace(/\/$/, '') !== CHATGPT_PLAN_BASE_URL)
+      || config.organization || config.project)) {
+      throw new InvalidConfigError('ChatGPT plan access requires the public OpenAI endpoint without API organization/project overrides');
+    }
 
     this.client = new OpenAI({
       apiKey: config.apiKeyProvider
@@ -145,6 +157,7 @@ export class OpenAITextProvider extends BaseTextProvider {
       maxRetries: this.getMaxRetries(),
       fetch: modelExecutionFetch,
       ...browserSDKOptions,
+      ...(this.chatGPTPlan ? { baseURL: CHATGPT_PLAN_BASE_URL, organization: null, project: null, maxRetries: 0, logLevel: 'off' as const } : {}),
     });
     registerModelTransport(this);
 
@@ -191,7 +204,9 @@ export class OpenAITextProvider extends BaseTextProvider {
         const genStartTime = Date.now();
 
         // Call Responses API
-        const response = await modelTransportClient(this.client, options.signal).responses.create(params as any, ...modelRequestOptions(options));
+        const response = this.chatGPTPlan
+          ? await this.collectPlanResponse(params, options)
+          : await modelTransportClient(this.client, options.signal).responses.create(params as any, ...modelRequestOptions(options));
         this.logger.debug(
           { model: options.model, duration: Date.now() - genStartTime },
           'generate: response received',
@@ -246,7 +261,8 @@ export class OpenAITextProvider extends BaseTextProvider {
       // Convert stream events using the stream converter
       let chunkCount = 0;
       try {
-        for await (const event of this.streamConverter.convertStream(stream as AsyncIterable<ResponsesAPI.ResponseStreamEvent>)) {
+        for await (const event of this.streamConverter.convertStream(this.chatGPTPlan
+          ? checkedChatGPTPlanStream(stream) : stream as AsyncIterable<ResponsesAPI.ResponseStreamEvent>)) {
           chunkCount++;
           yield event;
         }
@@ -293,7 +309,7 @@ export class OpenAITextProvider extends BaseTextProvider {
     const supportsStructuredOutput = info?.features.structuredOutput === true;
     const supportsExtendedPromptCaching = OPENAI_EXTENDED_PROMPT_CACHE_MODELS.test(model);
     const nativeTools = info ? getOpenAINativeTools(model) : [];
-    return {
+    const capabilities: AdvancedTextCapabilities = {
       nativeCompaction: { onDemand: this.nativeToolVendor === 'openai' ? (this.verifiedCompactionModels.has(model) ? 'supported' : 'unverified') : 'unsupported',
         inputTokenCounting: this.nativeToolVendor === 'openai' ? 'provider' : 'unavailable' },
       promptCaching: {
@@ -334,6 +350,15 @@ export class OpenAITextProvider extends BaseTextProvider {
         remoteMcp: nativeTools.includes('remote_mcp') ? 'third_party' : 'none',
       },
     };
+    if (this.chatGPTPlan) return { ...capabilities,
+      nativeCompaction: { onDemand: 'unsupported', inputTokenCounting: 'unavailable' },
+      promptCaching: { mode: 'unsupported', ttlModes: [], reportsCacheUsage: false },
+      batch: { supported: false, cancellable: false },
+      nativeTools: nativeTools.filter(tool => tool === 'web_search'),
+      responsesExtensions: { asyncToolCalling: false, midTurnSteering: false, configurationUpdates: false, misalignmentMonitoring: false },
+      dataHandling: { promptCaching: 'provider_managed', batch: 'none', remoteMcp: 'none' },
+    };
+    return capabilities;
   }
 
   async submitBatch(
@@ -414,14 +439,17 @@ export class OpenAITextProvider extends BaseTextProvider {
   }
 
   async getBatch(id: string): Promise<BatchHandle> {
+    if (this.chatGPTPlan) throw new ProviderCapabilityNotSupportedError(this.name, '', 'batch with ChatGPT plan access');
     return this.mapBatch(await this.client.batches.retrieve(id));
   }
 
   async cancelBatch(id: string): Promise<BatchHandle> {
+    if (this.chatGPTPlan) throw new ProviderCapabilityNotSupportedError(this.name, '', 'batch with ChatGPT plan access');
     return this.mapBatch(await this.client.batches.cancel(id));
   }
 
   async *getBatchResults(id: string): AsyncIterable<BatchTextResult<LLMResponse>> {
+    if (this.chatGPTPlan) throw new ProviderCapabilityNotSupportedError(this.name, '', 'batch with ChatGPT plan access');
     const batch = await this.client.batches.retrieve(id);
     const resultFileIds = [batch.output_file_id, batch.error_file_id].filter(
       (fileId): fileId is string => Boolean(fileId),
@@ -560,6 +588,12 @@ export class OpenAITextProvider extends BaseTextProvider {
    * List available models from the OpenAI API
    */
   async listModels(): Promise<string[]> {
+    if (this.chatGPTPlan) {
+      // This OAuth route has an account-specific catalog, not the API-key ListPage schema.
+      const response = await this.client.get<{ models: Array<{ slug: string; visibility: string }> }>('/models');
+      if (!Array.isArray(response.models)) throw new InvalidConfigError('Invalid ChatGPT plan model catalog');
+      return response.models.filter(model => model.visibility === 'list' && typeof model.slug === 'string').map(model => model.slug);
+    }
     const models: string[] = [];
     for await (const model of this.client.models.list()) {
       models.push(model.id);
@@ -615,7 +649,25 @@ export class OpenAITextProvider extends BaseTextProvider {
     // Add reasoning config from unified thinking option
     this.applyReasoningConfig(params, options);
     if (stream) params.stream = true;
-    return params;
+    return this.chatGPTPlan ? chatGPTPlanRequest(params) : params;
+  }
+
+  private async collectPlanResponse(params: Record<string, unknown>, options: TextGenerateOptions): Promise<ResponsesAPI.Response> {
+    const stream = await modelTransportClient(this.client, options.signal).responses.create(params as any, ...modelRequestOptions(options)) as unknown as AsyncIterable<ResponsesAPI.ResponseStreamEvent> & { controller?: AbortController };
+    let response: ResponsesAPI.Response | undefined;
+    try {
+      // Reuse the ordinary stream error conversion, without maintaining a second response accumulator.
+      const converter = new OpenAIResponsesStreamConverter();
+      const observe = async function* () {
+        for await (const event of checkedChatGPTPlanStream(stream)) {
+          if (event.type === 'response.completed' || event.type === 'response.incomplete') response = event.response;
+          yield event;
+        }
+      };
+      for await (const _event of converter.convertStream(observe())) { /* validate the complete event stream */ }
+      if (!response) throw new InvalidConfigError('ChatGPT plan response did not complete');
+      return response;
+    } finally { stream.controller?.abort(); }
   }
 
   /**

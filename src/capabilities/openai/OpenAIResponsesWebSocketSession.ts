@@ -1,3 +1,4 @@
+import { assertOpenAIAPIKeyConnector } from '../../infrastructure/providers/openai/OpenAIAuth.js';
 import { EventEmitter } from 'events';
 import { OpenAI } from 'openai/client.js';
 import { ResponsesWS } from 'openai/resources/responses/ws.js';
@@ -93,6 +94,7 @@ export class OpenAIResponsesWebSocketSession extends EventEmitter {
     this.connector = typeof options.connector === 'string'
       ? Connector.get(options.connector)
       : options.connector;
+    assertOpenAIAPIKeyConnector(this.connector, 'OpenAIResponsesWebSocketSession');
   }
 
   get isConnected(): boolean {

@@ -1,3 +1,4 @@
+import { assertOpenAIAPIKeyConnector } from '../../infrastructure/providers/openai/OpenAIAuth.js';
 import { managedFetch } from '../ManagedTransport.js';
 import type OpenAI from 'openai';
 import type { ClientOptions } from 'openai';
@@ -35,6 +36,7 @@ export class OpenAIManagedDriver implements AgentDriver {
     const spec = request.spec;
     if (!spec.definition || !spec.connector || !spec.model) throw new AgentDriverConfigurationError('OpenAI managed execution requires a logical definition, connector and model');
     const connector = request.connectorRegistry.get(spec.connector);
+    assertOpenAIAPIKeyConnector(connector, 'OpenAI managed runtime');
     if (connector.vendor !== Vendor.OpenAI || !['api_key','api_key_provider'].includes(connector.config.auth.type)) throw new AgentDriverConfigurationError('OpenAI managed execution requires an OpenAI API-key connector');
     this.validateModel(spec.model, spec.reasoning);
     if (request.durability !== 'durable') throw new AgentDriverConfigurationError('Managed execution requires durable runtime control storage');
@@ -74,6 +76,7 @@ export class OpenAIManagedDriver implements AgentDriver {
   }
   private async client(request: DriverOpenSessionRequest): Promise<OpenAI> {
     const connector = request.connectorRegistry.get(request.spec.connector!);
+    assertOpenAIAPIKeyConnector(connector, 'OpenAI managed runtime');
     if (connector.vendor !== Vendor.OpenAI || !['api_key','api_key_provider'].includes(connector.config.auth.type)) throw new AgentDriverConfigurationError('Cleanup/restore requires the original OpenAI API-key connector');
     const token = runtimeTokenProvider(request.connectorRegistry, request.spec.connector!);
     const options: ClientOptions = { apiKey: token, organization: connector.config.options?.organization ?? null, project: connector.config.options?.project ?? null, logLevel: 'off', baseURL: connector.baseURL || 'https://api.openai.com/v1', maxRetries: 0, timeout: 10000, fetch: managedFetch(fetch, connector.baseURL || 'https://api.openai.com/v1') };

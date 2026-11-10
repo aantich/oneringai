@@ -1,4 +1,12 @@
 import { InvalidConfigError } from '../../../domain/errors/AIErrors.js';
+import type { Connector } from '../../../core/Connector.js';
+
+/** Plan credentials authorize our HTTP Responses profile, not other OpenAI endpoints/harnesses. */
+export function assertOpenAIAPIKeyConnector(connector: Connector, capability: string): void {
+  if (connector.getOptions().openaiAuthMode === 'chatgpt-plan') {
+    throw new InvalidConfigError(`${capability} requires a separate API-key connector; ChatGPT plan access supports HTTP Responses inference only`);
+  }
+}
 import type {
   APIKeyProviderAuth,
   OpenAIMediaConfig,

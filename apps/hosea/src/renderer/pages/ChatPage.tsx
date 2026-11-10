@@ -1,3 +1,4 @@
+import { ChatGPTUsage } from '../components/connectors/ChatGPTUsage.js';
 import { Welcome } from '../design-system/Welcome';
 import { HoseaMark } from '../design-system/Brand';
 /**
@@ -376,6 +377,7 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
       </div>
 
       <div className="chat__input">
+        <ChatGPTUsage connector={tab.status.connector} />
         <div className="chat__input-wrapper">
           <div className="chat__input-form">
             <textarea

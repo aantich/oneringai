@@ -5,12 +5,15 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, Alert, Badge, Spinner } from 'react-bootstrap';
 import { Plus, Brain, Key, Trash2, Check, Cloud, Monitor, RefreshCw, Globe, Cpu } from 'lucide-react';
+import { ChatGPTConnection } from '../components/connectors/ChatGPTConnection.js';
 import { PageHeader } from '../components/layout';
 import { useConnectorVersion } from '../App';
 
 interface ConnectorConfig {
   name: string;
   vendor: string;
+  authMode?: 'api-key' | 'chatgpt-plan';
+  connected?: boolean;
   source?: 'local' | 'backend' | 'built-in';
   models?: string[];
   createdAt: number;
@@ -185,6 +188,7 @@ export function LLMConnectorsPage(): React.ReactElement {
       </PageHeader>
 
       <div className="page__content">
+        <ChatGPTConnection onChanged={() => void loadConnectors()} />
         {connectors.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state__icon">
@@ -222,9 +226,9 @@ export function LLMConnectorsPage(): React.ReactElement {
                       <h3 className="connector-card__name">{connector.name}</h3>
                       <p className="connector-card__vendor">{info.label}</p>
                       <div className="connector-card__status d-flex gap-2 align-items-center flex-wrap">
-                        <span className="badge badge--success">
-                          <Check size={12} />
-                          Connected
+                        <span className={`badge ${connector.connected === false ? 'badge--warning' : 'badge--success'}`}>
+                          {connector.connected === false ? <RefreshCw size={12} /> : <Check size={12} />}
+                          {connector.connected === false ? 'Reconnect required' : 'Connected'}
                         </span>
                         {isManagedOllama ? (
                           <Badge bg="success" className="d-flex align-items-center gap-1">
@@ -243,6 +247,7 @@ export function LLMConnectorsPage(): React.ReactElement {
                           </Badge>
                         )}
                       </div>
+                      {connector.authMode === 'chatgpt-plan' && <Badge bg={connector.connected === false ? 'warning' : 'success'} className="mt-2">Shared ChatGPT plan</Badge>}
                       {connector.models && connector.models.length > 0 && (
                         <div className="mt-2" style={{ fontSize: '0.75rem' }}>
                           <span className="text-muted">Models: </span>
@@ -260,6 +265,8 @@ export function LLMConnectorsPage(): React.ReactElement {
                     <div className="card__footer">
                       {isManagedOllama ? (
                         <small className="text-muted">{'Managed by hosea \u2014 Settings > Local AI'}</small>
+                      ) : connector.source === 'built-in' && connector.vendor === 'openai' ? (
+                        <small className="text-muted">Managed by shared ChatGPT connection</small>
                       ) : !isRemote ? (
                         <Button
                           variant="outline-secondary"
@@ -267,12 +274,12 @@ export function LLMConnectorsPage(): React.ReactElement {
                           onClick={() => handleOpenEditModal(connector)}
                         >
                           <Key size={14} className="me-1" />
-                          Update Key
+                          {connector.authMode === 'chatgpt-plan' ? 'Update media API key' : 'Update Key'}
                         </Button>
                       ) : (
                         <small className="text-muted">Managed by Backend</small>
                       )}
-                      {!isManagedOllama && (
+                      {!isManagedOllama && !(connector.source === 'built-in' && connector.vendor === 'openai') && (
                         <Button
                           variant="outline-danger"
                           size="sm"

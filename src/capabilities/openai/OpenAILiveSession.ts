@@ -1,3 +1,4 @@
+import { assertOpenAIAPIKeyConnector } from '../../infrastructure/providers/openai/OpenAIAuth.js';
 import { EventEmitter } from 'events';
 import { OpenAI } from 'openai/client.js';
 import { LiveWS } from 'openai/resources/live/ws.js';
@@ -27,6 +28,7 @@ export class OpenAILiveSession extends EventEmitter {
     this.connector = typeof options.connector === 'string'
       ? Connector.get(options.connector)
       : options.connector;
+    assertOpenAIAPIKeyConnector(this.connector, 'OpenAILiveSession');
   }
 
   get isConnected(): boolean {

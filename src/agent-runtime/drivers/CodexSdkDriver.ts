@@ -1,3 +1,4 @@
+import { assertOpenAIAPIKeyConnector } from '../../infrastructure/providers/openai/OpenAIAuth.js';
 import { access, realpath, rm } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
 import path from 'node:path';
@@ -668,6 +669,7 @@ function validatePolicy(context: Parameters<AgentDriver['inspect']>[0]): void {
 
 function validateConnectorAndModel(context: Parameters<AgentDriver['inspect']>[0]): void {
   const connector = context.connectorRegistry.get(context.spec.connector!);
+  assertOpenAIAPIKeyConnector(connector, 'Codex SDK');
   if (connector.vendor !== Vendor.OpenAI) {
     throw new AgentDriverConfigurationError(`Codex SDK connector '${connector.name}' must declare Vendor.OpenAI`);
   }

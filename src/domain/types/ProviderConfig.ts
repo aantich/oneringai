@@ -59,6 +59,7 @@ export interface GrokMediaConfig {
 }
 
 export interface OpenAIConfig extends BaseProviderConfig {
+  openaiAuthMode?: 'api-key' | 'chatgpt-plan';
   apiKeyProvider?: () => Promise<string>;
   organization?: string;
   project?: string;

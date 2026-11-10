@@ -303,6 +303,21 @@ const getWeather: ToolFunction = {
   source receipts. Reuse the same evidence storage handle and shared ToolManager.
   See [Remote Tool Outcomes](docs/REMOTE_TOOL_OUTCOMES.md).
 
+### ChatGPT plan access (unreleased)
+
+This checkout adds `options.openaiAuthMode: 'chatgpt-plan'` and secret-free
+`openaiAccountId` to the existing OpenAI connector. Use a runtime-only
+`api_key_provider` callback bound to a validated SIWC registration. `Agent.create`,
+`run` and `stream` retain the same browser/Node API. The host owns OAuth, storage,
+refresh and authorization; identity sign-in alone is insufficient. This feature
+is not part of the published beta.3 baseline.
+
+Hosea applies one selected registration to every OpenAI agent. Other applications
+choose their own connector policy. Explicit unsupported request controls, hosted
+tools, hard output caps, bounded helpers, native compaction and non-Responses APIs
+must fail before dispatch. Signing out/limits never grant fallback API-key billing.
+Read [ChatGPT plan access](docs/CHATGPT_PLAN_ACCESS.md) before implementation or use.
+
 ## Context plugins: built-in and custom
 
 Feature flags are open string keys. External developers do not need core changes

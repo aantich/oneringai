@@ -7,6 +7,9 @@
 import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
+import { safeStorage, shell } from 'electron';
+import { ChatGPTAuthService } from './ChatGPTAuthService.js';
+import type { ChatGPTStatus, ChatGPTResult } from '../shared/chatgpt.js';
 import {
   Connector,
   Vendor,
@@ -115,7 +118,7 @@ import { VendorOAuthService } from './VendorOAuthService.js';
 import { OAuthCallbackServer } from './OAuthCallbackServer.js';
 import { OAuthCallbackServerHttps } from './OAuthCallbackServerHttps.js';
 import { createHoseaStorage } from './storage.js';
-import { isBackendEnabled } from './runtimeConfig.js';
+import { isBackendEnabled, isDesignPreview } from './runtimeConfig.js';
 import { loadBuiltInOAuthApps, type BuiltInOAuthApp } from './built-in-oauth-apps.js';
 
 interface StoredConnectorConfig {
@@ -125,7 +128,7 @@ interface StoredConnectorConfig {
   baseURL?: string;
   models?: string[];
   /** Where this connector comes from: 'local' (user-configured) or 'backend' (synced from backend backend) */
-  source?: 'local' | 'backend';
+  source?: 'local' | 'backend' | 'built-in';
   createdAt: number;
   updatedAt: number;
 }
@@ -696,6 +699,116 @@ export class AgentService {
   private ollamaService: import('./OllamaService.js').OllamaService | null = null;
   // Vendor OAuth service for authorization_code and client_credentials flows
   private vendorOAuthService = new VendorOAuthService();
+  private chatGPT!: ChatGPTAuthService;
+  private chatGPTConnectorName = 'hosea-chatgpt';
+  private agentAuth = new WeakMap<Agent, string>();
+  private rebindings = new Map<string, Promise<AgentInstance>>();
+
+  private openAIAuthKey(): string { return this.chatGPT?.activeProfileId ?? 'api-key'; }
+
+  private assertAuthIdle(): void {
+    for (const id of AgentRegistry.list()) {
+      const agent = AgentRegistry.get(id);
+      if (agent instanceof Agent && agent.connector.vendor === Vendor.OpenAI && (agent.isRunning() || agent.isPaused() || agent.hasPendingAsyncTools(true))) {
+        throw new Error('Finish or cancel active agent work before changing the shared ChatGPT account');
+      }
+    }
+  }
+
+  /** One registration path for every model agent and media factory. */
+  private registerLLMConnector(config: StoredConnectorConfig): void {
+    const openai = config.vendor === Vendor.OpenAI;
+    const apiKey = config.auth.type === 'api_key' ? config.auth.apiKey : undefined;
+    const profileId = openai ? this.chatGPT?.activeProfileId : null;
+    if (Connector.has(config.name)) Connector.remove(config.name);
+    Connector.create({ name: config.name, vendor: config.vendor as Vendor,
+      auth: openai ? { type: 'api_key_provider', getApiKey: async () => {
+        if (this.chatGPT.busy) throw new Error('ChatGPT account change in progress');
+        if (profileId) return this.chatGPT.accessToken(profileId);
+        this.chatGPT.assertAPIKeyAccess();
+        if (!apiKey) throw new Error('Connect ChatGPT or configure an OpenAI API key in Model providers');
+        return apiKey;
+      } } : config.auth,
+      baseURL: profileId ? 'https://api.openai.com/v1' : config.baseURL,
+      ...(profileId ? { options: { openaiAuthMode: 'chatgpt-plan', openaiAccountId: profileId } } : {}),
+    });
+  }
+
+  private usesChatGPT(connectorName: string): boolean {
+    return !!this.chatGPT?.activeProfileId && this.connectors.get(connectorName)?.vendor === Vendor.OpenAI;
+  }
+
+  /** Media keeps its explicitly configured API-key billing, separate from the shared chat plan. */
+  private mediaConnector(name: string): string {
+    const config = this.connectors.get(name);
+    if (!config) throw new Error('Media connector not found');
+    if (config.vendor !== Vendor.OpenAI) return name;
+    if (config.auth.type !== 'api_key') throw new Error('Configure an OpenAI API key for media; ChatGPT plan access cannot power this feature');
+    const mediaName = `__hosea_media_${name}`;
+    if (!Connector.has(mediaName)) Connector.create({ name: mediaName, vendor: Vendor.OpenAI,
+      auth: config.auth, baseURL: config.baseURL });
+    return mediaName;
+  }
+  private hasMediaCredential(config: StoredConnectorConfig): boolean {
+    return config.vendor !== Vendor.OpenAI || config.auth.type === 'api_key';
+  }
+
+  private ensureChatGPTConnector(): StoredConnectorConfig | undefined {
+    if (!this.chatGPT.status().accounts.length) return undefined;
+    let name = 'hosea-chatgpt'; let suffix = 2;
+    while (this.connectors.has(name)) {
+      const existing = this.connectors.get(name)!;
+      if (existing.source === 'built-in' && existing.vendor === Vendor.OpenAI && existing.auth.type === 'none') break;
+      name = `hosea-chatgpt-${suffix++}`;
+    }
+    this.chatGPTConnectorName = name;
+    if (!this.connectors.has(name)) this.connectors.set(name, { name, vendor: Vendor.OpenAI,
+      auth: { type: 'none' }, source: 'built-in', createdAt: Date.now(), updatedAt: Date.now() });
+    return this.connectors.get(name);
+  }
+
+  getChatGPTStatus(): ChatGPTStatus { return this.chatGPT.status(); }
+  cancelChatGPTSignIn(): void { this.chatGPT.cancel(); }
+  async changeChatGPT(operation: 'signin' | 'select' | 'signout' | 'apiKeys', profileId?: string, consent = false): Promise<ChatGPTResult> {
+    try {
+      let warning: string | undefined;
+      if (operation === 'signin') await this.chatGPT.signIn(profileId, consent);
+      else if (operation === 'select') await this.chatGPT.select(profileId ?? '');
+      else if (operation === 'signout') ({ warning } = await this.chatGPT.signOut(profileId ?? ''));
+      else if (operation === 'apiKeys') await this.chatGPT.useAPIKeys();
+      else throw new Error('Unknown ChatGPT account operation');
+      this.ensureChatGPTConnector();
+      for (const connector of this.connectors.values()) if (connector.vendor === Vendor.OpenAI) this.registerLLMConnector(connector);
+      this.notifyRenderer('chatgpt:changed', this.chatGPT.status());
+      return { success: true, status: this.chatGPT.status(), ...(warning ? { warning } : {}) };
+    } catch (error) { return { success: false, status: this.chatGPT.status(), error: error instanceof Error ? error.message : 'ChatGPT connection failed' }; }
+  }
+
+  /** Idle chats are rebuilt once against the selected account, with plugins restored before use. */
+  private async currentInstance(instanceId: string): Promise<AgentInstance> {
+    const old = this.instances.get(instanceId);
+    if (!old) throw new Error(`Instance "${instanceId}" not found`);
+    if (old.agent.connector.vendor === Vendor.OpenAI && this.chatGPT.busy) throw new Error('Finish the ChatGPT account change before starting OpenAI work');
+    if (old.agent.connector.vendor !== Vendor.OpenAI || this.agentAuth.get(old.agent) === this.openAIAuthKey()) return old;
+    const pending = this.rebindings.get(instanceId);
+    if (pending) return pending;
+    const rebind = (async () => {
+      if (old.agent.isRunning() || old.agent.isPaused() || old.agent.hasPendingAsyncTools(true)) throw new Error('Finish pending work before changing this chat account');
+      const sessionId = `auth-change-${instanceId}-${Date.now()}`;
+      await old.agent.context.save(sessionId);
+      const result = await this.createInstance(old.agentConfigId, { instanceId, sessionId });
+      if (!result.success) throw new Error(`Checkpoint saved as ${sessionId}; this chat could not switch OpenAI connections. Start a fresh chat or restore its original account. ${result.error}`);
+      const instance = this.instances.get(instanceId)!;
+      instance.sessionSaveEnabled = old.sessionSaveEnabled;
+      old.orchestratorCleanup?.();
+      old.voiceStream?.destroy();
+      old.agent.destroy();
+      return instance;
+    })();
+    this.rebindings.set(instanceId, rebind);
+    try { return await rebind; } finally { this.rebindings.delete(instanceId); }
+  }
+
   // Tool catalog uses ToolCatalogRegistry (static global)
   // Stream emitter for sending chunks to renderer (set by main process)
   private streamEmitter: ((instanceId: string, chunk: StreamChunk) => void) | null = null;
@@ -983,6 +1096,13 @@ export class AgentService {
     await this.loadConfig();
     this.initializeLogLevel();
     await this.initializeTokenStorage();
+    this.chatGPT = new ChatGPTAuthService({ directory: join(this.dataDir, 'chatgpt'),
+      available: () => !isDesignPreview() && safeStorage.isEncryptionAvailable()
+        && (process.platform !== 'linux' || safeStorage.getSelectedStorageBackend() !== 'basic_text'),
+      encrypt: text => safeStorage.encryptString(text), decrypt: bytes => safeStorage.decryptString(bytes),
+      openExternal: url => shell.openExternal(url), onChanged: status => this.notifyRenderer('chatgpt:changed', status), assertCanChange: () => { this.assertAuthIdle(); if (this.rebindings.size) throw new Error('Wait for chat restoration before changing accounts'); },
+    });
+    await this.chatGPT.initialize();
   }
 
   /**
@@ -1023,6 +1143,8 @@ export class AgentService {
   async initializeHeavy(): Promise<void> {
     try {
       await this.loadConnectors();
+      const managedChatGPT = this.ensureChatGPTConnector();
+      if (managedChatGPT) this.registerLLMConnector(managedChatGPT);
       await this.loadUniversalConnectors();
       await this.migrateAPIConnectorsToUniversal();
 
@@ -1137,12 +1259,7 @@ export class AgentService {
 
           // Register with the library so ConnectorTools can discover vendor-based tools
           if (!Connector.has(config.name)) {
-            Connector.create({
-              name: config.name,
-              vendor: config.vendor as Vendor,
-              auth: config.auth,
-              baseURL: config.baseURL,
-            });
+            this.registerLLMConnector(config);
             logger.debug(`[loadConnectors] Registered with Connector library: ${config.name}`);
           } else {
             logger.debug(`[loadConnectors] Already registered in library: ${config.name}`);
@@ -1585,12 +1702,7 @@ export class AgentService {
           await writeFile(filePath, JSON.stringify(config, null, 2));
 
           if (Connector.has(remote.name)) Connector.remove(remote.name);
-          Connector.create({
-            name: remote.name,
-            vendor: remote.vendor as Vendor,
-            auth: config.auth,
-            baseURL: config.baseURL,
-          });
+          this.registerLLMConnector(config);
 
           if (wasKnown) updated++; else added++;
           logger.debug(`[syncActiveBackendProfile] Synced LLM connector: ${remote.name} (vendor: ${remote.vendor})`);
@@ -1868,12 +1980,7 @@ export class AgentService {
 
       // Register with library if not already
       if (!Connector.has(connectorName)) {
-        Connector.create({
-          name: connectorName,
-          vendor: connectorConfig.vendor as Vendor,
-          auth: connectorConfig.auth,
-          baseURL: connectorConfig.baseURL,
-        });
+        this.registerLLMConnector(connectorConfig);
       }
 
       // Destroy existing agent
@@ -1894,6 +2001,7 @@ export class AgentService {
       };
 
       this.agent = Agent.create(agentConfig);
+      this.agentAuth.set(this.agent, String(this.agent.connector.getOptions().openaiAccountId ?? 'api-key'));
 
       // Subscribe to context events for monitoring
       this.subscribeToContextEvents(this.agent, 'default');
@@ -1909,12 +2017,25 @@ export class AgentService {
     }
   }
 
+  private async currentDefaultAgent(): Promise<void> {
+    const old = this.agent;
+    if (old?.connector.vendor === Vendor.OpenAI && this.chatGPT.busy) throw new Error('Finish the ChatGPT account change first');
+    if (!old || old.connector.vendor !== Vendor.OpenAI || this.agentAuth.get(old) === this.openAIAuthKey()) return;
+    this.assertAuthIdle();
+    const sessionId = `auth-change-default-${Date.now()}`;
+    await old.context.save(sessionId);
+    const active = this.getActiveAgent();
+    const result = active ? await this.initializeWithConfig(active) : await this.initialize(old.connector.name, old.model);
+    if (!result.success || !this.agent || !await this.agent.context.load(sessionId)) throw new Error(`Could not restore chat after account change; checkpoint ${sessionId} is preserved`);
+  }
+
   async send(message: string): Promise<{ success: boolean; response?: string; error?: string }> {
     if (!this.agent) {
       return { success: false, error: 'Agent not initialized' };
     }
 
     try {
+      await this.currentDefaultAgent();
       // NextGen uses run() instead of chat()
       const response = await this.agent.run(message);
       return { success: true, response: response.output_text || '' };
@@ -1934,7 +2055,8 @@ export class AgentService {
     let suppressText = false;
 
     try {
-      for await (const event of this.agent.stream(message)) {
+      await this.currentDefaultAgent();
+      for await (const event of this.agent!.stream(message)) {
         // Cast through unknown to any for flexible event handling
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const e = event as any;
@@ -2138,8 +2260,12 @@ export class AgentService {
     };
   }
 
-  listConnectors(): StoredConnectorConfig[] {
-    return Array.from(this.connectors.values());
+  listConnectors() {
+    const status = this.chatGPT.status();
+    const active = status.accounts.find(account => account.id === status.activeId);
+    return Array.from(this.connectors.values(), ({ auth, ...config }) => ({ ...config,
+      ...(config.vendor === Vendor.OpenAI ? { authMode: this.openAIAuthKey() === 'api-key' ? 'api-key' : 'chatgpt-plan',
+        connected: status.usePlan ? !!active?.connected && active.planEnabled : auth.type === 'api_key' } : {}) }));
   }
 
   async addConnector(config: unknown): Promise<{ success: boolean; error?: string }> {
@@ -2156,12 +2282,7 @@ export class AgentService {
 
       // Register with the Connector library so it's immediately usable
       if (Connector.has(connectorConfig.name)) Connector.remove(connectorConfig.name);
-      Connector.create({
-        name: connectorConfig.name,
-        vendor: connectorConfig.vendor as Vendor,
-        auth: connectorConfig.auth,
-        baseURL: connectorConfig.baseURL,
-      });
+      this.registerLLMConnector(connectorConfig);
 
       return { success: true };
     } catch (error) {
@@ -2176,6 +2297,7 @@ export class AgentService {
       }
 
       this.connectors.delete(name);
+      Connector.remove(`__hosea_media_${name}`);
 
       // Remove from library
       if (Connector.has(name)) {
@@ -2212,6 +2334,7 @@ export class AgentService {
         existing.baseURL = updates.baseURL || undefined;
       }
       existing.updatedAt = Date.now();
+      Connector.remove(`__hosea_media_${name}`);
 
       this.connectors.set(name, existing);
 
@@ -2221,12 +2344,7 @@ export class AgentService {
 
       // Re-register with library
       if (Connector.has(name)) Connector.remove(name);
-      Connector.create({
-        name,
-        vendor: existing.vendor as Vendor,
-        auth: existing.auth,
-        baseURL: existing.baseURL,
-      });
+      this.registerLLMConnector(existing);
 
       return { success: true };
     } catch (error) {
@@ -2240,6 +2358,14 @@ export class AgentService {
     baseURL?: string,
     existingConnectorName?: string
   ): Promise<{ success: boolean; models?: string[]; error?: string }> {
+    if (vendor === Vendor.OpenAI && this.chatGPT.busy) return { success: false, error: 'Finish the ChatGPT account change first' };
+    if (vendor === Vendor.OpenAI && this.chatGPT.activeProfileId) {
+      try {
+        const config = this.connectors.get(existingConnectorName ?? this.chatGPTConnectorName) ?? this.connectors.get(this.chatGPTConnectorName);
+        if (!config) throw new Error('Connect ChatGPT first');
+        return { success: true, models: await createProvider(Connector.get(config.name)).listModels() };
+      } catch (error) { return { success: false, error: error instanceof Error ? error.message : 'Model discovery failed' }; }
+    }
     // If no new API key and an existing connector is registered, use it directly
     if (!apiKey && existingConnectorName && Connector.has(existingConnectorName)) {
       try {
@@ -3501,12 +3627,7 @@ export class AgentService {
 
       // Register with library if not already
       if (!Connector.has(agentConfig.connector)) {
-        Connector.create({
-          name: agentConfig.connector,
-          vendor: connectorConfig.vendor as Vendor,
-          auth: connectorConfig.auth,
-          baseURL: connectorConfig.baseURL,
-        });
+        this.registerLLMConnector(connectorConfig);
       }
 
       // Destroy existing agent
@@ -3547,7 +3668,7 @@ export class AgentService {
         name: agentConfig.name,
         tools: plainTools,
         instructions: fullInstructions,
-        temperature: agentConfig.temperature,
+        ...(this.usesChatGPT(agentConfig.connector) ? {} : { temperature: agentConfig.temperature }),
         maxIterations: agentConfig.maxIterations ?? 50,
         // NextGen context configuration
         context: {
@@ -3594,6 +3715,7 @@ export class AgentService {
       };
 
       this.agent = Agent.create(config);
+      this.agentAuth.set(this.agent, String(this.agent.connector.getOptions().openaiAccountId ?? 'api-key'));
 
       // Register connector-produced tools with source tracking
       for (const [connName, connTools] of connectorToolGroups) {
@@ -3923,6 +4045,7 @@ export class AgentService {
   }
 
   destroy(): void {
+    this.chatGPT?.cancel();
     // Destroy the legacy single agent
     this.agent?.destroy();
     this.agent = null;
@@ -4316,10 +4439,10 @@ export class AgentService {
    * @param agentConfigId - The ID of the agent configuration to use
    * @returns instanceId if successful
    */
-  async createInstance(agentConfigId: string): Promise<{ success: boolean; instanceId?: string; error?: string }> {
+  async createInstance(agentConfigId: string, restore?: { instanceId: string; sessionId: string }): Promise<{ success: boolean; instanceId?: string; error?: string }> {
     try {
       // Check instance limit
-      if (this.instances.size >= MAX_INSTANCES) {
+      if (!restore && this.instances.size >= MAX_INSTANCES) {
         return { success: false, error: `Maximum number of instances (${MAX_INSTANCES}) reached` };
       }
 
@@ -4335,18 +4458,15 @@ export class AgentService {
         return { success: false, error: `Connector "${agentConfig.connector}" not found` };
       }
 
+      if (connectorConfig.vendor === Vendor.OpenAI && this.chatGPT.busy) throw new Error('Finish the ChatGPT account change before starting OpenAI work');
+
       // Register connector with library if not already
       if (!Connector.has(agentConfig.connector)) {
-        Connector.create({
-          name: agentConfig.connector,
-          vendor: connectorConfig.vendor as Vendor,
-          auth: connectorConfig.auth,
-          baseURL: connectorConfig.baseURL,
-        });
+        this.registerLLMConnector(connectorConfig);
       }
 
       // Generate unique instance ID
-      const instanceId = `inst_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const instanceId = restore?.instanceId ?? `inst_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
       // Create instance-specific session storage via StorageRegistry factory
       const sessionStorage = this.createSessionStorage(instanceId);
@@ -4596,7 +4716,7 @@ export class AgentService {
           name: agentConfig.name,
           tools: plainTools,
           instructions: fullInstructions,
-          temperature: agentConfig.temperature,
+          ...(this.usesChatGPT(agentConfig.connector) ? {} : { temperature: agentConfig.temperature }),
           context: contextConfig,
           // Wire permission approval when enabled
           ...(agentConfig.permissionsEnabled ? {
@@ -4649,6 +4769,12 @@ export class AgentService {
         logger.warn(`[createInstance] streamEmitter not set - HoseaUIPlugin NOT registered for ${instanceId}`);
       }
 
+      if (restore) {
+        try {
+          if (!await agent.context.load(restore.sessionId)) throw new Error('Chat checkpoint was not found');
+        } catch (error) { orchestratorCleanup?.(); agent.destroy(); throw error; }
+      }
+      this.agentAuth.set(agent, String(agent.connector.getOptions().openaiAccountId ?? 'api-key'));
       // Store the instance
       const agentInstance: AgentInstance = {
         instanceId,
@@ -4754,19 +4880,14 @@ export class AgentService {
           if (!connectorConfig) {
             return { success: false, error: `Connector "${ttsConnectorName}" not found` };
           }
-          Connector.create({
-            name: ttsConnectorName,
-            vendor: connectorConfig.vendor as typeof Vendor[keyof typeof Vendor],
-            auth: connectorConfig.auth as any,
-            baseURL: connectorConfig.baseURL,
-          });
+          this.registerLLMConnector(connectorConfig);
         }
 
         const voiceFormat = (agentConfig.voiceFormat ?? 'mp3') as string;
         const useStreaming = voiceFormat === 'pcm';
 
         instance.voiceStream = VoiceStream.create({
-          ttsConnector: ttsConnectorName,
+          ttsConnector: this.mediaConnector(ttsConnectorName),
           ttsModel: agentConfig.voiceModel,
           voice: agentConfig.voiceVoice,
           format: voiceFormat as any,
@@ -5079,11 +5200,9 @@ export class AgentService {
    * Stream a message to a specific agent instance
    */
   async *streamInstance(instanceId: string, message: string): AsyncGenerator<StreamChunk> {
-    const instance = this.instances.get(instanceId);
-    if (!instance) {
-      yield { type: 'error', content: `Instance "${instanceId}" not found` };
-      return;
-    }
+    let instance: AgentInstance;
+    try { instance = await this.currentInstance(instanceId); }
+    catch (error) { yield { type: 'error', content: error instanceof Error ? error.message : 'ChatGPT connection failed' }; return; }
 
     // Track when we're in plan mode to suppress text output
     let suppressText = false;
@@ -5663,12 +5782,12 @@ export class AgentService {
     const configuredVendors = new Set<string>();
     if (connectorName) {
       const connector = this.connectors.get(connectorName);
-      if (connector) {
+      if (connector && this.hasMediaCredential(connector)) {
         configuredVendors.add(connector.vendor);
       }
     } else {
       for (const c of this.connectors.values()) {
-        configuredVendors.add(c.vendor);
+        if (this.hasMediaCredential(c)) configuredVendors.add(c.vendor);
       }
     }
 
@@ -5780,7 +5899,7 @@ export class AgentService {
       const connector = options.connector
         ? this.connectors.get(options.connector)
         : Array.from(this.connectors.values()).find(
-            (c) => c.vendor.toLowerCase() === vendor
+            (c) => c.vendor.toLowerCase() === vendor && this.hasMediaCredential(c)
           );
 
       if (!connector) {
@@ -5794,16 +5913,11 @@ export class AgentService {
 
       // Ensure connector is registered with the library
       if (!Connector.has(connector.name)) {
-        Connector.create({
-          name: connector.name,
-          vendor: connector.vendor as Vendor,
-          auth: connector.auth,
-          baseURL: connector.baseURL,
-        });
+        this.registerLLMConnector(connector);
       }
 
       // Create ImageGeneration instance
-      const imageGen = ImageGeneration.create({ connector: connector.name });
+      const imageGen = ImageGeneration.create({ connector: this.mediaConnector(connector.name) });
 
       // Extract standard options
       const { model, prompt, size, quality, style, n, ...vendorOptions } = options;
@@ -5865,12 +5979,12 @@ export class AgentService {
     const configuredVendors = new Set<string>();
     if (connectorName) {
       const connector = this.connectors.get(connectorName);
-      if (connector) {
+      if (connector && this.hasMediaCredential(connector)) {
         configuredVendors.add(connector.vendor);
       }
     } else {
       for (const c of this.connectors.values()) {
-        configuredVendors.add(c.vendor);
+        if (this.hasMediaCredential(c)) configuredVendors.add(c.vendor);
       }
     }
 
@@ -5985,7 +6099,7 @@ export class AgentService {
       const connector = options.connector
         ? this.connectors.get(options.connector)
         : Array.from(this.connectors.values()).find(
-            (c) => c.vendor.toLowerCase() === vendor
+            (c) => c.vendor.toLowerCase() === vendor && this.hasMediaCredential(c)
           );
 
       if (!connector) {
@@ -5999,16 +6113,11 @@ export class AgentService {
 
       // Ensure connector is registered with the library
       if (!Connector.has(connector.name)) {
-        Connector.create({
-          name: connector.name,
-          vendor: connector.vendor as Vendor,
-          auth: connector.auth,
-          baseURL: connector.baseURL,
-        });
+        this.registerLLMConnector(connector);
       }
 
       // Create VideoGeneration instance
-      const videoGen = VideoGeneration.create({ connector: connector.name });
+      const videoGen = VideoGeneration.create({ connector: this.mediaConnector(connector.name) });
 
       // Convert base64 image to Buffer if provided
       let imageBuffer: Buffer | undefined;
@@ -6171,11 +6280,12 @@ export class AgentService {
     if (connectorName) {
       // Only include the specified connector
       const connector = this.connectors.get(connectorName);
-      if (connector) {
+      if (connector && this.hasMediaCredential(connector)) {
         vendorToConnectors.set(connector.vendor, [connector.name]);
       }
     } else {
       for (const [, c] of this.connectors) {
+        if (!this.hasMediaCredential(c)) continue;
         const list = vendorToConnectors.get(c.vendor) || [];
         list.push(c.name);
         vendorToConnectors.set(c.vendor, list);
@@ -6300,7 +6410,7 @@ export class AgentService {
       const connector = options.connector
         ? this.connectors.get(options.connector)
         : Array.from(this.connectors.values()).find(
-            (c) => c.vendor.toLowerCase() === vendor
+            (c) => c.vendor.toLowerCase() === vendor && this.hasMediaCredential(c)
           );
 
       if (!connector) {
@@ -6314,17 +6424,12 @@ export class AgentService {
 
       // Ensure connector is registered with the library
       if (!Connector.has(connector.name)) {
-        Connector.create({
-          name: connector.name,
-          vendor: connector.vendor as Vendor,
-          auth: connector.auth,
-          baseURL: connector.baseURL,
-        });
+        this.registerLLMConnector(connector);
       }
 
       // Create TextToSpeech instance
       const tts = TextToSpeech.create({
-        connector: connector.name,
+        connector: this.mediaConnector(connector.name),
         model: options.model,
       });
 
@@ -6367,11 +6472,12 @@ export class AgentService {
     const vendorToConnectors = new Map<string, string[]>();
     if (connectorName) {
       const connector = this.connectors.get(connectorName);
-      if (connector) {
+      if (connector && this.hasMediaCredential(connector)) {
         vendorToConnectors.set(connector.vendor, [connector.name]);
       }
     } else {
       for (const [, c] of this.connectors) {
+        if (!this.hasMediaCredential(c)) continue;
         const list = vendorToConnectors.get(c.vendor) || [];
         list.push(c.name);
         vendorToConnectors.set(c.vendor, list);
@@ -6512,24 +6618,14 @@ export class AgentService {
       const sttConnectorName = config.voiceBridgeSttConnector || '';
       const sttConn = this.connectors.get(sttConnectorName);
       if (sttConn && !Connector.has(sttConnectorName)) {
-        Connector.create({
-          name: sttConnectorName,
-          vendor: sttConn.vendor as Vendor,
-          auth: sttConn.auth,
-          baseURL: sttConn.baseURL,
-        });
+        this.registerLLMConnector(sttConn);
       }
 
       // Ensure TTS connector is registered
       const ttsConnectorName = config.voiceBridgeTtsConnector || config.voiceConnector || '';
       const ttsConn = this.connectors.get(ttsConnectorName);
       if (ttsConn && !Connector.has(ttsConnectorName)) {
-        Connector.create({
-          name: ttsConnectorName,
-          vendor: ttsConn.vendor as Vendor,
-          auth: ttsConn.auth,
-          baseURL: ttsConn.baseURL,
-        });
+        this.registerLLMConnector(ttsConn);
       }
 
       const port = config.voiceBridgePort ?? 3000;
@@ -6578,11 +6674,11 @@ export class AgentService {
       } else {
         bridgeConfig.pipeline = 'text';
         bridgeConfig.stt = {
-          connector: sttConnectorName,
+          connector: this.mediaConnector(sttConnectorName),
           model: config.voiceBridgeSttModel,
         };
         bridgeConfig.tts = {
-          connector: ttsConnectorName,
+          connector: this.mediaConnector(ttsConnectorName),
           model: config.voiceBridgeTtsModel || config.voiceModel || 'tts-1',
           voice: config.voiceBridgeTtsVoice || config.voiceVoice || 'nova',
         };
@@ -6915,7 +7011,7 @@ export class AgentService {
   }
 
   async executeRoutineOnInstance(instanceId: string, routineId: string): Promise<{ executionId: string }> {
-    const instance = this.instances.get(instanceId);
+    const instance = await this.currentInstance(instanceId);
     if (!instance) {
       throw new Error(`Instance "${instanceId}" not found`);
     }

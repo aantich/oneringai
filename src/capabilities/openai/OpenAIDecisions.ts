@@ -1,3 +1,4 @@
+import { assertOpenAIAPIKeyConnector } from '../../infrastructure/providers/openai/OpenAIAuth.js';
 import OpenAI from 'openai';
 import type {
   Decision,
@@ -12,6 +13,7 @@ export class OpenAIDecisions {
 
   constructor(connector: string | Connector) {
     this.connector = typeof connector === 'string' ? Connector.get(connector) : connector;
+    assertOpenAIAPIKeyConnector(this.connector, 'OpenAIDecisions');
   }
 
   async create(params: DecisionCreateParams): Promise<Decision> {

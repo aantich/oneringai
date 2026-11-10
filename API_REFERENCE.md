@@ -1,6 +1,6 @@
 # oneringai - API Reference
 
-**Generated:** 2026-11-09
+**Generated:** 2026-11-10
 **Mode:** public
 
 This document provides a complete reference for the public API of `oneringai`.
@@ -2197,7 +2197,7 @@ type Vendor = (typeof Vendor)[keyof typeof Vendor]
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:90`](src/core/createProvider.ts#L90)
+📍 [`src/core/createProvider.ts:92`](src/core/createProvider.ts#L92)
 
 Create a text provider from a connector
 
@@ -7532,7 +7532,7 @@ async deleteSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject
 
 ### CodexSdkDriver `class`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:93`](src/agent-runtime/drivers/CodexSdkDriver.ts#L93)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:94`](src/agent-runtime/drivers/CodexSdkDriver.ts#L94)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -7859,7 +7859,7 @@ async restoreSession(request: DriverOpenSessionRequest & { checkpoint: import('.
 
 ### OpenAIManagedDriver `class`
 
-📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:29`](src/agent-runtime/drivers/OpenAIManagedDriver.ts#L29)
+📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:30`](src/agent-runtime/drivers/OpenAIManagedDriver.ts#L30)
 
 Official managed Codex harness. This is distinct from the client-side OpenAI Agents SDK.
 
@@ -8642,7 +8642,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### CodexSdkDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:76`](src/agent-runtime/drivers/CodexSdkDriver.ts#L76)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:77`](src/agent-runtime/drivers/CodexSdkDriver.ts#L77)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -9099,7 +9099,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### OpenAIManagedDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:19`](src/agent-runtime/drivers/OpenAIManagedDriver.ts#L19)
+📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:20`](src/agent-runtime/drivers/OpenAIManagedDriver.ts#L20)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -21369,7 +21369,7 @@ override updateSession(
 
 ### OpenAILiveSession `class`
 
-📍 [`src/capabilities/openai/OpenAILiveSession.ts:17`](src/capabilities/openai/OpenAILiveSession.ts#L17)
+📍 [`src/capabilities/openai/OpenAILiveSession.ts:18`](src/capabilities/openai/OpenAILiveSession.ts#L18)
 
 Connector-first primary WebSocket session for GPT-Live.
 
@@ -21670,7 +21670,7 @@ send(event: OpenAIRealtimeClientEvent): void
 
 ### OpenAIRealtimeSession `class`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:69`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L69)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:70`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L70)
 
 Connector-first, server-side WebSocket client for OpenAI's GA Realtime API.
 It intentionally exposes the raw event stream while providing helpers for
@@ -21858,7 +21858,7 @@ on&lt;K extends keyof OpenAIRealtimeSessionEvents&gt;(event: K, handler: OpenAIR
 
 ### OpenAIResponsesWebSocketSession `class`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:82`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L82)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:83`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L83)
 
 Connector-first Responses WebSocket session with GPT-6 Astra steering support.
 
@@ -22716,7 +22716,7 @@ Unified agent storage interface
 
 ### OpenAILiveSessionOptions `interface`
 
-📍 [`src/capabilities/openai/OpenAILiveSession.ts:9`](src/capabilities/openai/OpenAILiveSession.ts#L9)
+📍 [`src/capabilities/openai/OpenAILiveSession.ts:10`](src/capabilities/openai/OpenAILiveSession.ts#L10)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -22966,7 +22966,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeConnectOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:51`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L51)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:52`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L52)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -23068,7 +23068,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeSessionEvents `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:55`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L55)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:56`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L56)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -23087,7 +23087,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeSessionOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:24`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L24)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:25`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L25)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -23185,7 +23185,7 @@ Translation configuration accepted when minting a WebRTC client secret.
 
 ### OpenAIResponseSteerMessage `interface`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:59`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L59)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:60`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L60)
 
 One user message accepted by the Responses mid-turn steering protocol.
 
@@ -23204,7 +23204,7 @@ One user message accepted by the Responses mid-turn steering protocol.
 
 ### OpenAIResponsesWebSocketSessionEvents `interface`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:73`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L73)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:74`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L74)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -23223,7 +23223,7 @@ One user message accepted by the Responses mid-turn steering protocol.
 
 ### OpenAIResponsesWebSocketSessionOptions `interface`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:32`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L32)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:33`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L33)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -23250,7 +23250,7 @@ One user message accepted by the Responses mid-turn steering protocol.
 
 ### OpenAIResponsesWebSocketTransport `interface`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:24`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L24)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:25`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L25)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -23578,7 +23578,7 @@ Exposed to lifecycle hooks and event handlers.
 
 ### OpenAIResponsesCreateEventOptions `type`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:49`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L49)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:50`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L50)
 
 ```typescript
 type OpenAIResponsesCreateEventOptions = Omit&lt;
@@ -23595,7 +23595,7 @@ type OpenAIResponsesCreateEventOptions = Omit&lt;
 
 ### ResponseSteerInput `type`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:69`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L69)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:70`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L70)
 
 Mid-turn steering accepts a string or a non-empty list of user messages.
 Tool results and general Responses input items are intentionally excluded.
@@ -49144,7 +49144,7 @@ async consolidate(_context: CompactionContext): Promise&lt;ConsolidationResult&g
 
 ### OpenAIDecisions `class`
 
-📍 [`src/capabilities/openai/OpenAIDecisions.ts:10`](src/capabilities/openai/OpenAIDecisions.ts#L10)
+📍 [`src/capabilities/openai/OpenAIDecisions.ts:11`](src/capabilities/openai/OpenAIDecisions.ts#L11)
 
 Connector-first access to OpenAI's ordered classification/scoring API.
 
@@ -49191,7 +49191,7 @@ async create(params: DecisionCreateParams): Promise&lt;Decision&gt;
 
 ### OpenAIRealtimeAPI `class`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:31`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L31)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:32`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L32)
 
 REST helpers for browser/WebRTC credentials and server-side SIP call control.
 
@@ -49419,7 +49419,7 @@ close(code = 1000, reason = 'Client closed'): void
 
 ### OpenAISafetyAPI `class`
 
-📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:7`](src/capabilities/openai/OpenAISafetyAPI.ts#L7)
+📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:8`](src/capabilities/openai/OpenAISafetyAPI.ts#L8)
 
 Connector-first access to OpenAI safety-alert records.
 
@@ -49466,7 +49466,7 @@ async retrieveAlert(id: string): Promise&lt;SafetyAlert&gt;
 
 ### OpenAIVoices `class`
 
-📍 [`src/capabilities/openai/OpenAIVoices.ts:9`](src/capabilities/openai/OpenAIVoices.ts#L9)
+📍 [`src/capabilities/openai/OpenAIVoices.ts:10`](src/capabilities/openai/OpenAIVoices.ts#L10)
 
 Connector-first creation of prompt-designed and consent-based OpenAI voices.
 
@@ -54504,6 +54504,10 @@ Used for BOTH AI providers AND external APIs
 | `documentation?` | `documentation?: string;` | - |
 | `tags?` | `tags?: string[];` | - |
 | `options?` | `options?: {
+    /** Opt-in Responses contract for OAuth credentials authorized for ChatGPT plan usage. */
+    openaiAuthMode?: 'api-key' | 'chatgpt-plan';
+    /** Secret-free, stable registration identity; do not change it underneath an Agent. */
+    openaiAccountId?: string;
     organization?: string; // OpenAI
     project?: string; // OpenAI
     anthropicVersion?: string;
@@ -54551,7 +54555,7 @@ Used for BOTH AI providers AND external APIs
 
 ### ConnectorConfigResult `interface`
 
-📍 [`src/domain/entities/Connector.ts:253`](src/domain/entities/Connector.ts#L253)
+📍 [`src/domain/entities/Connector.ts:257`](src/domain/entities/Connector.ts#L257)
 
 Result from ProviderConfigAgent
 Includes setup instructions and environment variables
@@ -55205,7 +55209,7 @@ Conversation message in history
 
 ### CreateRealtimeClientSecretOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:11`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L11)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:12`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L12)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55222,7 +55226,7 @@ Conversation message in history
 
 ### CreateRealtimeTranslationClientSecretOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:17`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L17)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:18`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L18)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55238,7 +55242,7 @@ Conversation message in history
 
 ### CreateRealtimeWebRTCCallOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:22`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L22)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:23`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L23)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -67814,7 +67818,7 @@ type OpenAIRealtimeVoice = | 'alloy'
 
 ### OpenAISafetyAlert `type`
 
-📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:31`](src/capabilities/openai/OpenAISafetyAPI.ts#L31)
+📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:33`](src/capabilities/openai/OpenAISafetyAPI.ts#L33)
 
 ```typescript
 type OpenAISafetyAlert = SafetyAlert
@@ -67824,7 +67828,7 @@ type OpenAISafetyAlert = SafetyAlert
 
 ### OpenAIVoice `type`
 
-📍 [`src/capabilities/openai/OpenAIVoices.ts:5`](src/capabilities/openai/OpenAIVoices.ts#L5)
+📍 [`src/capabilities/openai/OpenAIVoices.ts:6`](src/capabilities/openai/OpenAIVoices.ts#L6)
 
 ```typescript
 type OpenAIVoice = Awaited&lt;ReturnType&lt;OpenAI['audio']['voices']['create']&gt;&gt;
@@ -67834,7 +67838,7 @@ type OpenAIVoice = Awaited&lt;ReturnType&lt;OpenAI['audio']['voices']['create']&
 
 ### OpenAIVoiceCreateParams `type`
 
-📍 [`src/capabilities/openai/OpenAIVoices.ts:6`](src/capabilities/openai/OpenAIVoices.ts#L6)
+📍 [`src/capabilities/openai/OpenAIVoices.ts:7`](src/capabilities/openai/OpenAIVoices.ts#L7)
 
 ```typescript
 type OpenAIVoiceCreateParams = Parameters&lt;OpenAI['audio']['voices']['create']&gt;[0]

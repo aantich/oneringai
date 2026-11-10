@@ -1,3 +1,4 @@
+import { assertOpenAIAPIKeyConnector } from '../../infrastructure/providers/openai/OpenAIAuth.js';
 import OpenAI from 'openai';
 import { Connector } from '../../core/Connector.js';
 import { ProviderErrorMapper } from '../../infrastructure/providers/base/ProviderErrorMapper.js';
@@ -11,6 +12,7 @@ export class OpenAIVoices {
 
   constructor(connector: string | Connector) {
     this.connector = typeof connector === 'string' ? Connector.get(connector) : connector;
+    assertOpenAIAPIKeyConnector(this.connector, 'OpenAIVoices');
   }
 
   async create(params: OpenAIVoiceCreateParams): Promise<OpenAIVoice> {

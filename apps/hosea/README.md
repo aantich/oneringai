@@ -33,6 +33,25 @@ then opens Electron after the renderer is ready. Renderer edits reload live;
 restart after editing main/preload code. For a built normal launch, use
 `npm run build && npm start`. DevTools are available from the View menu.
 
+## One ChatGPT sign-in for all OpenAI agents
+
+Open **Connections → Manage models → Continue with ChatGPT** and authorize
+Hosea to use your eligible ChatGPT plan. This one connection powers every OpenAI
+agent, including saved agent configurations and orchestrated workers. Choose the
+`hosea-chatgpt` provider if you have no API key. Idle open chats adopt the account
+on their next turn with their context restored. Active work must finish before
+switching accounts.
+
+Use **Manage usage** to review your plan/app limits. Signing out or reaching a
+limit never silently enables API-key billing; switching back to saved API keys is
+explicit. Image/video generation, voice and embeddings require separately
+configured compatible credentials. Real sign-in is disabled in design preview.
+
+See [ChatGPT plan access](../../docs/CHATGPT_PLAN_ACCESS.md) for account recovery,
+OS credential storage, supported features, testing and current OpenAI eligibility.
+This feature is implemented in this checkout; production sign-in/inference still
+requires live verification with an eligible account.
+
 ## Your workspace
 
 - **Chat:** open a conversation with a configured agent.

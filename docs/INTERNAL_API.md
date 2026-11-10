@@ -1,6 +1,6 @@
 # oneringai - Internal API Reference
 
-**Generated:** 2026-11-09
+**Generated:** 2026-11-10
 **Mode:** full
 
 This document provides a complete reference for ALL APIs in `oneringai`, including internal implementations.
@@ -15,7 +15,7 @@ This document provides a complete reference for ALL APIs in `oneringai`, includi
 - [Image Generation](#image-generation) (45 items)
 - [Video Generation](#video-generation) (34 items)
 - [Agent Runtime](#agent-runtime) (237 items)
-- [Task Agents](#task-agents) (194 items)
+- [Task Agents](#task-agents) (197 items)
 - [Context Management](#context-management) (25 items)
 - [Session Management](#session-management) (139 items)
 - [Tools & Function Calling](#tools--function-calling) (388 items)
@@ -27,7 +27,7 @@ This document provides a complete reference for ALL APIs in `oneringai`, includi
 - [Utilities](#utilities) (30 items)
 - [Interfaces](#interfaces) (90 items)
 - [Base Classes](#base-classes) (7 items)
-- [Other](#other) (2068 items)
+- [Other](#other) (2069 items)
 
 ## Core
 
@@ -2546,7 +2546,7 @@ function configuredNativeEndpoint(connector: Connector): string
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:90`](../src/core/createProvider.ts#L90)
+📍 [`src/core/createProvider.ts:92`](../src/core/createProvider.ts#L92)
 
 Create a text provider from a connector
 
@@ -2558,7 +2558,7 @@ export function createProvider(connector: Connector): ITextProvider
 
 ### createProviderAsync `function`
 
-📍 [`src/core/createProvider.ts:235`](../src/core/createProvider.ts#L235)
+📍 [`src/core/createProvider.ts:238`](../src/core/createProvider.ts#L238)
 
 Create a text provider from a Connector with async token support
 Use this for OAuth connectors
@@ -2574,7 +2574,7 @@ export async function createProviderAsync(
 
 ### createProviderInstance `function`
 
-📍 [`src/core/createProvider.ts:99`](../src/core/createProvider.ts#L99)
+📍 [`src/core/createProvider.ts:101`](../src/core/createProvider.ts#L101)
 
 ```typescript
 function createProviderInstance(connector: Connector): ITextProvider
@@ -2584,7 +2584,7 @@ function createProviderInstance(connector: Connector): ITextProvider
 
 ### extractProviderConfig `function`
 
-📍 [`src/core/createProvider.ts:191`](../src/core/createProvider.ts#L191)
+📍 [`src/core/createProvider.ts:194`](../src/core/createProvider.ts#L194)
 
 Extract ProviderConfig from a Connector
 
@@ -2653,7 +2653,7 @@ function nativePrincipal(context: AgentContextNextGen): string
 
 ### nativeProviderEndpoint `function`
 
-📍 [`src/core/createProvider.ts:80`](../src/core/createProvider.ts#L80)
+📍 [`src/core/createProvider.ts:82`](../src/core/createProvider.ts#L82)
 
 ```typescript
 export function nativeProviderEndpoint(provider: ITextProvider, connector: Connector): string
@@ -9588,7 +9588,7 @@ async destroy(): Promise&lt;void&gt;
 
 ### CodexDriverSession `class`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:242`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L242)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:243`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L243)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -9680,7 +9680,7 @@ async destroy(): Promise&lt;void&gt;
 
 ### CodexSdkDriver `class`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:93`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L93)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:94`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L94)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -10482,7 +10482,7 @@ async detach(): Promise&lt;void&gt;
 
 ### OpenAIManagedDriver `class`
 
-📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:29`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L29)
+📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:30`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L30)
 
 Official managed Codex harness. This is distinct from the client-side OpenAI Agents SDK.
 
@@ -10562,7 +10562,7 @@ async deleteSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject
 
 ### OpenAIManagedSession `class`
 
-📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:85`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L85)
+📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:88`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L88)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -11707,7 +11707,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### CodexSdkDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:76`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L76)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:77`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L77)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -12037,7 +12037,7 @@ downloadArtifact?(reference: string, limits: { maxBytes: number; mediaTypes: rea
 
 ### IncrementalTextState `interface`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:874`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L874)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:876`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L876)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -12246,7 +12246,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### OpenAIManagedDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:19`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L19)
+📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:20`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L20)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -12264,7 +12264,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### ParsedCodexConfig `interface`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:88`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L88)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:89`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L89)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -13086,7 +13086,7 @@ type ClaudeSdk = Pick&lt;typeof import('@anthropic-ai/claude-agent-sdk'), 'query
 
 ### CodexConstructor `type`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:74`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L74)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:75`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L75)
 
 ```typescript
 type CodexConstructor = new (options?: CodexOptions) =&gt; Codex
@@ -13096,7 +13096,7 @@ type CodexConstructor = new (options?: CodexOptions) =&gt; Codex
 
 ### EventStream `type`
 
-📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:18`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L18)
+📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:19`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L19)
 
 ```typescript
 type EventStream = AsyncIterable&lt;AgentSessionEvent&gt; & { controller: AbortController }
@@ -13308,7 +13308,7 @@ function boundEventData(_type: AgentRunEventType, data: JsonObject, maxJournalBy
 
 ### boundEventText `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:934`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L934)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:936`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L936)
 
 ```typescript
 function boundEventText(text: string): string
@@ -13350,7 +13350,7 @@ export function bufferManagedEvents&lt;T&gt;(stream: AsyncIterable&lt;T&gt; & { 
 
 ### capability `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:990`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L990)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:992`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L992)
 
 ```typescript
 function capability(
@@ -13410,7 +13410,7 @@ export function cloneAndFreezeSpec(spec: RuntimeAgentSpec): Readonly&lt;RuntimeA
 
 ### codexCapabilities `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:947`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L947)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:949`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L949)
 
 ```typescript
 function codexCapabilities(
@@ -13552,7 +13552,7 @@ function eventSize(event: AgentRunEvent): number
 
 ### failedResult `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:1004`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L1004)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:1006`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L1006)
 
 ```typescript
 function failedResult(error: AgentNativeExecutionError, cancelled: boolean): DriverRunResult
@@ -13572,7 +13572,7 @@ function failedResult(error: AgentNativeExecutionError): DriverRunResult
 
 ### findProjectConfig `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:818`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L818)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:820`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L820)
 
 ```typescript
 async function findProjectConfig(workspaceRoot: string): Promise&lt;string | undefined&gt;
@@ -13602,7 +13602,7 @@ function hasWorkspaceFileInput(input: AgentRunInput): boolean
 
 ### isInsideWorkspace `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:907`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L907)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:909`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L909)
 
 ```typescript
 function isInsideWorkspace(file: string, workspaceRoot: string): boolean
@@ -13642,7 +13642,7 @@ export function isJsonValue(value: unknown): value is JsonValue
 
 ### isolatedCodexEnvironment `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:841`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L841)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:843`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L843)
 
 ```typescript
 function isolatedCodexEnvironment(codexHome: string): Record&lt;string, string&gt;
@@ -13674,7 +13674,7 @@ export function managedFetch(fetcher: typeof fetch, baseURL: string): typeof fet
 
 ### mapCodexEvents `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:355`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L355)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:356`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L356)
 
 ```typescript
 async function* mapCodexEvents(
@@ -13693,7 +13693,7 @@ async function* mapCodexEvents(
 
 ### mapCompletedItem `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:569`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L569)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:570`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L570)
 
 ```typescript
 function mapCompletedItem(
@@ -13718,7 +13718,7 @@ function mapOneRingEvent(event: StreamEvent): DriverEvent | undefined
 
 ### mapStartedItem `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:537`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L537)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:538`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L538)
 
 ```typescript
 function mapStartedItem(
@@ -13732,7 +13732,7 @@ function mapStartedItem(
 
 ### mapUsage `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:912`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L912)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:914`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L914)
 
 ```typescript
 function mapUsage(usage: Usage): RuntimeUsage
@@ -13775,7 +13775,7 @@ function mergeRunMetadata(input: AgentRunInput, metadata: AgentRunOptions['metad
 
 ### nextSafeDelta `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:879`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L879)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:881`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L881)
 
 ```typescript
 function nextSafeDelta(
@@ -13791,7 +13791,7 @@ function nextSafeDelta(
 
 ### normalizeFileChange `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:646`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L646)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:647`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L647)
 
 ```typescript
 function normalizeFileChange(kind: 'add' | 'delete' | 'update'): 'created' | 'deleted' | 'modified'
@@ -13813,7 +13813,7 @@ function normalizeModelReasoningControls(
 
 ### normalizeModelReasoningEfforts `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:729`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L729)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:731`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L731)
 
 ```typescript
 function normalizeModelReasoningEfforts(
@@ -13863,7 +13863,7 @@ export function parseAndValidateStructuredOutput(
 
 ### parseDriverConfig `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:749`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L749)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:751`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L751)
 
 ```typescript
 function parseDriverConfig(spec: Readonly&lt;RuntimeAgentSpec&gt;): ParsedCodexConfig
@@ -13883,7 +13883,7 @@ function parseSource(spec: Readonly&lt;RuntimeAgentSpec&gt;): OneRingAgentSource
 
 ### planEvent `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:635`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L635)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:636`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L636)
 
 ```typescript
 function planEvent(
@@ -13967,7 +13967,7 @@ function rejectCommonOverrides(spec: Readonly&lt;RuntimeAgentSpec&gt;): void
 
 ### resolveWorkspaceFile `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:803`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L803)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:805`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L805)
 
 ```typescript
 async function resolveWorkspaceFile(file: string, workspaceRoot: string): Promise&lt;string&gt;
@@ -14074,7 +14074,7 @@ function terminalRun(result: AgentRunResult): AgentRun
 
 ### toCodexInput `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:783`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L783)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:785`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L785)
 
 ```typescript
 async function toCodexInput(input: DriverRunRequest['input'], workspaceRoot: string): Promise&lt;Input&gt;
@@ -14124,7 +14124,7 @@ function toThinkingConfig(reasoning?: RuntimeReasoningConfig): ThinkingConfig | 
 
 ### toThreadOptions `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:768`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L768)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:770`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L770)
 
 ```typescript
 function toThreadOptions(request: DriverOpenSessionRequest, config: ParsedCodexConfig): ThreadOptions
@@ -14154,7 +14154,7 @@ function truncateUtf8(text: string, maxBytes: number): string
 
 ### truncateUtf8 `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:940`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L940)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:942`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L942)
 
 ```typescript
 function truncateUtf8(text: string, maxBytes: number): string
@@ -14164,7 +14164,7 @@ function truncateUtf8(text: string, maxBytes: number): string
 
 ### usage `function`
 
-📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:357`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L357)
+📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:360`](../src/agent-runtime/drivers/OpenAIManagedDriver.ts#L360)
 
 ```typescript
 function usage(value: TokenUsage)
@@ -14174,7 +14174,7 @@ function usage(value: TokenUsage)
 
 ### usageData `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:923`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L923)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:925`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L925)
 
 ```typescript
 function usageData(usage: RuntimeUsage): JsonObject
@@ -14207,7 +14207,7 @@ function validateChoice(value: unknown, choices: readonly string[], label: strin
 
 ### validateCodexModel `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:688`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L688)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:690`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L690)
 
 ```typescript
 function validateCodexModel(modelName: string): void
@@ -14217,7 +14217,7 @@ function validateCodexModel(modelName: string): void
 
 ### validateCodexReasoning `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:697`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L697)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:699`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L699)
 
 ```typescript
 function validateCodexReasoning(
@@ -14231,7 +14231,7 @@ function validateCodexReasoning(
 
 ### validateConnectorAndModel `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:669`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L669)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:670`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L670)
 
 ```typescript
 function validateConnectorAndModel(context: Parameters&lt;AgentDriver['inspect']&gt;[0]): void
@@ -14261,7 +14261,7 @@ function validatePolicy(policy: AgentExecutionPolicy): void
 
 ### validatePolicy `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:655`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L655)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:656`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L656)
 
 ```typescript
 function validatePolicy(context: Parameters&lt;AgentDriver['inspect']&gt;[0]): void
@@ -14345,7 +14345,7 @@ function validateSessionOptions(options: OpenAgentSessionOptions): void
 
 ### validateSpec `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:650`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L650)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:651`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L651)
 
 ```typescript
 function validateSpec(spec: Readonly&lt;RuntimeAgentSpec&gt;): void
@@ -14365,7 +14365,7 @@ export async function verifyNativeStateDirectory(directory: unknown, prefix: str
 
 ### workspaceRelativePath `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:900`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L900)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:902`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L902)
 
 ```typescript
 function workspaceRelativePath(file: string, workspaceRoot: string): string | undefined
@@ -14420,7 +14420,7 @@ function workspaceRelativePath(file: string, workspaceRoot: string): string | un
 
 ### MODEL_REASONING_EFFORTS `const`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:63`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L63)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:64`](../src/agent-runtime/drivers/CodexSdkDriver.ts#L64)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -23476,6 +23476,18 @@ export function addTierPrefix(key: string, tier: MemoryTier): string
 
 ---
 
+### assertChatGPTPlanTool `function`
+
+📍 [`src/infrastructure/providers/openai/chatGPTPlan.ts:46`](../src/infrastructure/providers/openai/chatGPTPlan.ts#L46)
+
+Preserve leaf tool names in the shared ToolManager; reject foreign namespaces.
+
+```typescript
+export function assertChatGPTPlanTool(item: { type: string; namespace?: string }): void
+```
+
+---
+
 ### buildPlanOverview `function`
 
 📍 [`src/core/routineRunner.ts:486`](../src/core/routineRunner.ts#L486)
@@ -23509,6 +23521,30 @@ Check if a task can be executed (dependencies met, status is pending)
 
 ```typescript
 export function canTaskExecute(task: Task, allTasks: Task[]): boolean
+```
+
+---
+
+### chatGPTPlanRequest `function`
+
+📍 [`src/infrastructure/providers/openai/chatGPTPlan.ts:11`](../src/infrastructure/providers/openai/chatGPTPlan.ts#L11)
+
+The plan route is an explicit, narrower contract; never silently discard caller controls.
+
+```typescript
+export function chatGPTPlanRequest(params: Record&lt;string, unknown&gt;): Record&lt;string, unknown&gt;
+```
+
+---
+
+### checkedChatGPTPlanStream `function`
+
+📍 [`src/infrastructure/providers/openai/chatGPTPlan.ts:53`](../src/infrastructure/providers/openai/chatGPTPlan.ts#L53)
+
+Read through termination, including errors after deltas. Never treat a truncated stream as success.
+
+```typescript
+export async function* checkedChatGPTPlanStream(stream: AsyncIterable&lt;ResponsesAPI.ResponseStreamEvent&gt;): AsyncGenerator&lt;ResponsesAPI.ResponseStreamEvent&gt;
 ```
 
 ---
@@ -27269,7 +27305,7 @@ override updateSession(
 
 ### OpenAILiveSession `class`
 
-📍 [`src/capabilities/openai/OpenAILiveSession.ts:17`](../src/capabilities/openai/OpenAILiveSession.ts#L17)
+📍 [`src/capabilities/openai/OpenAILiveSession.ts:18`](../src/capabilities/openai/OpenAILiveSession.ts#L18)
 
 Connector-first primary WebSocket session for GPT-Live.
 
@@ -27570,7 +27606,7 @@ send(event: OpenAIRealtimeClientEvent): void
 
 ### OpenAIRealtimeSession `class`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:69`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L69)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:70`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L70)
 
 Connector-first, server-side WebSocket client for OpenAI's GA Realtime API.
 It intentionally exposes the raw event stream while providing helpers for
@@ -27758,7 +27794,7 @@ on&lt;K extends keyof OpenAIRealtimeSessionEvents&gt;(event: K, handler: OpenAIR
 
 ### OpenAIResponsesWebSocketSession `class`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:82`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L82)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:83`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L83)
 
 Connector-first Responses WebSocket session with GPT-6 Astra steering support.
 
@@ -29105,7 +29141,7 @@ Unified agent storage interface
 
 ### OpenAILiveSessionOptions `interface`
 
-📍 [`src/capabilities/openai/OpenAILiveSession.ts:9`](../src/capabilities/openai/OpenAILiveSession.ts#L9)
+📍 [`src/capabilities/openai/OpenAILiveSession.ts:10`](../src/capabilities/openai/OpenAILiveSession.ts#L10)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -29355,7 +29391,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeConnectOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:51`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L51)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:52`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L52)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -29457,7 +29493,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeSessionEvents `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:55`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L55)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:56`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L56)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -29476,7 +29512,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeSessionOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:24`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L24)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:25`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L25)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -29574,7 +29610,7 @@ Translation configuration accepted when minting a WebRTC client secret.
 
 ### OpenAIResponseSteerMessage `interface`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:59`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L59)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:60`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L60)
 
 One user message accepted by the Responses mid-turn steering protocol.
 
@@ -29593,7 +29629,7 @@ One user message accepted by the Responses mid-turn steering protocol.
 
 ### OpenAIResponsesWebSocketSessionEvents `interface`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:73`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L73)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:74`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L74)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -29612,7 +29648,7 @@ One user message accepted by the Responses mid-turn steering protocol.
 
 ### OpenAIResponsesWebSocketSessionOptions `interface`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:32`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L32)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:33`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L33)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -29639,7 +29675,7 @@ One user message accepted by the Responses mid-turn steering protocol.
 
 ### OpenAIResponsesWebSocketTransport `interface`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:24`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L24)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:25`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L25)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -30225,7 +30261,7 @@ Exposed to lifecycle hooks and event handlers.
 
 ### WebSocketLike `interface`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:13`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L13)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:14`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L14)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -30269,7 +30305,7 @@ off(event: string, listener: (...args: any[]) =&gt; void): void;
 
 ### WebSocketLike `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:15`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L15)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:16`](../src/capabilities/voice/openai/OpenAIRealtimeSession.ts#L16)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -30336,7 +30372,7 @@ close(code?: number, reason?: string): void;
 
 ### OpenAIResponsesCreateEventOptions `type`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:49`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L49)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:50`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L50)
 
 ```typescript
 type OpenAIResponsesCreateEventOptions = Omit&lt;
@@ -30353,7 +30389,7 @@ type OpenAIResponsesCreateEventOptions = Omit&lt;
 
 ### ResponsesCloseMessage `type`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:19`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L19)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:20`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L20)
 
 ```typescript
 type ResponsesCloseMessage = Extract&lt;ResponsesStreamMessage, { type: 'close' }&gt;
@@ -30363,7 +30399,7 @@ type ResponsesCloseMessage = Extract&lt;ResponsesStreamMessage, { type: 'close' 
 
 ### ResponsesReconnectingEvent `type`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:22`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L22)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:23`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L23)
 
 ```typescript
 type ResponsesReconnectingEvent = ResponsesReconnectingMessage['reconnect']
@@ -30373,7 +30409,7 @@ type ResponsesReconnectingEvent = ResponsesReconnectingMessage['reconnect']
 
 ### ResponsesReconnectingMessage `type`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:20`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L20)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:21`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L21)
 
 ```typescript
 type ResponsesReconnectingMessage = Extract&lt;ResponsesStreamMessage, { type: 'reconnecting' }&gt;
@@ -30383,7 +30419,7 @@ type ResponsesReconnectingMessage = Extract&lt;ResponsesStreamMessage, { type: '
 
 ### ResponseSteerInput `type`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:69`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L69)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:70`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L70)
 
 Mid-turn steering accepts a string or a non-empty list of user messages.
 Tool results and general Responses input items are intentionally excluded.
@@ -30397,7 +30433,7 @@ type ResponseSteerInput = | string
 
 ### ResponsesUnsentMessage `type`
 
-📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:21`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L21)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:22`](../src/capabilities/openai/OpenAIResponsesWebSocketSession.ts#L22)
 
 ```typescript
 type ResponsesUnsentMessage = ResponsesCloseMessage['unsent'][number]
@@ -39311,7 +39347,7 @@ export function getConnectorTools(connectorName: string): ToolFunction[]
 
 ### getOpenAINativeTools `function`
 
-📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:48`](../src/infrastructure/providers/openai/OpenAITextProvider.ts#L48)
+📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:49`](../src/infrastructure/providers/openai/OpenAITextProvider.ts#L49)
 
 ```typescript
 function getOpenAINativeTools(model: string): AdvancedTextCapabilities['nativeTools']
@@ -43340,7 +43376,7 @@ export function calculateEmbeddingCost(
 
 ### compactModel `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:124`](../src/core/model-execution/ModelExecutor.ts#L124)
+📍 [`src/core/model-execution/ModelExecutor.ts:126`](../src/core/model-execution/ModelExecutor.ts#L126)
 
 ```typescript
 export async function compactModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task: ModelTask,
@@ -43351,7 +43387,7 @@ export async function compactModel(provider: ITextProvider, connector: Connector
 
 ### generateModel `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:112`](../src/core/model-execution/ModelExecutor.ts#L112)
+📍 [`src/core/model-execution/ModelExecutor.ts:114`](../src/core/model-execution/ModelExecutor.ts#L114)
 
 ```typescript
 export async function generateModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
@@ -43500,7 +43536,7 @@ export async function selectModelRoute(config: ModelRoutingConfig | undefined, o
 
 ### streamModel `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:146`](../src/core/model-execution/ModelExecutor.ts#L146)
+📍 [`src/core/model-execution/ModelExecutor.ts:148`](../src/core/model-execution/ModelExecutor.ts#L148)
 
 ```typescript
 export async function* streamModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
@@ -68017,7 +68053,7 @@ async handle(
 
 ### OpenAIDecisions `class`
 
-📍 [`src/capabilities/openai/OpenAIDecisions.ts:10`](../src/capabilities/openai/OpenAIDecisions.ts#L10)
+📍 [`src/capabilities/openai/OpenAIDecisions.ts:11`](../src/capabilities/openai/OpenAIDecisions.ts#L11)
 
 Connector-first access to OpenAI's ordered classification/scoring API.
 
@@ -68124,7 +68160,7 @@ async listModels(): Promise&lt;string[]&gt;
 
 ### OpenAIRealtimeAPI `class`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:31`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L31)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:32`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L32)
 
 REST helpers for browser/WebRTC credentials and server-side SIP call control.
 
@@ -68601,7 +68637,7 @@ convertResponseFormat(
 
 ### OpenAISafetyAPI `class`
 
-📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:7`](../src/capabilities/openai/OpenAISafetyAPI.ts#L7)
+📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:8`](../src/capabilities/openai/OpenAISafetyAPI.ts#L8)
 
 Connector-first access to OpenAI safety-alert records.
 
@@ -68793,7 +68829,7 @@ async cancelJob(_jobId: string): Promise&lt;boolean&gt;
 
 ### OpenAITextProvider `class`
 
-📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:62`](../src/infrastructure/providers/openai/OpenAITextProvider.ts#L62)
+📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:63`](../src/infrastructure/providers/openai/OpenAITextProvider.ts#L63)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -68939,7 +68975,7 @@ async listModels(): Promise&lt;string[]&gt;
 
 ### OpenAIVoices `class`
 
-📍 [`src/capabilities/openai/OpenAIVoices.ts:9`](../src/capabilities/openai/OpenAIVoices.ts#L9)
+📍 [`src/capabilities/openai/OpenAIVoices.ts:10`](../src/capabilities/openai/OpenAIVoices.ts#L10)
 
 Connector-first creation of prompt-designed and consent-based OpenAI voices.
 
@@ -74307,7 +74343,7 @@ validateBinding(userId: string, anchorId: string): Promise&lt;boolean&gt;;
 
 ### AnthropicConfig `interface`
 
-📍 [`src/domain/types/ProviderConfig.ts:67`](../src/domain/types/ProviderConfig.ts#L67)
+📍 [`src/domain/types/ProviderConfig.ts:68`](../src/domain/types/ProviderConfig.ts#L68)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -75728,6 +75764,10 @@ Used for BOTH AI providers AND external APIs
 | `documentation?` | `documentation?: string;` | - |
 | `tags?` | `tags?: string[];` | - |
 | `options?` | `options?: {
+    /** Opt-in Responses contract for OAuth credentials authorized for ChatGPT plan usage. */
+    openaiAuthMode?: 'api-key' | 'chatgpt-plan';
+    /** Secret-free, stable registration identity; do not change it underneath an Agent. */
+    openaiAccountId?: string;
     organization?: string; // OpenAI
     project?: string; // OpenAI
     anthropicVersion?: string;
@@ -75775,7 +75815,7 @@ Used for BOTH AI providers AND external APIs
 
 ### ConnectorConfigResult `interface`
 
-📍 [`src/domain/entities/Connector.ts:253`](../src/domain/entities/Connector.ts#L253)
+📍 [`src/domain/entities/Connector.ts:257`](../src/domain/entities/Connector.ts#L257)
 
 Result from ProviderConfigAgent
 Includes setup instructions and environment variables
@@ -76656,7 +76696,7 @@ Arguments for the create_pr tool
 
 ### CreateRealtimeClientSecretOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:11`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L11)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:12`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L12)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -76673,7 +76713,7 @@ Arguments for the create_pr tool
 
 ### CreateRealtimeTranslationClientSecretOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:17`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L17)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:18`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L18)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -76689,7 +76729,7 @@ Arguments for the create_pr tool
 
 ### CreateRealtimeWebRTCCallOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:22`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L22)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:23`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L23)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -79773,7 +79813,7 @@ reject(error: unknown): void
 
 ### GenericOpenAIConfig `interface`
 
-📍 [`src/domain/types/ProviderConfig.ts:96`](../src/domain/types/ProviderConfig.ts#L96)
+📍 [`src/domain/types/ProviderConfig.ts:97`](../src/domain/types/ProviderConfig.ts#L97)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -80809,7 +80849,7 @@ Result of a glob operation
 
 ### GoogleConfig `interface`
 
-📍 [`src/domain/types/ProviderConfig.ts:71`](../src/domain/types/ProviderConfig.ts#L71)
+📍 [`src/domain/types/ProviderConfig.ts:72`](../src/domain/types/ProviderConfig.ts#L72)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81563,7 +81603,7 @@ Result of a grep operation
 
 ### GrokConfig `interface`
 
-📍 [`src/domain/types/ProviderConfig.ts:88`](../src/domain/types/ProviderConfig.ts#L88)
+📍 [`src/domain/types/ProviderConfig.ts:89`](../src/domain/types/ProviderConfig.ts#L89)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81615,7 +81655,7 @@ Uses OpenAI-compatible API at api.x.ai
 
 ### GroqConfig `interface`
 
-📍 [`src/domain/types/ProviderConfig.ts:84`](../src/domain/types/ProviderConfig.ts#L84)
+📍 [`src/domain/types/ProviderConfig.ts:85`](../src/domain/types/ProviderConfig.ts#L85)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -86243,6 +86283,7 @@ Global library configuration
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `openaiAuthMode?` | `openaiAuthMode?: 'api-key' | 'chatgpt-plan';` | - |
 | `apiKeyProvider?` | `apiKeyProvider?: () =&gt; Promise&lt;string&gt;;` | - |
 | `organization?` | `organization?: string;` | - |
 | `project?` | `project?: string;` | - |
@@ -88176,7 +88217,7 @@ lower-level structure each provider converter already understands.
 
 ### ProvidersConfig `interface`
 
-📍 [`src/domain/types/ProviderConfig.ts:112`](../src/domain/types/ProviderConfig.ts#L112)
+📍 [`src/domain/types/ProviderConfig.ts:113`](../src/domain/types/ProviderConfig.ts#L113)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -93497,7 +93538,7 @@ Text pipeline configuration — STT → Agent → TTS
 
 ### TogetherAIConfig `interface`
 
-📍 [`src/domain/types/ProviderConfig.ts:92`](../src/domain/types/ProviderConfig.ts#L92)
+📍 [`src/domain/types/ProviderConfig.ts:93`](../src/domain/types/ProviderConfig.ts#L93)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -94585,7 +94626,7 @@ preserve(): boolean;
 
 ### VertexAIConfig `interface`
 
-📍 [`src/domain/types/ProviderConfig.ts:76`](../src/domain/types/ProviderConfig.ts#L76)
+📍 [`src/domain/types/ProviderConfig.ts:77`](../src/domain/types/ProviderConfig.ts#L77)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -96460,7 +96501,7 @@ type OpenAIRealtimeVoice = | 'alloy'
 
 ### OpenAISafetyAlert `type`
 
-📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:31`](../src/capabilities/openai/OpenAISafetyAPI.ts#L31)
+📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:33`](../src/capabilities/openai/OpenAISafetyAPI.ts#L33)
 
 ```typescript
 type OpenAISafetyAlert = SafetyAlert
@@ -96470,7 +96511,7 @@ type OpenAISafetyAlert = SafetyAlert
 
 ### OpenAISDKAPIKey `type`
 
-📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:7`](../src/infrastructure/providers/openai/OpenAIAuth.ts#L7)
+📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:15`](../src/infrastructure/providers/openai/OpenAIAuth.ts#L15)
 
 ```typescript
 type OpenAISDKAPIKey = string | (() =&gt; Promise&lt;string&gt;)
@@ -96480,7 +96521,7 @@ type OpenAISDKAPIKey = string | (() =&gt; Promise&lt;string&gt;)
 
 ### OpenAIVoice `type`
 
-📍 [`src/capabilities/openai/OpenAIVoices.ts:5`](../src/capabilities/openai/OpenAIVoices.ts#L5)
+📍 [`src/capabilities/openai/OpenAIVoices.ts:6`](../src/capabilities/openai/OpenAIVoices.ts#L6)
 
 ```typescript
 type OpenAIVoice = Awaited&lt;ReturnType&lt;OpenAI['audio']['voices']['create']&gt;&gt;
@@ -96490,7 +96531,7 @@ type OpenAIVoice = Awaited&lt;ReturnType&lt;OpenAI['audio']['voices']['create']&
 
 ### OpenAIVoiceCreateParams `type`
 
-📍 [`src/capabilities/openai/OpenAIVoices.ts:6`](../src/capabilities/openai/OpenAIVoices.ts#L6)
+📍 [`src/capabilities/openai/OpenAIVoices.ts:7`](../src/capabilities/openai/OpenAIVoices.ts#L7)
 
 ```typescript
 type OpenAIVoiceCreateParams = Parameters&lt;OpenAI['audio']['voices']['create']&gt;[0]
@@ -96826,7 +96867,7 @@ type PromptContext = ProfileGeneratorInput
 
 ### ProviderConfig `type`
 
-📍 [`src/domain/types/ProviderConfig.ts:101`](../src/domain/types/ProviderConfig.ts#L101)
+📍 [`src/domain/types/ProviderConfig.ts:102`](../src/domain/types/ProviderConfig.ts#L102)
 
 ```typescript
 type ProviderConfig = | OpenAIConfig
@@ -98247,6 +98288,18 @@ function assertOnlyKeys(
   allowed: Iterable&lt;string&gt;,
   field: string,
 ): void
+```
+
+---
+
+### assertOpenAIAPIKeyConnector `function`
+
+📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:5`](../src/infrastructure/providers/openai/OpenAIAuth.ts#L5)
+
+Plan credentials authorize our HTTP Responses profile, not other OpenAI endpoints/harnesses.
+
+```typescript
+export function assertOpenAIAPIKeyConnector(connector: Connector, capability: string): void
 ```
 
 ---
@@ -100315,7 +100368,7 @@ export function createTextContent(text: string): Content
 
 ### createValidatedOpenAIAPIKeyProvider `function`
 
-📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:21`](../src/infrastructure/providers/openai/OpenAIAuth.ts#L21)
+📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:29`](../src/infrastructure/providers/openai/OpenAIAuth.ts#L29)
 
 Keep direct provider construction as strict as connector-backed construction.
 
@@ -101417,7 +101470,7 @@ function extractDomain(email: string): string | null
 
 ### extractGoogleConfig `function`
 
-📍 [`src/core/extractProviderConfig.ts:54`](../src/core/extractProviderConfig.ts#L54)
+📍 [`src/core/extractProviderConfig.ts:56`](../src/core/extractProviderConfig.ts#L56)
 
 Extract Google config (simple API key only)
 
@@ -101429,7 +101482,7 @@ export function extractGoogleConfig(connector: Connector): GoogleConfig
 
 ### extractGoogleMediaConfig `function`
 
-📍 [`src/core/extractProviderConfig.ts:69`](../src/core/extractProviderConfig.ts#L69)
+📍 [`src/core/extractProviderConfig.ts:71`](../src/core/extractProviderConfig.ts#L71)
 
 Extract Google media config (with timeout/retry options)
 
@@ -101441,7 +101494,7 @@ export function extractGoogleMediaConfig(connector: Connector): GoogleMediaConfi
 
 ### extractGrokMediaConfig `function`
 
-📍 [`src/core/extractProviderConfig.ts:91`](../src/core/extractProviderConfig.ts#L91)
+📍 [`src/core/extractProviderConfig.ts:93`](../src/core/extractProviderConfig.ts#L93)
 
 Extract Grok media config
 
@@ -101538,7 +101591,7 @@ function extractMeetLink(event: GoogleCalendarEvent): string | undefined
 
 ### extractOpenAICompatConfig `function`
 
-📍 [`src/core/extractProviderConfig.ts:22`](../src/core/extractProviderConfig.ts#L22)
+📍 [`src/core/extractProviderConfig.ts:23`](../src/core/extractProviderConfig.ts#L23)
 
 Extract OpenAI/OpenAI-compatible config from connector.
 Supports static and rotating OpenAI auth, plus none auth for local providers.
@@ -103300,7 +103353,7 @@ function invalid(): never
 
 ### invokeConfiguredHelper `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:167`](../src/core/model-execution/ModelExecutor.ts#L167)
+📍 [`src/core/model-execution/ModelExecutor.ts:169`](../src/core/model-execution/ModelExecutor.ts#L169)
 
 ```typescript
 export async function invokeConfiguredHelper&lt;T&gt;(args: {
@@ -104910,7 +104963,7 @@ export function parseAutoDescribeResponse(
 
 ### parseCallId `function`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:176`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L176)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:178`](../src/capabilities/voice/openai/OpenAIRealtimeAPI.ts#L178)
 
 ```typescript
 function parseCallId(location: string | null): string | null
@@ -105487,7 +105540,7 @@ export function preflightUserInfoStorage(_storage?: IUserInfoStorage): void
 
 ### prepare `function`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:75`](../src/core/model-execution/ModelExecutor.ts#L75)
+📍 [`src/core/model-execution/ModelExecutor.ts:77`](../src/core/model-execution/ModelExecutor.ts#L77)
 
 ```typescript
 function prepare(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task: ModelTask,
@@ -106395,7 +106448,7 @@ export async function resolveMeetingId(
 
 ### resolveOpenAIBaseProviderKey `function`
 
-📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:16`](../src/infrastructure/providers/openai/OpenAIAuth.ts#L16)
+📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:24`](../src/infrastructure/providers/openai/OpenAIAuth.ts#L24)
 
 Placeholder used only by BaseProvider's synchronous validation plumbing.
 
@@ -106407,7 +106460,7 @@ export function resolveOpenAIBaseProviderKey(config: OpenAIMediaConfig): string
 
 ### resolveOpenAISDKAPIKey `function`
 
-📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:10`](../src/infrastructure/providers/openai/OpenAIAuth.ts#L10)
+📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:18`](../src/infrastructure/providers/openai/OpenAIAuth.ts#L18)
 
 Resolve static or rotating OpenAI credentials for SDK construction.
 

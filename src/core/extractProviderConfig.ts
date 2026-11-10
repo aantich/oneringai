@@ -6,6 +6,7 @@
 
 import { Connector } from './Connector.js';
 import { Vendor } from './Vendor.js';
+import { assertOpenAIAPIKeyConnector } from '../infrastructure/providers/openai/OpenAIAuth.js';
 import type {
   APIKeyAuth,
   APIKeyProviderAuth,
@@ -20,6 +21,7 @@ import type {
  * Supports static and rotating OpenAI auth, plus none auth for local providers.
  */
 export function extractOpenAICompatConfig(connector: Connector, providerLabel?: string): OpenAIMediaConfig {
+  assertOpenAIAPIKeyConnector(connector, 'Media or embeddings');
   const auth = connector.config.auth;
   let resolvedAuth: APIKeyAuth | APIKeyProviderAuth;
 

@@ -1,3 +1,4 @@
+import { assertOpenAIAPIKeyConnector } from '../../infrastructure/providers/openai/OpenAIAuth.js';
 import OpenAI from 'openai';
 import type { SafetyAlert } from 'openai/resources/safety/alerts.js';
 import { Connector } from '../../core/Connector.js';
@@ -9,6 +10,7 @@ export class OpenAISafetyAPI {
 
   constructor(connector: string | Connector) {
     this.connector = typeof connector === 'string' ? Connector.get(connector) : connector;
+    assertOpenAIAPIKeyConnector(this.connector, 'OpenAISafetyAPI');
   }
 
   async retrieveAlert(id: string): Promise<SafetyAlert> {

@@ -3,6 +3,7 @@
  */
 
 import { contextBridge, ipcRenderer } from 'electron';
+import type { ChatGPTStatus, ChatGPTResult } from '../shared/chatgpt.js';
 import type { IContextSnapshot, IViewContextData, RoutineDefinition, RoutineDefinitionInput } from 'oneringai';
 
 /**
@@ -453,11 +454,23 @@ export interface HoseaAPI {
     getAvailableTools: (instanceId: string) => Promise<{ success: boolean; tools?: string[]; error?: string }>;
   };
 
+  chatGPT: {
+    status: () => Promise<ChatGPTStatus>;
+    signIn: (profileId?: string, consent?: boolean) => Promise<ChatGPTResult>;
+    select: (profileId: string) => Promise<ChatGPTResult>;
+    signOut: (profileId: string) => Promise<ChatGPTResult>;
+    useAPIKeys: () => Promise<ChatGPTResult>;
+    cancel: () => Promise<void>;
+    manageUsage: () => Promise<void>;
+    onChanged: (callback: (status: ChatGPTStatus) => void) => () => void;
+  };
   // Connectors
   connector: {
     list: () => Promise<Array<{
       name: string;
       vendor: string;
+      authMode?: 'api-key' | 'chatgpt-plan';
+      connected?: boolean;
       source?: 'local' | 'backend' | 'built-in';
       models?: string[];
       createdAt: number;
@@ -1547,6 +1560,20 @@ const api: HoseaAPI = {
     getAvailableTools: (instanceId) => ipcRenderer.invoke('agent:get-available-tools', instanceId),
   },
 
+  chatGPT: {
+    status: () => ipcRenderer.invoke('chatgpt:status'),
+    signIn: (profileId, consent) => ipcRenderer.invoke('chatgpt:signin', profileId, consent),
+    select: profileId => ipcRenderer.invoke('chatgpt:select', profileId),
+    signOut: profileId => ipcRenderer.invoke('chatgpt:signout', profileId),
+    useAPIKeys: () => ipcRenderer.invoke('chatgpt:api-keys'),
+    cancel: () => ipcRenderer.invoke('chatgpt:cancel'),
+    manageUsage: () => ipcRenderer.invoke('chatgpt:usage'),
+    onChanged: callback => {
+      const listener = (_event: Electron.IpcRendererEvent, status: ChatGPTStatus) => callback(status);
+      ipcRenderer.on('chatgpt:changed', listener);
+      return () => ipcRenderer.removeListener('chatgpt:changed', listener);
+    },
+  },
   connector: {
     list: () => ipcRenderer.invoke('connector:list'),
     add: (config) => ipcRenderer.invoke('connector:add', config),

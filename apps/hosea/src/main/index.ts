@@ -356,6 +356,30 @@ async function setupIPC(): Promise<void> {
     return agentService!.getPinnedContextKeys(agentConfigId);
   });
 
+  const requireChatGPTSender = (event: Electron.IpcMainInvokeEvent) => {
+    if (!mainWindow || event.sender !== mainWindow.webContents || event.senderFrame !== mainWindow.webContents.mainFrame) {
+      throw new Error('ChatGPT accounts are available only to the main Hosea window');
+    }
+  };
+  const profileArgument = (value: unknown): string | undefined => {
+    if (value === undefined) return undefined;
+    if (typeof value !== 'string' || !/^[a-zA-Z0-9-]{1,100}$/.test(value)) throw new Error('Invalid ChatGPT account');
+    return value;
+  };
+  ipcMain.handle('chatgpt:status', event => { requireChatGPTSender(event); return agentService!.getChatGPTStatus(); });
+  ipcMain.handle('chatgpt:signin', readyHandler(async (event, id?: unknown, consent?: unknown) => {
+    requireChatGPTSender(event);
+    return agentService!.changeChatGPT('signin', profileArgument(id), consent === true);
+  }));
+  for (const [channel, operation] of [['chatgpt:select', 'select'], ['chatgpt:signout', 'signout']] as const) {
+    ipcMain.handle(channel, readyHandler(async (event, id: unknown) => {
+      requireChatGPTSender(event); return agentService!.changeChatGPT(operation, profileArgument(id));
+    }));
+  }
+  ipcMain.handle('chatgpt:api-keys', readyHandler(async event => { requireChatGPTSender(event); return agentService!.changeChatGPT('apiKeys'); }));
+  ipcMain.handle('chatgpt:cancel', event => { requireChatGPTSender(event); agentService!.cancelChatGPTSignIn(); });
+  ipcMain.handle('chatgpt:usage', async event => { requireChatGPTSender(event); await shell.openExternal('https://chatgpt.com/settings/usage'); });
+
   // Connector operations (list is safe before heavy init, add/delete require it)
   ipcMain.handle('connector:list', async () => {
     return agentService!.listConnectors();
@@ -1282,9 +1306,16 @@ protocol.registerSchemesAsPrivileged([{
 // Keep the native identity and Chromium profile independent of other applications.
 app.setName('hosea');
 app.setPath('userData', join(getDataDir(), 'desktop'));
+const ownsProfile = app.requestSingleInstanceLock();
+if (!ownsProfile) app.quit();
+app.on('second-instance', () => {
+  if (mainWindow?.isMinimized()) mainWindow.restore();
+  mainWindow?.show(); mainWindow?.focus();
+});
 
 // App lifecycle
 app.whenReady().then(async () => {
+  if (!ownsProfile) return;
   if (process.platform === 'darwin') app.dock?.setIcon(join(__dirname, '../../assets/icon.png'));
   app.setAboutPanelOptions({ applicationName: 'hosea', applicationVersion: app.getVersion(),
     copyright: '© 2025–2026 Anton Antic · MIT', website: 'https://github.com/aantich/oneringai' });

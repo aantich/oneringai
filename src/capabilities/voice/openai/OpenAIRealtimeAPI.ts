@@ -1,3 +1,4 @@
+import { assertOpenAIAPIKeyConnector } from '../../../infrastructure/providers/openai/OpenAIAuth.js';
 import { Connector } from '../../../core/Connector.js';
 import type {
   OpenAIRealtimeClientSecret,
@@ -33,6 +34,7 @@ export class OpenAIRealtimeAPI {
 
   constructor(connector: string | Connector) {
     this.connector = typeof connector === 'string' ? Connector.get(connector) : connector;
+    assertOpenAIAPIKeyConnector(this.connector, 'OpenAIRealtimeAPI');
   }
 
   async createClientSecret(options: CreateRealtimeClientSecretOptions): Promise<OpenAIRealtimeClientSecret> {

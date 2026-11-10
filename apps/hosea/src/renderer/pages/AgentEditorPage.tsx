@@ -2,6 +2,7 @@
  * Agent Editor Page - Create or edit an agent
  */
 
+import { useChatGPTStatus } from '../hooks/useChatGPTStatus.js';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Button,
@@ -246,6 +247,7 @@ export function AgentEditorPage(): React.ReactElement {
   const { state, goBack, navigate } = useNavigation();
   const isEditMode = state.params.mode === 'edit';
   const agentId = state.params.id as string | undefined;
+  const { status: chatGPTStatus } = useChatGPTStatus();
   const [formData, setFormData] = useState<AgentFormData>(defaultFormData);
   const [selectedChildAgentId, setSelectedChildAgentId] = useState('');
   const [activeTab, setActiveTab] = useState<string>('general');
@@ -410,7 +412,7 @@ export function AgentEditorPage(): React.ReactElement {
         if (!cancelled) setLoadingLiveModels(false);
       });
     return () => { cancelled = true; };
-  }, [formData.connector, connectors]);
+  }, [formData.connector, connectors, chatGPTStatus]);
 
   // Load TTS models when voice is enabled
   useEffect(() => {
@@ -521,8 +523,9 @@ export function AgentEditorPage(): React.ReactElement {
     const vendorModels = modelsByVendor.find(
       (v) => v.vendor.toLowerCase() === connector.vendor.toLowerCase()
     );
-    return vendorModels?.models || [];
-  }, [connectors, formData.connector, modelsByVendor]);
+    const models = vendorModels?.models || [];
+    return chatGPTStatus?.usePlan && connector.vendor === 'openai' ? models.filter(model => liveModels.includes(model.id)) : models;
+  }, [connectors, formData.connector, modelsByVendor, chatGPTStatus?.usePlan, liveModels]);
 
   // Live models not already in the registry
   const extraLiveModels = useMemo(() => {
@@ -1035,13 +1038,14 @@ export function AgentEditorPage(): React.ReactElement {
                 <Col md={3}>
                   <Form.Group>
                     <Form.Label>
-                      Temperature: {formData.temperature.toFixed(1)}
+                      Temperature: {chatGPTStatus?.usePlan && connectors.find(c => c.name === formData.connector)?.vendor === 'openai' ? 'Provider managed by ChatGPT plan' : formData.temperature.toFixed(1)}
                     </Form.Label>
                     <Form.Range
                       min={0}
                       max={2}
                       step={0.1}
                       value={formData.temperature}
+                      disabled={!!chatGPTStatus?.usePlan && connectors.find(c => c.name === formData.connector)?.vendor === 'openai'}
                       onChange={(e) =>
                         setFormData({
                           ...formData,

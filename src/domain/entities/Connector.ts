@@ -185,6 +185,10 @@ export interface ConnectorConfig {
 
   // Vendor-specific options
   options?: {
+    /** Opt-in Responses contract for OAuth credentials authorized for ChatGPT plan usage. */
+    openaiAuthMode?: 'api-key' | 'chatgpt-plan';
+    /** Secret-free, stable registration identity; do not change it underneath an Agent. */
+    openaiAccountId?: string;
     organization?: string; // OpenAI
     project?: string; // OpenAI
     anthropicVersion?: string;

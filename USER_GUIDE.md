@@ -19076,3 +19076,13 @@ npm update cannot move an installation between package names.
 The library, AMOS, and Hosea source are MIT licensed, Copyright © 2025–2026
 Anton Antic ([anton.antich@gmail.com](mailto:anton.antich@gmail.com)).
 See [LICENSE](LICENSE) and [Licensing](LICENSING.md) for scope and third-party terms.
+
+
+## ChatGPT plan authentication
+
+The unreleased ChatGPT plan profile keeps the same Agent API in Node and browser
+builds. A trusted host authorizes one account and supplies rotating credentials
+through an ordinary OpenAI connector; agents share that connection without
+per-agent OAuth. Hosea applies this as a global OpenAI-agent setting. Read the
+[complete setup and capability boundaries](docs/CHATGPT_PLAN_ACCESS.md). Published
+beta.3 consumers need a package version that includes this implementation.

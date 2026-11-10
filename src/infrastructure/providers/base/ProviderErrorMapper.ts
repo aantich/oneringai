@@ -42,6 +42,17 @@ export class ProviderErrorMapper {
     const message = error.message || String(error);
     const messageLower = message.toLowerCase();
     const providerCode = this.extractProviderCode(error);
+    if (providerCode?.startsWith('subscription_sharing_') || providerCode?.startsWith('chatpass_v2_')) {
+      const advice = providerCode === 'subscription_sharing_usage_limit_exceeded'
+        ? 'Usage limit reached. Manage usage in ChatGPT Settings → Usage.'
+        : providerCode === 'subscription_sharing_user_not_eligible'
+          ? 'ChatGPT plan access is unavailable for this account or workspace.'
+          : providerCode === 'subscription_sharing_invalid_user'
+            ? 'Reconnect ChatGPT in Model providers.'
+            : 'ChatGPT plan request failed. Check the connection and supported capabilities.';
+      // Preserve status, exact code, request/response IDs and raw diagnostic shape in originalError.
+      return new ProviderError(providerName, `${advice} (${providerCode}) ${message}`, typeof status === 'number' ? status : undefined, error);
+    }
 
     // OpenAI uses HTTP 403 for both auth failures and safety monitor stops.
     // Match the stable response code first; these requests must not be retried.

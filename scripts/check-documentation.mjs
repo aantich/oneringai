@@ -64,7 +64,7 @@ for (const file of files) {
 // Documented checkout commands must exist; this never executes them.
 const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
 const instructionFiles = ['AGENTS.md', 'CLAUDE.md'];
-const usageFiles = ['README.md', 'USER_GUIDE.md', 'docs/BROWSER_AGENTS.md', ...instructionFiles];
+const usageFiles = ['README.md', 'USER_GUIDE.md', 'docs/BROWSER_AGENTS.md', 'docs/CHATGPT_PLAN_ACCESS.md', ...instructionFiles];
 for (const file of [...usageFiles, 'examples/README.md']) {
   for (const match of document(file).source.matchAll(/npm run ([\w:-]+)/g)) {
     if (!(match[1] in manifest.scripts)) failures.push(`${file}: unknown npm script ${match[1]}`);
