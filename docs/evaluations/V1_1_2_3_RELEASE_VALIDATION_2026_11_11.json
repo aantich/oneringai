@@ -1,0 +1,67 @@
+{
+  "package": "@everworker/oneringai@1.2.3",
+  "date": "2026-11-11",
+  "branch": "version1",
+  "status": "published-and-registry-verified",
+  "publicationPerformed": true,
+  "sourceTag": "v1.2.3",
+  "sourceCommit": "10ce86ddedaa67f1339e33c03f87ddc0f9bfc345",
+  "distTags": {
+    "latest": "1.2.3"
+  },
+  "registry": {
+    "metadata": {
+      "version": "1.2.3",
+      "dist.integrity": "sha512-7Pu76TfixyUi0tkNUENU/Oc8b865kaySYV+DYbTHqwzlJQIDJ+JTufc9iinUyiAWHDF/FQUfuy3vTZKx/vrU3w==",
+      "dist.shasum": "9df20b406e3d566941064180281fe5acc3b531bb"
+    },
+    "probe": {
+      "status": "pass",
+      "package": "@everworker/oneringai@1.2.3",
+      "entries": 8,
+      "formats": [
+        "esm",
+        "cjs"
+      ],
+      "models": 137,
+      "images": 25,
+      "videos": 11,
+      "tts": 9,
+      "stt": 15,
+      "embeddings": 16,
+      "providerCalls": 0
+    },
+    "verifiedAt": "2026-11-11T10:55:32.548Z"
+  },
+  "checks": {
+    "releaseBranchSafeguard": "pass",
+    "releaseSafeguardTests": "pass",
+    "buildAndExportIdentity": "pass",
+    "types": "pass",
+    "lint": "pass",
+    "exampleTypes": "pass",
+    "generatedDocs": "pass",
+    "exactTagAndCleanWorktree": "pass",
+    "unit": {
+      "status": "pass",
+      "files": 318,
+      "passed": 6741,
+      "node": "24.20.0",
+      "concurrency": 4
+    },
+    "initialUnitAttempt": "One wall-clock-sensitive Realtime context test crossed a clock boundary; its isolated rerun and the complete publication gate both passed."
+  },
+  "catalogs": {
+    "llm": 137,
+    "image": 25,
+    "video": 11,
+    "tts": 9,
+    "stt": 15,
+    "embedding": 16
+  },
+  "liveProviderCalls": 0,
+  "limits": [
+    "Registry metadata does not establish endpoint adapter support or account entitlement.",
+    "Upcoming promotional pricing changes are documented in the November registry audit."
+  ]
+}
