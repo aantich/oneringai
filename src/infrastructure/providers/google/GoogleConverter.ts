@@ -114,8 +114,8 @@ export class GoogleConverter {
     const serviceTier = options.vendorOptions?.serviceTier ?? options.vendorOptions?.service_tier;
     if (serviceTier !== undefined) request.generationConfig.serviceTier = serviceTier;
 
-    // Gemini 3 uses thinking levels; Gemini 2.x retains token budgets.
-    if (/^gemini-3(?:\.|-|$)/.test(options.model) && options.thinking?.enabled) {
+    // Gemini 3/4 use thinking levels; Gemini 2.x retains token budgets.
+    if (/^gemini-(?:3(?:\.|-|$)|4-(?:carbon|argon)(?:-|$))/.test(options.model) && options.thinking?.enabled) {
       validateThinkingConfig(options.thinking);
       request.generationConfig.thinkingConfig = {
         thinkingLevel: this.resolveThinkingLevel(
@@ -134,6 +134,11 @@ export class GoogleConverter {
       request.generationConfig.thinkingConfig = {
         thinkingBudget: options.thinking.budgetTokens || 8192,
       };
+    }
+
+    if (/^gemini-4-(?:carbon|argon)(?:-|$)/.test(options.model)
+      && request.generationConfig.thinkingConfig?.thinkingLevel === 'MINIMAL') {
+      request.generationConfig.thinkingConfig.thinkingLevel = 'LOW';
     }
 
     // Disable Google's code execution if we have function tools

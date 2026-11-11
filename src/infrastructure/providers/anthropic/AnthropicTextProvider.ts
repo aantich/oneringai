@@ -39,6 +39,7 @@ const NATIVE_STRUCTURED_OUTPUT_MODELS = [
   /^claude-opus-4-5(?:-|$)/,
   /^claude-sonnet-4-5(?:-|$)/,
   /^claude-haiku-4-5(?:-|$)/,
+  /^claude-haiku-5-5(?:-|$)/,
 ] as const;
 const MAX_SERVER_TOOL_CONTINUATIONS = 8;
 const ANTHROPIC_SERVER_TOOL_MODELS = [

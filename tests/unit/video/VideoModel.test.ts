@@ -112,7 +112,7 @@ describe('VideoModel Registry', () => {
       const models = getVideoModelsWithFeature('upscaling');
       expect(models.length).toBeGreaterThan(0);
       expect(models.some((m) => m.name === 'sora-2-pro')).toBe(false);
-      expect(models.some((m) => m.name === 'veo-3.1-generate-preview')).toBe(true);
+      expect(models.some((m) => m.name === 'veo-3.1-generate-preview')).toBe(false);
     });
 
     it('should find models with style control', () => {
@@ -125,7 +125,7 @@ describe('VideoModel Registry', () => {
       const models = getVideoModelsWithFeature('seed');
       expect(models.length).toBeGreaterThan(0);
       expect(models.some((m) => m.name === 'sora-2')).toBe(false);
-      expect(models.some((m) => m.name === 'veo-3.1-generate-preview')).toBe(true);
+      expect(models.some((m) => m.name === 'veo-3.1-generate-preview')).toBe(false);
       expect(models.some((m) => m.name === 'veo-2.0-generate-001')).toBe(false);
       expect(models.some((m) => m.name === 'grok-imagine-video')).toBe(true);
     });
@@ -136,7 +136,7 @@ describe('VideoModel Registry', () => {
       const models = getVideoModelsWithAudio();
       expect(models.length).toBeGreaterThan(0);
       expect(models.some((m) => m.name === 'sora-2')).toBe(false);
-      expect(models.some((m) => m.name === 'veo-3.1-generate-preview')).toBe(true);
+      expect(models.some((m) => m.name === 'veo-3.1-generate-preview')).toBe(false);
       expect(models.some((m) => m.name === 'grok-imagine-video')).toBe(true);
     });
 

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] — 2026-11-11
+
+- Refresh all six model catalogs against November 11 vendor documentation: add
+  27 LLM/multimodal/realtime entries, GPT Image 2.6 and Gemini Omni 1.2; correct
+  lifecycle dates, floating voice aliases, cache rates, image/TTS/video estimates
+  and preview redirects. Extend the existing Claude/Gemini model-family mappings.
+  See [the audit](docs/MODEL_REGISTRY_REFRESH_2026_11_11.md) for sources, upcoming
+  promotional-price changes and endpoint/adapter support limits.
+
 ## [1.2.2] — 2026-11-09
 
 ### Changed

@@ -150,8 +150,13 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/text-to-speech',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-01',
+    retirementDate: '2027-01-06',
+    replacementModel: 'gpt-realtime-2.1-mini',
+    preferred: false,
     capabilities: {
       ...OPENAI_TTS_BASE,
       features: {
@@ -183,8 +188,13 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/text-to-speech',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-01',
+    retirementDate: '2027-01-06',
+    replacementModel: 'gpt-realtime-2.1-mini',
+    preferred: false,
     capabilities: {
       ...OPENAI_TTS_BASE,
       features: {
@@ -209,8 +219,13 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/text-to-speech',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-01',
+    retirementDate: '2027-01-06',
+    replacementModel: 'gpt-realtime-2.1-mini',
+    preferred: false,
     capabilities: {
       ...OPENAI_TTS_BASE,
       features: {
@@ -231,14 +246,14 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
     name: 'gemini-3.8-flash-tts',
     displayName: 'Gemini 3.8 Flash TTS',
     provider: Vendor.Google,
-    description: 'Flagship creative TTS for studio-grade fidelity, expressive acting, regional dialects, voice design, and replication',
+    description: 'Flagship creative TTS for studio-grade fidelity, expressive acting, regional dialects, voice design, and replication; introductory token prices through 2026-12-31, double from 2027-01-01',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
     endpoints: ['audio_speech', 'generate_content', 'batch'],
     releaseDate: '2026-09-22',
-    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash-tts', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash-tts', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-11-11' },
     capabilities: {
       voices: GEMINI_VOICES,
       formats: ['wav'],
@@ -251,21 +266,21 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
         voiceId: { type: 'string', description: 'Extended-library, designed, or replicated voice resource ID' },
       },
     },
-    pricing: { perMInputTokens: 1, perMOutputTokens: 20, currency: 'USD' },
+    pricing: { perMInputTokens: 0.5, perMOutputTokens: 9, currency: 'USD' },
   },
 
   'gemini-3.8-flash-lite-tts': {
     name: 'gemini-3.8-flash-lite-tts',
     displayName: 'Gemini 3.8 Flash-Lite TTS',
     provider: Vendor.Google,
-    description: 'Fast, cost-efficient TTS for high-throughput speech, voice-agent cascades, and voice replication',
+    description: 'Fast, cost-efficient TTS for high-throughput speech, voice-agent cascades, and voice replication; introductory token prices through 2026-12-31, double from 2027-01-01',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
     endpoints: ['audio_speech', 'generate_content', 'batch'],
     releaseDate: '2026-09-22',
-    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash-lite-tts', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash-lite-tts', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-11-11' },
     capabilities: {
       voices: GEMINI_VOICES,
       formats: ['wav'],
@@ -295,7 +310,7 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-tts-preview',
       pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       voices: GEMINI_VOICES,
@@ -404,7 +419,7 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
     sources: {
       documentation: 'https://docs.x.ai/developers/model-capabilities/audio/text-to-speech',
       pricing: 'https://docs.x.ai/developers/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       voices: XAI_VOICES,

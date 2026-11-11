@@ -58,7 +58,7 @@ describe('Model Registry', () => {
 
     it('should include current and migration-relevant DeepSeek models', () => {
       const deepSeekModels = getModelsByVendor(Vendor.DeepSeek);
-      expect(deepSeekModels).toHaveLength(5);
+      expect(deepSeekModels).toHaveLength(6);
       expect(MODEL_REGISTRY['deepseek-v4-flash'].features.input.tokens).toBe(1_000_000);
       expect(MODEL_REGISTRY['deepseek-v4-pro'].features.output.tokens).toBe(384_000);
       expect(MODEL_REGISTRY['deepseek-v4-flash-vision-exp'].features.vision).toBe(true);
@@ -211,7 +211,7 @@ describe('Model Registry', () => {
   describe('getModelInfo()', () => {
     it('resolves floating aliases to their canonical registry records', () => {
       expect(getModelInfo('gpt-5.6')?.name).toBe('gpt-5.6-sol');
-      expect(getModelInfo('grok-voice-latest')?.name).toBe('grok-voice-think-fast-2.0');
+      expect(getModelInfo('grok-voice-latest')?.name).toBe('grok-voice-3.0');
     });
 
     it('should return model info for valid model name', () => {
@@ -273,7 +273,7 @@ describe('Model Registry', () => {
     });
 
     it('should return empty array for vendor with no models', () => {
-      const models = getModelsByVendor(Vendor.Ollama);
+      const models = getModelsByVendor(Vendor.Custom);
       expect(models).toHaveLength(0);
     });
 
@@ -555,7 +555,7 @@ describe('Model Registry', () => {
       expect(gpt52?.preferred).toBeUndefined();
       expect(gpt5?.preferred).toBeUndefined();
       // Current flagships are preferred; superseded models are demoted.
-      expect(fable51?.preferred).toBe(true);
+      expect(fable51?.preferred).toBe(false);
       expect(opus55?.preferred).toBe(true);
       expect(sonnet55?.preferred).toBe(true);
       expect(opus48?.preferred).toBeUndefined();
@@ -575,7 +575,7 @@ describe('Model Registry', () => {
       const grok46 = getModelInfo('grok-4.6');
 
       expect(fable51).toMatchObject({
-        lifecycle: 'active',
+        lifecycle: 'legacy',
         availability: 'public',
         knowledgeCutoff: '2026-06-01',
         features: {

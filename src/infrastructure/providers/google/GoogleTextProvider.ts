@@ -28,10 +28,10 @@ import {
   ProviderCapabilityNotSupportedError,
 } from '../../../domain/errors/AIErrors.js';
 
-const GOOGLE_SERVER_TOOL_MODELS = /^gemini-(?:2\.5|3(?:\.|-|$))/;
-const GOOGLE_STRUCTURED_WITH_TOOLS_MODELS = /^gemini-3(?:\.|-|$)/;
+const GOOGLE_SERVER_TOOL_MODELS = /^gemini-(?:2\.5|3(?:\.|-|$)|4-(?:carbon|argon)(?:-|$))/;
+const GOOGLE_STRUCTURED_WITH_TOOLS_MODELS = /^gemini-(?:3(?:\.|-|$)|4-(?:carbon|argon)(?:-|$))/;
 const GOOGLE_NON_TEXT_VARIANTS = /(?:image|live)/;
-const GOOGLE_INTERACTIONS_DEFAULT_MODELS = /^gemini-3\.(?:5|6|7|8)(?:-|$)/;
+const GOOGLE_INTERACTIONS_DEFAULT_MODELS = /^gemini-(?:3\.(?:5|6|7|8)(?:-|$)|4-(?:carbon|argon)(?:-|$))/;
 
 export class GoogleTextProvider extends BaseTextProvider {
   readonly name = 'google';
@@ -257,7 +257,7 @@ export class GoogleTextProvider extends BaseTextProvider {
             'web_search',
             'web_fetch',
             'code_execution',
-            ...(/^gemini-3\.8(?:-|$)/.test(model)
+            ...(/^gemini-(?:3\.8(?:-|$)|4-(?:carbon|argon)(?:-|$))/.test(model)
               ? (['file_search', 'computer_use'] as const)
               : []),
           ]

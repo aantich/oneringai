@@ -1,6 +1,6 @@
 # Model Registry Sources
 
-Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`ImageModel.ts`), Video (`VideoModel.ts`), TTS (`TTSModel.ts`), STT (`STTModel.ts`), and embeddings (`EmbeddingModel.ts`). Last audited 2026-10-07.
+Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`ImageModel.ts`), Video (`VideoModel.ts`), TTS (`TTSModel.ts`), STT (`STTModel.ts`), and embeddings (`EmbeddingModel.ts`). Catalog discovery/lifecycle audited 2026-11-11; individual records retain their own verification dates. See [the November audit](../../../docs/MODEL_REGISTRY_REFRESH_2026_11_11.md) for additions, changed prices and adapter boundaries.
 
 ---
 
@@ -12,26 +12,26 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Deprecations**: https://developers.openai.com/api/docs/deprecations
 - **API reference**: https://developers.openai.com/api/reference
 - **Key fields**: context window, max output tokens, pricing (input/cached/output), knowledge cutoff, supported features (vision, audio, reasoning, structured output, function calling)
-- **Current additions**: GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol/Luna, GPT-5.6 Cyber, and GPT-Rosalind Research. Verify access scope as well as ordinary capabilities.
+- **Current additions**: GPT-6.1 Terra, GPT-6 Cyber, GPT-6 Astra/Sol/Luna, GPT-5.6 Cyber, and GPT-Rosalind Research. Verify access scope as well as ordinary capabilities.
 - **Notes**: Cache discounts and cache-write rates are model-specific. GPT-6
   sampling controls depend on effective reasoning effort: Sol/Luna allow them
   only with `none`, while Astra and GPT-6.1 Sol do not support `none`.
 
 ### Image Models (`ImageModel.ts`)
 - **Image guide**: https://platform.openai.com/docs/guides/images
-- **Models**: GPT Image 2.5 Sunburst/Flare and `gpt-image-2`; deprecated GPT Image 1 family; retired DALL-E records
+- **Models**: GPT Image 2.6 and 2.5 Sunburst/Flare; deprecated `gpt-image-2` and GPT Image 1.5/mini; retired GPT Image 1 and DALL-E records
 - **Key fields**: sizes, max images per request, quality levels, output formats, editing/variation support
 
 ### Video Models (`VideoModel.ts`)
 - **Video guide**: https://developers.openai.com/api/docs/guides/video-generation
 - **API reference**: https://developers.openai.com/api/reference/resources/videos
 - **Models**: `sora-2`, `sora-2-pro`
-- **Lifecycle**: both models and the Videos API were deprecated 2026-03-24 and remain callable until 2026-09-24
+- **Lifecycle**: both models and the Videos API retired 2026-09-24
 - **Key fields**: durations, resolutions, fps, audio support, per-second pricing
 
 ### TTS Models (`TTSModel.ts`)
 - **TTS guide**: https://platform.openai.com/docs/guides/text-to-speech
-- **Models**: `gpt-4o-mini-tts` (instruction-steerable), `tts-1`, `tts-1-hd`
+- **Models**: `gpt-4o-mini-tts` (instruction-steerable), `tts-1`, `tts-1-hd`; all deprecated with 2027-01-06 shutdown. Their Realtime replacement is not a Speech API drop-in.
 - **Key fields**: voices, formats, max input length, per-1k-character pricing
 
 ### STT Models (`STTModel.ts`)
@@ -45,6 +45,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 
 ### LLM Models (`Model.ts`)
 - **Models overview**: https://platform.claude.com/docs/en/models/overview
+- **Fable/Mythos 5.2 and Haiku 5.5**: https://platform.claude.com/docs/en/models/fable-5-2/overview and https://platform.claude.com/docs/en/models/haiku-5-5/overview
 - **Opus 5.5**: https://platform.claude.com/docs/en/models/opus-5-5/overview
 - **Sonnet 5.5**: https://platform.claude.com/docs/en/models/sonnet-5-5/overview
 - **Fable 5.1**: https://platform.claude.com/docs/en/models/fable-5-1/overview
@@ -52,7 +53,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Pricing page**: https://platform.claude.com/docs/en/about-claude/pricing
 - **Release notes**: https://platform.claude.com/docs/en/release-notes/overview
 - **Deprecations**: https://platform.claude.com/docs/en/about-claude/model-deprecations
-- **Key fields**: context window (200K standard, 1M beta for some), max output, pricing (input/cached/output), extended thinking support
+- **Key fields**: context window (1M for the current models; legacy models differ), max output, pricing (input/cached/output), extended thinking support
 - **Notes**: Current adaptive-thinking models accept model-specific effort levels. Opus 5.5 is always adaptive; Sonnet 5.5 supports adaptive and `between_tools` under its published effort constraints. Prompt caching uses `cache_control` blocks.
 
 ---
@@ -66,6 +67,8 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Deprecations**: https://ai.google.dev/gemini-api/docs/deprecations
 
 ### LLM Model Detail Pages
+- **Gemini 4 Carbon / Argon**: https://aistudio.google.com/docs/models/gemini-4-carbon and https://aistudio.google.com/docs/models/gemini-4-argon
+- **Pricing dates**: Gemini 4 introductory prices end 2026-11-30; Gemini 3.8 TTS introductory prices end 2026-12-31.
 - **Gemini 3.8 Flash**: https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash
 - **Gemini 3.7 Flash**: https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash
 - **Gemini 3.1 Pro Preview**: https://ai.google.dev/gemini-api/docs/models/gemini-3.1-pro-preview
@@ -87,7 +90,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 
 ### Video Models (`VideoModel.ts`)
 - **Video guide**: https://ai.google.dev/gemini-api/docs/video
-- **Models**: `gemini-omni-1.1-flash`, deprecated `gemini-omni-flash-preview`, and current Veo 3.1 variants; retired Veo 2 record
+- **Models**: `gemini-omni-1.2-flash`, legacy `gemini-omni-1.1-flash`, retired Omni Flash Preview and Developer API Veo variants (Cloud Veo is separate)
 - **Key fields**: durations (4/6/8s), resolutions (720p/1080p/4K), aspect ratios, audio support, per-second pricing
 - **Notes**: Veo 2 only supports 720p, no audio, no reference images. Veo 3.1 supports native audio, reference images (up to 3), video extension. 1080p/4K require 8s duration. Pricing varies by resolution tier (720p/1080p vs 4K).
 
@@ -126,7 +129,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Image generation guide**: https://docs.x.ai/docs/guides/image-generation
 - **Models**: `grok-imagine-image-2.0`, `grok-imagine-image-quality`, `grok-imagine-image`; retired `grok-2-image-1212`
 - **Key fields**: aspect ratios, resolutions (1K/2K), quality tiers, max images per request, and tiered per-image pricing
-- **Notes**: `grok-imagine-image-quality` is deprecated and retires 2026-11-02; migrate to `grok-imagine-image-2.0` with low quality. `grok-imagine-image` remains active. Generated URLs are temporary.
+- **Notes**: `grok-imagine-image-quality` retired 2026-11-02 and redirects; migrate to `grok-imagine-image-2.0` with low quality. `grok-imagine-image` remains active. Generated URLs are temporary.
 
 ### Video Models (`VideoModel.ts`)
 - **Video generation guide**: https://docs.x.ai/docs/guides/video-generations
@@ -136,7 +139,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 ### Speech Models (`TTSModel.ts`, `STTModel.ts`)
 - **Text to speech**: https://docs.x.ai/developers/model-capabilities/audio/text-to-speech
 - **Speech to text**: https://docs.x.ai/developers/model-capabilities/audio/speech-to-text
-- **Models**: model-less `xai-tts`/`xai-stt`, Grok Voice Transcribe 2.0, and maintained transcription records; voice-agent models remain in the LLM registry
+- **Models**: model-less `xai-tts`/`xai-stt`, Grok Voice Transcribe 2.0, and maintained transcription records; `grok-voice-3.0` owns `grok-voice-latest` in the LLM registry
 
 ---
 
@@ -155,7 +158,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Release updates**: https://api-docs.deepseek.com/updates/
 - **Vision guide**: https://api-docs.deepseek.com/guides/vision/
 - **Responses API**: https://api-docs.deepseek.com/guides/responses_api/
-- **Models**: `deepseek-v4-flash`, `deepseek-v4-pro`, and experimental `deepseek-v4-flash-vision-exp`
+- **Models**: `deepseek-flash` (V4.1 Flash 1017) and `deepseek-v4-pro`; old Flash/vision records are retired and vendor-redirected
 - **Pricing note**: registry base token rates are peak rates; `processingMultipliers.off_peak` represents the documented 50% off-peak reduction
 
 ---
@@ -166,6 +169,19 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Codestral Embed**: https://docs.mistral.ai/models/codestral-embed-25-05
 - **Ollama embeddings**: https://docs.ollama.com/capabilities/embeddings
 - **Ollama model metadata**: https://ollama.com/library/embeddinggemma and https://ollama.com/library/all-minilm
+
+---
+
+## Compatible-host LLM catalogs
+
+- Groq: https://console.groq.com/docs/models
+- Mistral: https://docs.mistral.ai/models
+- Together: https://docs.together.ai/docs/serverless/models
+- Perplexity: https://docs.perplexity.ai/docs/agent-api/models and https://docs.perplexity.ai/docs/agent-api/openai-compatibility
+- Ollama: https://ollama.com/library?sort=newest and https://docs.ollama.com/api/openai-compatibility
+- Google Cloud deployment catalog: https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/google-models
+
+Metadata discovery is separate from implemented endpoint/adapter support; see the November audit.
 
 ---
 

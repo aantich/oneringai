@@ -394,12 +394,13 @@ export class GoogleInteractionsConverter {
     const explicit = options.vendorOptions?.thinkingLevel as ReasoningEffort | undefined;
     const effort = explicit ?? options.thinking?.effort;
     if (!options.thinking?.enabled && !explicit) return undefined;
-    if (effort === 'none' || effort === 'minimal') return 'minimal';
+    const minimum = /^gemini-4-(?:carbon|argon)(?:-|$)/.test(options.model) ? 'low' : 'minimal';
+    if (effort === 'none' || effort === 'minimal') return minimum;
     if (effort === 'xhigh' || effort === 'max') return 'high';
     if (effort) return effort;
     const budget = options.thinking?.budgetTokens;
     if (budget !== undefined) {
-      if (budget < 2048) return 'minimal';
+      if (budget < 2048) return minimum;
       if (budget < 8192) return 'low';
       if (budget < 24576) return 'medium';
       return 'high';

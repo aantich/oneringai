@@ -92,7 +92,8 @@
     "examples/agent-runtime-local.ts",
     "CHANGELOG.md",
     "LICENSE",
-    "docs/VERSION1_MAINTENANCE.md"
+    "docs/VERSION1_MAINTENANCE.md",
+    "docs/MODEL_REGISTRY_REFRESH_2026_11_11.md"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",

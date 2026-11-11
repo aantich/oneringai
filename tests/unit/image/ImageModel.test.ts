@@ -118,7 +118,7 @@ describe('ImageModel Registry', () => {
     it('should find models with editing support', () => {
       const models = getImageModelsWithFeature('editing');
       expect(models.length).toBeGreaterThan(0);
-      expect(models.some((m) => m.name === 'gpt-image-1')).toBe(true);
+      expect(models.some((m) => m.name === 'gpt-image-2.6-sunburst')).toBe(true);
       expect(models.some((m) => m.name === 'grok-imagine-image')).toBe(true);
     });
 
@@ -213,8 +213,8 @@ describe('ImageModel Registry', () => {
   describe('Model features', () => {
     it('should track the Grok Imagine Image Quality retirement', () => {
       expect(getImageModelInfo('grok-imagine-image-quality')).toMatchObject({
-        isActive: true,
-        lifecycle: 'deprecated',
+        isActive: false,
+        lifecycle: 'retired',
         deprecationDate: '2026-09-02',
         retirementDate: '2026-11-02',
         replacementModel: 'grok-imagine-image-2.0',

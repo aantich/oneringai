@@ -1,6 +1,6 @@
 # @everworker/oneringai - Internal API Reference
 
-**Generated:** 2026-08-30
+**Generated:** 2026-11-11
 **Mode:** full
 
 This document provides a complete reference for ALL APIs in `@everworker/oneringai`, including internal implementations.
@@ -17,17 +17,17 @@ This document provides a complete reference for ALL APIs in `@everworker/onering
 - [Agent Runtime](#agent-runtime) (171 items)
 - [Task Agents](#task-agents) (160 items)
 - [Context Management](#context-management) (25 items)
-- [Session Management](#session-management) (115 items)
-- [Tools & Function Calling](#tools-function-calling) (333 items)
-- [Streaming](#streaming) (45 items)
+- [Session Management](#session-management) (132 items)
+- [Tools & Function Calling](#tools-function-calling) (341 items)
+- [Streaming](#streaming) (51 items)
 - [Model Registry](#model-registry) (29 items)
-- [OAuth & External APIs](#oauth-external-apis) (126 items)
+- [OAuth & External APIs](#oauth-external-apis) (131 items)
 - [Resilience & Observability](#resilience-observability) (40 items)
-- [Errors](#errors) (60 items)
+- [Errors](#errors) (62 items)
 - [Utilities](#utilities) (30 items)
 - [Interfaces](#interfaces) (78 items)
 - [Base Classes](#base-classes) (7 items)
-- [Other](#other) (1606 items)
+- [Other](#other) (1638 items)
 
 ## Core
 
@@ -35,7 +35,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:375`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:387`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -1203,7 +1203,7 @@ static clear(): void
 
 ### Connector `class`
 
-📍 [`src/core/Connector.ts:54`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:56`](src/core/Connector.ts)
 
 Connector class - represents a single authenticated connection
 
@@ -1544,8 +1544,11 @@ async startAuth(userId?: string, accountId?: string): Promise&lt;string&gt;
 Handle OAuth callback
 Call this after user is redirected back from OAuth provider
 
+Returns an optional raw ID token for caller-side OIDC verification. The ID
+token is not verified or persisted by the library; non-OIDC flows return {}.
+
 ```typescript
-async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise&lt;void&gt;
+async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise&lt;OAuthCallbackResult&gt;
 ```
 
 **Parameters:**
@@ -1553,7 +1556,7 @@ async handleCallback(callbackUrl: string, userId?: string, accountId?: string): 
 - `userId`: `string | undefined` *(optional)*
 - `accountId`: `string | undefined` *(optional)*
 
-**Returns:** `Promise&lt;void&gt;`
+**Returns:** `Promise&lt;OAuthCallbackResult&gt;`
 
 #### `hasValidToken()`
 
@@ -1802,7 +1805,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:200`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:203`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1825,7 +1828,7 @@ Agent has session storage and false otherwise. |
 
 ### AgentExecutionLease `interface`
 
-📍 [`src/core/Agent.ts:256`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:259`](src/core/Agent.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -1995,7 +1998,7 @@ Aggregate metrics across all tracked agents
 
 ### ConnectorFetchOptions `interface`
 
-📍 [`src/core/Connector.ts:42`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:44`](src/core/Connector.ts)
 
 Fetch options with additional connector-specific settings
 
@@ -2014,7 +2017,7 @@ Fetch options with additional connector-specific settings
 
 ### ExecutionSetup `interface`
 
-📍 [`src/core/Agent.ts:247`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:250`](src/core/Agent.ts)
 
 Execution setup information returned by _prepareExecution()
 
@@ -2034,7 +2037,7 @@ Execution setup information returned by _prepareExecution()
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:224`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:227`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -2051,7 +2054,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:237`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:240`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -2071,7 +2074,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:230`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:233`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2258,7 +2261,7 @@ eventNames(): (string | symbol)[];
 
 ### IterationPreconditionResult `interface`
 
-📍 [`src/core/Agent.ts:264`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:267`](src/core/Agent.ts)
 
 Result of iteration precondition checks
 
@@ -2309,6 +2312,7 @@ These override the agent-level config for this single invocation.
 | `promptCache?` | `promptCache?: PromptCachePolicy;` | Per-run override for provider prompt caching. |
 | `nativeTools?` | `nativeTools?: NativeToolRequest[];` | Per-run override for provider-hosted tools. |
 | `dataHandling?` | `dataHandling?: DataHandlingPolicy;` | - |
+| `continuationToken?` | `continuationToken?: string;` | Resume an incomplete provider decode using the token returned by the prior response. |
 | `responseFormat?` | `responseFormat?: ResponseFormat;` | Vendor-agnostic structured (JSON) output. When set, the final answer is
 constrained to JSON — via the vendor's native mechanism where supported,
 otherwise a strict prompt instruction — and parsed into
@@ -2332,7 +2336,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentExecutionKind `type`
 
-📍 [`src/core/Agent.ts:254`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:257`](src/core/Agent.ts)
 
 ```typescript
 type AgentExecutionKind = 'run' | 'stream' | 'external' | 'continuation' | 'rollover'
@@ -2402,7 +2406,7 @@ type Vendor = (typeof Vendor)[keyof typeof Vendor]
 
 ### cloneRuntimeConfigValue `function`
 
-📍 [`src/core/Agent.ts:269`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:272`](src/core/Agent.ts)
 
 ```typescript
 function cloneRuntimeConfigValue&lt;T&gt;(value: T, seen = new WeakMap&lt;object, unknown&gt;()): T
@@ -2412,7 +2416,7 @@ function cloneRuntimeConfigValue&lt;T&gt;(value: T, seen = new WeakMap&lt;object
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:61`](src/core/createProvider.ts)
+📍 [`src/core/createProvider.ts:62`](src/core/createProvider.ts)
 
 Create a text provider from a connector
 
@@ -2424,7 +2428,7 @@ export function createProvider(connector: Connector): ITextProvider
 
 ### createProviderAsync `function`
 
-📍 [`src/core/createProvider.ts:192`](src/core/createProvider.ts)
+📍 [`src/core/createProvider.ts:198`](src/core/createProvider.ts)
 
 Create a text provider from a Connector with async token support
 Use this for OAuth connectors
@@ -2440,7 +2444,7 @@ export async function createProviderAsync(
 
 ### extractProviderConfig `function`
 
-📍 [`src/core/createProvider.ts:148`](src/core/createProvider.ts)
+📍 [`src/core/createProvider.ts:154`](src/core/createProvider.ts)
 
 Extract ProviderConfig from a Connector
 
@@ -2452,7 +2456,7 @@ function extractProviderConfig(connector: Connector): ProviderConfig
 
 ### formatRolloverSource `function`
 
-📍 [`src/core/Agent.ts:333`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:336`](src/core/Agent.ts)
 
 ```typescript
 function formatRolloverSource(input: ContextRolloverSummaryInput): string
@@ -2462,7 +2466,7 @@ function formatRolloverSource(input: ContextRolloverSummaryInput): string
 
 ### getVendorDefaultBaseURL `function`
 
-📍 [`src/core/createProvider.ts:54`](src/core/createProvider.ts)
+📍 [`src/core/createProvider.ts:55`](src/core/createProvider.ts)
 
 Get the default API base URL for a vendor.
 For OpenAI/Anthropic reads from the installed SDK at runtime.
@@ -2488,7 +2492,7 @@ export function isVendor(value: string): value is Vendor
 
 ### stringifyRolloverValue `function`
 
-📍 [`src/core/Agent.ts:324`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:327`](src/core/Agent.ts)
 
 ```typescript
 function stringifyRolloverValue(value: unknown): string
@@ -2536,7 +2540,7 @@ async synthesize(options: TTSOptions): Promise&lt;TTSResponse&gt;
 
 #### `listVoices()`
 
-List available voices (returns static list for Google)
+List the built-in synthesis voices. Use GoogleVoices for the remote custom-voice catalog.
 
 ```typescript
 async listVoices(): Promise&lt;IVoiceInfo[]&gt;
@@ -2561,7 +2565,7 @@ async listVoices(): Promise&lt;IVoiceInfo[]&gt;
 
 ### GrokTTSProvider `class`
 
-📍 [`src/infrastructure/providers/grok/GrokTTSProvider.ts:20`](src/infrastructure/providers/grok/GrokTTSProvider.ts)
+📍 [`src/infrastructure/providers/grok/GrokTTSProvider.ts:21`](src/infrastructure/providers/grok/GrokTTSProvider.ts)
 
 xAI's dedicated TTS endpoint is not OpenAI-compatible.
 
@@ -3240,7 +3244,7 @@ type STTStreamInput = Buffer | { type: 'finalize'; channel?: number }
 
 ### calculateTTSCost `function`
 
-📍 [`src/domain/entities/TTSModel.ts:393`](src/domain/entities/TTSModel.ts)
+📍 [`src/domain/entities/TTSModel.ts:475`](src/domain/entities/TTSModel.ts)
 
 Calculate estimated cost for TTS
 For OpenAI models: based on character count
@@ -3270,7 +3274,7 @@ export function createTTSProvider(connector: Connector): ITextToSpeechProvider
 
 ### getTTSModelsWithFeature `function`
 
-📍 [`src/domain/entities/TTSModel.ts:380`](src/domain/entities/TTSModel.ts)
+📍 [`src/domain/entities/TTSModel.ts:462`](src/domain/entities/TTSModel.ts)
 
 Get TTS models that support a specific feature
 
@@ -3284,7 +3288,7 @@ export function getTTSModelsWithFeature(
 
 ### OPENAI_TTS_BASE `const`
 
-📍 [`src/domain/entities/TTSModel.ts:121`](src/domain/entities/TTSModel.ts)
+📍 [`src/domain/entities/TTSModel.ts:125`](src/domain/entities/TTSModel.ts)
 
 Base OpenAI TTS capabilities (shared across models)
 
@@ -3304,10 +3308,10 @@ Base OpenAI TTS capabilities (shared across models)
 
 ### TTS_MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/TTSModel.ts:136`](src/domain/entities/TTSModel.ts)
+📍 [`src/domain/entities/TTSModel.ts:140`](src/domain/entities/TTSModel.ts)
 
 Complete TTS model registry
-Last full audit: August 2026
+Last full audit: October 2026
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -3324,8 +3328,13 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/text-to-speech',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-01',
+    retirementDate: '2027-01-06',
+    replacementModel: 'gpt-realtime-2.1-mini',
+    preferred: false,
     capabilities: {
       ...OPENAI_TTS_BASE,
       features: {
@@ -3356,8 +3365,13 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/text-to-speech',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-01',
+    retirementDate: '2027-01-06',
+    replacementModel: 'gpt-realtime-2.1-mini',
+    preferred: false,
     capabilities: {
       ...OPENAI_TTS_BASE,
       features: {
@@ -3381,8 +3395,13 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/text-to-speech',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-01',
+    retirementDate: '2027-01-06',
+    replacementModel: 'gpt-realtime-2.1-mini',
+    preferred: false,
     capabilities: {
       ...OPENAI_TTS_BASE,
       features: {
@@ -3396,21 +3415,73 @@ Last full audit: August 2026
     },
     pricing: { per1kCharacters: 0.030, currency: 'USD' },
   }` | - |
+| `'gemini-3.8-flash-tts'` | `{
+    name: 'gemini-3.8-flash-tts',
+    displayName: 'Gemini 3.8 Flash TTS',
+    provider: Vendor.Google,
+    description: 'Flagship creative TTS for studio-grade fidelity, expressive acting, regional dialects, voice design, and replication; introductory token prices through 2026-12-31, double from 2027-01-01',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['audio_speech', 'generate_content', 'batch'],
+    releaseDate: '2026-09-22',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash-tts', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-11-11' },
+    capabilities: {
+      voices: GEMINI_VOICES,
+      formats: ['wav'],
+      languages: [...GEMINI_TTS_LANGUAGES],
+      speed: { supported: false },
+      features: { streaming: false, ssml: false, emotions: true, voiceCloning: true, wordTimestamps: false, instructionSteering: true },
+      limits: { maxInputLength: 8192 },
+      vendorOptions: {
+        stylePrompt: { type: 'string', description: 'Natural-language narration and delivery instructions' },
+        voiceId: { type: 'string', description: 'Extended-library, designed, or replicated voice resource ID' },
+      },
+    },
+    pricing: { perMInputTokens: 0.5, perMOutputTokens: 9, currency: 'USD' },
+  }` | - |
+| `'gemini-3.8-flash-lite-tts'` | `{
+    name: 'gemini-3.8-flash-lite-tts',
+    displayName: 'Gemini 3.8 Flash-Lite TTS',
+    provider: Vendor.Google,
+    description: 'Fast, cost-efficient TTS for high-throughput speech, voice-agent cascades, and voice replication; introductory token prices through 2026-12-31, double from 2027-01-01',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['audio_speech', 'generate_content', 'batch'],
+    releaseDate: '2026-09-22',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash-lite-tts', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-11-11' },
+    capabilities: {
+      voices: GEMINI_VOICES,
+      formats: ['wav'],
+      languages: [...GEMINI_TTS_LANGUAGES],
+      speed: { supported: false },
+      features: { streaming: false, ssml: false, emotions: true, voiceCloning: true, wordTimestamps: false, instructionSteering: true },
+      limits: { maxInputLength: 8192 },
+      vendorOptions: {
+        stylePrompt: { type: 'string', description: 'Natural-language narration and delivery instructions' },
+        voiceId: { type: 'string', description: 'Extended-library, designed, or replicated voice resource ID' },
+      },
+    },
+    pricing: { perMInputTokens: 0.5, perMOutputTokens: 6, currency: 'USD' },
+  }` | - |
 | `'gemini-3.1-flash-tts-preview'` | `{
     name: 'gemini-3.1-flash-tts-preview',
     displayName: 'Gemini 3.1 Flash TTS Preview',
     provider: Vendor.Google,
     description: 'Current low-latency Gemini speech model with steerable prompts and expressive audio tags',
     isActive: true,
-    lifecycle: 'preview',
+    lifecycle: 'legacy',
     availability: 'public',
-    preferred: true,
+    replacementModel: 'gemini-3.8-flash-lite-tts',
     endpoints: ['audio_speech', 'generate_content', 'batch'],
     releaseDate: '2026-04-01',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-tts-preview',
       pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       voices: GEMINI_VOICES,
@@ -3434,6 +3505,10 @@ Last full audit: August 2026
     provider: Vendor.Google,
     description: 'Google Gemini 2.5 Flash TTS - optimized for low latency, 30 voices, 70+ languages',
     isActive: true,
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-09-22',
+    retirementDate: '2026-11-17',
+    replacementModel: 'gemini-3.8-flash-lite-tts',
     releaseDate: '2025-01-01',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/speech-generation',
@@ -3466,6 +3541,10 @@ Last full audit: August 2026
     provider: Vendor.Google,
     description: 'Google Gemini 2.5 Pro TTS - optimized for quality, 30 voices, 70+ languages',
     isActive: true,
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-09-22',
+    retirementDate: '2026-11-17',
+    replacementModel: 'gemini-3.8-flash-tts',
     releaseDate: '2025-01-01',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/speech-generation',
@@ -3506,7 +3585,7 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://docs.x.ai/developers/model-capabilities/audio/text-to-speech',
       pricing: 'https://docs.x.ai/developers/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       voices: XAI_VOICES,
@@ -3599,7 +3678,7 @@ async translate(options: STTOptions): Promise&lt;STTResponse&gt;
 
 ### GrokSTTProvider `class`
 
-📍 [`src/infrastructure/providers/grok/GrokSTTProvider.ts:20`](src/infrastructure/providers/grok/GrokSTTProvider.ts)
+📍 [`src/infrastructure/providers/grok/GrokSTTProvider.ts:21`](src/infrastructure/providers/grok/GrokSTTProvider.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -4238,7 +4317,7 @@ type STTOutputFormat = 'json' | 'text' | 'srt' | 'vtt' | 'verbose_json'
 
 ### calculateSTTCost `function`
 
-📍 [`src/domain/entities/STTModel.ts:600`](src/domain/entities/STTModel.ts)
+📍 [`src/domain/entities/STTModel.ts:633`](src/domain/entities/STTModel.ts)
 
 Calculate estimated cost for STT
 
@@ -4266,7 +4345,7 @@ export function createSTTProvider(connector: Connector): ISpeechToTextProvider
 
 ### getSTTModelsWithFeature `function`
 
-📍 [`src/domain/entities/STTModel.ts:589`](src/domain/entities/STTModel.ts)
+📍 [`src/domain/entities/STTModel.ts:622`](src/domain/entities/STTModel.ts)
 
 Get STT models that support a specific feature
 
@@ -4280,10 +4359,10 @@ export function getSTTModelsWithFeature(
 
 ### STT_MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/STTModel.ts:150`](src/domain/entities/STTModel.ts)
+📍 [`src/domain/entities/STTModel.ts:152`](src/domain/entities/STTModel.ts)
 
 Complete STT model registry
-Last full audit: August 2026
+Last full audit: October 2026
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -4327,7 +4406,7 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-4o-mini-transcribe',
       pricing: 'https://developers.openai.com/api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -4412,7 +4491,7 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/speech-to-text',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -4437,7 +4516,7 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/speech-to-text',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -4472,7 +4551,7 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/speech-to-text',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -4575,15 +4654,44 @@ Last full audit: August 2026
     },
     pricing: { perMInputTokens: 1.5, currency: 'USD' },
   }` | - |
+| `'grok-voice-transcribe-2.0'` | `{
+    name: 'grok-voice-transcribe-2.0',
+    displayName: 'Grok Voice Transcribe 2.0',
+    provider: Vendor.Grok,
+    description: 'Current xAI file and streaming transcription model with timestamps, diarization, and multichannel support',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'region_limited',
+    preferred: true,
+    endpoints: ['audio_transcription', 'realtime'],
+    releaseDate: '2026-09-17',
+    sources: { documentation: 'https://docs.x.ai/developers/model-capabilities/audio/speech-to-text', pricing: 'https://docs.x.ai/developers/models/speech-to-text', lastVerified: '2026-11-11' },
+    capabilities: {
+      ...WHISPER_BASE_CAPABILITIES,
+      outputFormats: ['json', 'text', 'verbose_json'],
+      features: { translation: false, diarization: true, streaming: true, punctuation: true, profanityFilter: false },
+      limits: { maxFileSizeMB: 500 },
+      vendorOptions: {
+        format: { type: 'boolean', description: 'Apply automatic transcript formatting', default: false },
+        multichannel: { type: 'boolean', description: 'Transcribe channels independently', default: false },
+        channels: { type: 'number', description: 'Number of channels in raw audio', min: 2, max: 8 },
+        diarize: { type: 'boolean', description: 'Identify distinct speakers', default: false },
+        keyterm: { type: 'array', description: 'Terms whose recognition should be boosted' },
+        filler_words: { type: 'boolean', description: 'Retain filler words in the transcript', default: false },
+        vad_threshold: { type: 'number', description: 'Voice-activity detection threshold', min: 0, max: 1, default: 0.08 },
+      },
+    },
+    pricing: { perMinute: 0.0016666667, streamingPerMinute: 0.0033333333, currency: 'USD' },
+  }` | - |
 | `'xai-stt'` | `{
     name: 'xai-stt',
     displayName: 'xAI Speech to Text',
     provider: Vendor.Grok,
     description: 'Low-cost xAI file and streaming transcription with timestamps, diarization, and multichannel support',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'legacy',
     availability: 'region_limited',
-    preferred: true,
+    replacementModel: 'grok-voice-transcribe-2.0',
     endpoints: ['audio_transcription', 'realtime'],
     releaseDate: '2026-07-23',
     sources: {
@@ -4618,7 +4726,7 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://console.groq.com/docs/speech-to-text',
       pricing: 'https://console.groq.com/docs/speech-to-text',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -4648,7 +4756,7 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://console.groq.com/docs/speech-to-text',
       pricing: 'https://console.groq.com/docs/speech-to-text',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -4697,7 +4805,7 @@ Last full audit: August 2026
 
 ### WHISPER_BASE_CAPABILITIES `const`
 
-📍 [`src/domain/entities/STTModel.ts:135`](src/domain/entities/STTModel.ts)
+📍 [`src/domain/entities/STTModel.ts:137`](src/domain/entities/STTModel.ts)
 
 Base Whisper capabilities (shared across OpenAI/Groq models)
 
@@ -4920,8 +5028,8 @@ async edit(options: SimpleImageEditOptions): Promise&lt;ImageResponse&gt;
 
 #### `createVariation()`
 
-Create variations of an existing image
-Note: Only DALL-E 2 supports this
+Create variations of an existing image. OpenAI variations are retired and
+reject locally; use edit() with an explicit variation prompt instead.
 
 ```typescript
 async createVariation(options: ImageVariationOptions): Promise&lt;ImageResponse&gt;
@@ -5021,7 +5129,7 @@ async handle(
 
 ### OpenAIImageProvider `class`
 
-📍 [`src/infrastructure/providers/openai/OpenAIImageProvider.ts:25`](src/infrastructure/providers/openai/OpenAIImageProvider.ts)
+📍 [`src/infrastructure/providers/openai/OpenAIImageProvider.ts:27`](src/infrastructure/providers/openai/OpenAIImageProvider.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -5056,7 +5164,7 @@ async generateImage(options: ImageGenerateOptions): Promise&lt;ImageResponse&gt;
 #### `editImage()`
 
 Edit an existing image with a prompt
-Supported by: gpt-image-1, dall-e-2
+Supported by GPT Image models. DALL-E 2 was retired on 2026-05-12.
 
 ```typescript
 async editImage(options: ImageEditOptions): Promise&lt;ImageResponse&gt;
@@ -5069,15 +5177,12 @@ async editImage(options: ImageEditOptions): Promise&lt;ImageResponse&gt;
 
 #### `createVariation()`
 
-Create variations of an existing image
-Supported by: dall-e-2 only
-
 ```typescript
-async createVariation(options: ImageVariationOptions): Promise&lt;ImageResponse&gt;
+async createVariation(_options: ImageVariationOptions): Promise&lt;ImageResponse&gt;
 ```
 
 **Parameters:**
-- `options`: `ImageVariationOptions`
+- `_options`: `ImageVariationOptions`
 
 **Returns:** `Promise&lt;ImageResponse&gt;`
 
@@ -5376,7 +5481,7 @@ Image utilities for processing images
 | `prompt` | `prompt: string;` | - |
 | `size?` | `size?: string;` | - |
 | `aspectRatio?` | `aspectRatio?: string;` | - |
-| `quality?` | `quality?: 'standard' | 'hd' | 'low' | 'medium' | 'high' | 'auto';` | - |
+| `quality?` | `quality?: 'standard' | 'hd' | 'low' | 'medium' | 'high' | 'xhigh' | 'max' | 'auto';` | - |
 | `style?` | `style?: 'vivid' | 'natural';` | - |
 | `n?` | `n?: number;` | - |
 | `response_format?` | `response_format?: 'url' | 'b64_json';` | - |
@@ -5520,7 +5625,7 @@ Image model pricing
 
 ### InputImageContent `interface`
 
-📍 [`src/domain/entities/Content.ts:26`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:29`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -5629,7 +5734,7 @@ type SimpleImageEditOptions = Omit&lt;ImageEditOptions, 'model'&gt; & { model?: 
 
 ### calculateImageCost `function`
 
-📍 [`src/domain/entities/ImageModel.ts:1433`](src/domain/entities/ImageModel.ts)
+📍 [`src/domain/entities/ImageModel.ts:1607`](src/domain/entities/ImageModel.ts)
 
 Calculate estimated cost for image generation
 
@@ -5761,7 +5866,7 @@ export async function fetchImageAsBase64(
 
 ### getImageModelsWithFeature `function`
 
-📍 [`src/domain/entities/ImageModel.ts:1422`](src/domain/entities/ImageModel.ts)
+📍 [`src/domain/entities/ImageModel.ts:1596`](src/domain/entities/ImageModel.ts)
 
 Get image models that support a specific feature
 
@@ -5835,33 +5940,154 @@ async function readClipboardImageWindows(): Promise&lt;ClipboardImageResult&gt;
 
 ### IMAGE_MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/ImageModel.ts:170`](src/domain/entities/ImageModel.ts)
+📍 [`src/domain/entities/ImageModel.ts:178`](src/domain/entities/ImageModel.ts)
 
 Complete image model registry
-Last full audit: August 2026
+Last catalog audit: November 2026
 
 <details>
 <summary><strong>Properties</strong></summary>
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `'gpt-image-2.6-sunburst'` | `{
+    name: 'gpt-image-2.6-sunburst',
+    displayName: 'GPT Image 2.6 Sunburst',
+    provider: Vendor.OpenAI,
+    description: 'OpenAI\'s most capable image model for high-quality generation and precision editing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['image_generation', 'image_edit'],
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2.6-sunburst', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-11' },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg', 'svg', 'gif'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: true, promptRevision: false },
+      limits: { maxPromptLength: 32_000 },
+      vendorOptions: {
+        complexity: { type: 'enum', description: 'Planning complexity before rendering', enum: ['low', 'medium', 'high'], default: 'high' },
+        quality: { type: 'enum', description: 'Rendering quality tier', enum: ['auto', 'low', 'medium', 'high', 'xhigh', 'max'], default: 'auto' },
+        background: { type: 'enum', description: 'Background handling', enum: ['auto', 'transparent', 'opaque'], default: 'auto' },
+        output_format: { type: 'enum', description: 'Encoded output image format', enum: ['png', 'jpeg', 'webp', 'svg', 'gif'], default: 'png' },
+        output_compression: { type: 'number', description: 'JPEG/WebP compression quality', min: 0, max: 100, default: 100 },
+        moderation: { type: 'enum', description: 'Moderation strictness', enum: ['auto', 'low'], default: 'auto' },
+        input_fidelity: { type: 'enum', description: 'Fidelity applied to editing input images', enum: ['low', 'high'], default: 'low' },
+      },
+    },
+    pricing: { tokenPricing: { textInput: 5, cachedTextInput: 1.25, imageInput: 8, cachedImageInput: 2, imageOutput: 30 }, currency: 'USD' },
+  }` | - |
+| `'gpt-image-2.6-flare'` | `{
+    name: 'gpt-image-2.6-flare',
+    displayName: 'GPT Image 2.6 Flare',
+    provider: Vendor.OpenAI,
+    description: 'Fast GPT Image 2.6 model for high-quality generation and editing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['image_generation', 'image_edit'],
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2.6-flare', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-11' },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg', 'svg', 'gif'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: true, promptRevision: false },
+      limits: { maxPromptLength: 32_000 },
+      vendorOptions: {
+        complexity: { type: 'enum', description: 'Planning complexity before rendering', enum: ['low', 'medium', 'high'], default: 'high' },
+        quality: { type: 'enum', description: 'Rendering quality tier', enum: ['auto', 'low', 'medium', 'high', 'xhigh', 'max'], default: 'auto' },
+        background: { type: 'enum', description: 'Background handling', enum: ['auto', 'transparent', 'opaque'], default: 'auto' },
+        output_format: { type: 'enum', description: 'Encoded output image format', enum: ['png', 'jpeg', 'webp', 'svg', 'gif'], default: 'png' },
+        output_compression: { type: 'number', description: 'JPEG/WebP compression quality', min: 0, max: 100, default: 100 },
+        moderation: { type: 'enum', description: 'Moderation strictness', enum: ['auto', 'low'], default: 'auto' },
+        input_fidelity: { type: 'enum', description: 'Fidelity applied to editing input images', enum: ['low', 'high'], default: 'low' },
+      },
+    },
+    pricing: { tokenPricing: { textInput: 5, cachedTextInput: 1.25, imageInput: 8, cachedImageInput: 2, imageOutput: 30 }, currency: 'USD' },
+  }` | - |
+| `'gpt-image-2.5-sunburst'` | `{
+    name: 'gpt-image-2.5-sunburst',
+    displayName: 'GPT Image 2.5 Sunburst',
+    provider: Vendor.OpenAI,
+    description: 'OpenAI\'s most capable image model for high-quality generation and precision editing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    snapshots: ['gpt-image-2.5-sunburst-2026-09-08'],
+    endpoints: ['image_generation', 'image_edit', 'responses', 'batch'],
+    releaseDate: '2026-09-08',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: true, promptRevision: false },
+      limits: { maxPromptLength: 32_000, maxRequestsPerMinute: 250 },
+      vendorOptions: {
+        quality: { type: 'enum', description: 'Rendering quality tier', enum: ['auto', 'low', 'medium', 'high', 'xhigh', 'max'], default: 'auto' },
+        background: { type: 'enum', description: 'Background handling', enum: ['auto', 'transparent', 'opaque'], default: 'auto' },
+        output_format: { type: 'enum', description: 'Encoded output image format', enum: ['png', 'jpeg', 'webp'], default: 'png' },
+        output_compression: { type: 'number', description: 'JPEG/WebP compression quality', min: 0, max: 100, default: 100 },
+        moderation: { type: 'enum', description: 'Moderation strictness', enum: ['auto', 'low'], default: 'auto' },
+        input_fidelity: { type: 'enum', description: 'Fidelity applied to editing input images', enum: ['low', 'high'], default: 'low' },
+      },
+    },
+    pricing: { tokenPricing: { textInput: 5, cachedTextInput: 1.25, imageInput: 8, cachedImageInput: 2, imageOutput: 30 }, currency: 'USD' },
+  }` | - |
+| `'gpt-image-2.5-flare'` | `{
+    name: 'gpt-image-2.5-flare',
+    displayName: 'GPT Image 2.5 Flare',
+    provider: Vendor.OpenAI,
+    description: 'Fast GPT Image 2.5 model for high-quality generation and editing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    snapshots: ['gpt-image-2.5-flare-2026-09-08'],
+    endpoints: ['image_generation', 'image_edit', 'responses', 'batch'],
+    releaseDate: '2026-09-08',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2.5-flare', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: true, promptRevision: false },
+      limits: { maxPromptLength: 32_000, maxRequestsPerMinute: 250 },
+      vendorOptions: {
+        quality: { type: 'enum', description: 'Rendering quality tier', enum: ['auto', 'low', 'medium', 'high', 'xhigh', 'max'], default: 'auto' },
+        background: { type: 'enum', description: 'Background handling', enum: ['auto', 'transparent', 'opaque'], default: 'auto' },
+        output_format: { type: 'enum', description: 'Encoded output image format', enum: ['png', 'jpeg', 'webp'], default: 'png' },
+        output_compression: { type: 'number', description: 'JPEG/WebP compression quality', min: 0, max: 100, default: 100 },
+        moderation: { type: 'enum', description: 'Moderation strictness', enum: ['auto', 'low'], default: 'auto' },
+        input_fidelity: { type: 'enum', description: 'Fidelity applied to editing input images', enum: ['low', 'high'], default: 'low' },
+      },
+    },
+    pricing: { tokenPricing: { textInput: 5, cachedTextInput: 1.25, imageInput: 8, cachedImageInput: 2, imageOutput: 30 }, currency: 'USD' },
+  }` | - |
 | `'gpt-image-2'` | `{
     name: 'gpt-image-2',
     displayName: 'GPT Image 2',
     provider: Vendor.OpenAI,
     description: 'Current state-of-the-art OpenAI model for fast, high-quality image generation and editing',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'deprecated',
     availability: 'public',
-    preferred: true,
+    preferred: false,
     snapshots: ['gpt-image-2-2026-04-21'],
     endpoints: ['image_generation', 'image_edit'],
     releaseDate: '2026-04-21',
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2',
       pricing: 'https://developers.openai.com/api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    deprecationDate: '2026-11-10',
+    retirementDate: '2027-02-10',
+    replacementModel: 'gpt-image-2.6-sunburst',
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
       maxImagesPerRequest: 10,
@@ -5882,11 +6108,11 @@ Last full audit: August 2026
     },
     pricing: {
       tokenPricing: {
-        textInput: 5,
-        cachedTextInput: 1.25,
-        imageInput: 8,
-        cachedImageInput: 2,
-        imageOutput: 30,
+        textInput: 2.5,
+        cachedTextInput: 0.625,
+        imageInput: 4,
+        cachedImageInput: 1,
+        imageOutput: 15,
       },
       currency: 'USD',
     },
@@ -5900,12 +6126,12 @@ Last full audit: August 2026
     lifecycle: 'deprecated',
     deprecationDate: '2026-06-02',
     retirementDate: '2026-12-01',
-    replacementModel: 'gpt-image-2',
+    replacementModel: 'gpt-image-2.6-sunburst',
     releaseDate: '2025-12-16',
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-image-1.5',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
@@ -5980,12 +6206,12 @@ Last full audit: August 2026
     lifecycle: 'deprecated',
     deprecationDate: '2026-06-02',
     retirementDate: '2026-12-01',
-    replacementModel: 'gpt-image-2',
+    replacementModel: 'gpt-image-2.6-sunburst',
     releaseDate: '2025-12-01',
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/chatgpt-image-latest',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
@@ -6056,8 +6282,8 @@ Last full audit: August 2026
     displayName: 'GPT Image 1',
     provider: Vendor.OpenAI,
     description: 'Previous generation OpenAI image model. More expensive than GPT Image 1.5',
-    isActive: true,
-    lifecycle: 'deprecated',
+    isActive: false,
+    lifecycle: 'retired',
     deprecationDate: '2026-04-22',
     retirementDate: '2026-10-23',
     replacementModel: 'gpt-image-2',
@@ -6065,8 +6291,9 @@ Last full audit: August 2026
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-image-1',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
       maxImagesPerRequest: 10,
@@ -6140,12 +6367,12 @@ Last full audit: August 2026
     lifecycle: 'deprecated',
     deprecationDate: '2026-06-02',
     retirementDate: '2026-12-01',
-    replacementModel: 'gpt-image-2',
+    replacementModel: 'gpt-image-2.6-sunburst',
     releaseDate: '2025-06-01',
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-image-1-mini',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
@@ -6648,6 +6875,38 @@ Last full audit: August 2026
       currency: 'USD',
     },
   }` | - |
+| `'gemini-nano-banana-2.1'` | `{
+    name: 'gemini-nano-banana-2.1',
+    displayName: 'Nano Banana 2.1',
+    provider: Vendor.Google,
+    description: 'Latest high-efficiency Gemini image generation and conversational editing model with stronger typography and multi-turn consistency',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['image_generation', 'image_edit', 'interactions', 'generate_content', 'batch'],
+    releaseDate: '2026-10-06',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-nano-banana-2.1', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-11-11' },
+    capabilities: {
+      sizes: ['1024x1024', '2048x2048', '4096x4096', 'auto'],
+      aspectRatios: ['1:1', '3:4', '4:3', '9:16', '16:9', '3:2', '2:3', '1:4', '4:1', '1:8', '8:1'],
+      maxImagesPerRequest: 4,
+      outputFormats: ['png', 'jpeg'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: false, promptRevision: false },
+      limits: { maxPromptLength: 131_072 },
+      vendorOptions: {
+        imageSize: { type: 'enum', description: 'Requested output image resolution', enum: ['1024px', '2048px', '4096px'], default: '1024px' },
+        thinkingLevel: { type: 'enum', description: 'Generation reasoning depth', enum: ['minimal', 'medium', 'high'], default: 'medium' },
+      },
+    },
+    pricing: {
+      perImageStandard: 0.0336,
+      perImageHD: 0.1134,
+      perImageByResolution: { '1024px': 0.0336, '2048px': 0.0504, '4096px': 0.1134 },
+      tokenPricing: { textInput: 1.5, imageInput: 1.5, imageOutput: 30 },
+      currency: 'USD',
+    },
+  }` | - |
 | `'gemini-3.1-flash-image'` | `{
     name: 'gemini-3.1-flash-image',
     displayName: 'Nano Banana 2',
@@ -6656,14 +6915,15 @@ Last full audit: August 2026
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
-    preferred: true,
+    replacementModel: 'gemini-nano-banana-2.1',
     endpoints: ['image_generation', 'image_edit', 'generate_content', 'batch'],
     releaseDate: '2026-06-25',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-image',
       pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
     capabilities: {
       sizes: ['512x512', '1024x1024', '2048x2048', '4096x4096', 'auto'],
       aspectRatios: ['1:1', '3:4', '4:3', '9:16', '16:9', '3:2', '2:3', '1:4', '4:1', '1:8', '8:1'],
@@ -6844,14 +7104,15 @@ Last full audit: August 2026
     description: 'Native image generation and editing designed for fast, creative workflows',
     isActive: true,
     lifecycle: 'deprecated',
-    retirementDate: '2026-10-02',
-    replacementModel: 'gemini-3.1-flash-image',
+    retirementDate: '2027-03-15',
+    replacementModel: 'gemini-3.1-flash-lite-image',
     releaseDate: '2025-10-01',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-image',
       pricing: 'https://ai.google.dev/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
     capabilities: {
       sizes: ['1024x1024', 'auto'],
       aspectRatios: ['1:1', '3:4', '4:3', '9:16', '16:9'],
@@ -6913,19 +7174,23 @@ Last full audit: August 2026
     name: 'grok-imagine-image-quality',
     displayName: 'Grok Imagine Image Quality',
     provider: Vendor.Grok,
-    description: 'Higher-fidelity xAI image generation and multi-image editing with 1K and 2K output',
-    isActive: true,
-    lifecycle: 'active',
+    description: 'Retired xAI image model; requests redirect to Grok Imagine Image 2.0 low quality',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     aliases: ['grok-imagine-image-quality-latest', 'grok-imagine-image-pro'],
     snapshots: ['grok-imagine-image-quality-20260403'],
     endpoints: ['image_generation', 'image_edit'],
     releaseDate: '2026-04-03',
+    deprecationDate: '2026-09-02',
+    retirementDate: '2026-11-02',
+    replacementModel: 'grok-imagine-image-2.0',
     sources: {
       documentation: 'https://docs.x.ai/developers/models/grok-imagine-image-quality',
       pricing: 'https://docs.x.ai/developers/models/grok-imagine-image-quality',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
     capabilities: {
       sizes: ['1024x1024', '2048x2048', 'auto'],
       aspectRatios: ['1:1', '3:2', '2:3', '3:4', '4:3', '9:16', '16:9'],
@@ -7005,12 +7270,12 @@ Last full audit: August 2026
     description: 'xAI Grok 2 image generation (text-only input, no editing)',
     isActive: false,
     lifecycle: 'retired',
-    replacementModel: 'grok-imagine-image-quality',
+    replacementModel: 'grok-imagine-image-2.0',
     releaseDate: '2024-12-12',
     sources: {
       documentation: 'https://docs.x.ai/docs/guides/image-generation',
       pricing: 'https://docs.x.ai/docs/models',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       sizes: ['1024x1024'],
@@ -7931,7 +8196,7 @@ type VideoStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
 ### calculateVideoCost `function`
 
-📍 [`src/domain/entities/VideoModel.ts:502`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:551`](src/domain/entities/VideoModel.ts)
 
 Calculate video generation cost
 
@@ -7973,7 +8238,7 @@ export function createVideoTools(
 
 ### getVideoModelsWithAudio `function`
 
-📍 [`src/domain/entities/VideoModel.ts:495`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:544`](src/domain/entities/VideoModel.ts)
 
 Get models that support audio
 
@@ -7985,7 +8250,7 @@ export function getVideoModelsWithAudio(): IVideoModelDescription[]
 
 ### getVideoModelsWithFeature `function`
 
-📍 [`src/domain/entities/VideoModel.ts:486`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:535`](src/domain/entities/VideoModel.ts)
 
 Get models with a specific feature
 
@@ -7997,7 +8262,7 @@ export function getVideoModelsWithFeature(feature: keyof VideoModelCapabilities[
 
 ### GOOGLE_SOURCES `const`
 
-📍 [`src/domain/entities/VideoModel.ts:110`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:113`](src/domain/entities/VideoModel.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8006,7 +8271,7 @@ export function getVideoModelsWithFeature(feature: keyof VideoModelCapabilities[
 |----------|------|-------------|
 | `documentation` | `'https://ai.google.dev/gemini-api/docs/video'` | - |
 | `apiReference` | `'https://ai.google.dev/gemini-api/docs/models/veo'` | - |
-| `lastVerified` | `'2026-08-30'` | - |
+| `lastVerified` | `'2026-11-11'` | - |
 
 </details>
 
@@ -8014,7 +8279,7 @@ export function getVideoModelsWithFeature(feature: keyof VideoModelCapabilities[
 
 ### GROK_SOURCES `const`
 
-📍 [`src/domain/entities/VideoModel.ts:116`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:119`](src/domain/entities/VideoModel.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8031,7 +8296,7 @@ export function getVideoModelsWithFeature(feature: keyof VideoModelCapabilities[
 
 ### OPENAI_SOURCES `const`
 
-📍 [`src/domain/entities/VideoModel.ts:103`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:106`](src/domain/entities/VideoModel.ts)
 
 Common sources for model information
 
@@ -8040,10 +8305,10 @@ Common sources for model information
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `documentation` | `'https://developers.openai.com/api/docs/guides/video-generation'` | - |
+| `documentation` | `'https://developers.openai.com/api/docs/deprecations#2026-03-24-sora-2-video-generation-models-and-videos-api'` | - |
 | `apiReference` | `'https://developers.openai.com/api/reference/resources/videos'` | - |
 | `pricing` | `'https://developers.openai.com/api/docs/pricing'` | - |
-| `lastVerified` | `'2026-08-30'` | - |
+| `lastVerified` | `'2026-10-27'` | - |
 
 </details>
 
@@ -8051,7 +8316,7 @@ Common sources for model information
 
 ### VIDEO_MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/VideoModel.ts:125`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:128`](src/domain/entities/VideoModel.ts)
 
 Video Model Registry
 
@@ -8064,9 +8329,9 @@ Video Model Registry
     name: 'sora-2',
     displayName: 'Sora 2',
     provider: Vendor.OpenAI,
-    description: 'Deprecated video generation model with synced audio; migrate before the Videos API shutdown',
-    isActive: true,
-    lifecycle: 'deprecated',
+    description: 'Retired video generation model; OpenAI shut down the Videos API with no replacement',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     deprecationDate: '2026-03-24',
     retirementDate: '2026-09-24',
@@ -8096,9 +8361,9 @@ Video Model Registry
     name: 'sora-2-pro',
     displayName: 'Sora 2 Pro',
     provider: Vendor.OpenAI,
-    description: 'Deprecated high-resolution video generation model; migrate before the Videos API shutdown',
-    isActive: true,
-    lifecycle: 'deprecated',
+    description: 'Retired high-resolution video generation model; OpenAI shut down the Videos API with no replacement',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     deprecationDate: '2026-03-24',
     retirementDate: '2026-09-24',
@@ -8166,8 +8431,12 @@ Video Model Registry
     name: 'veo-3.1-fast-generate-preview',
     displayName: 'Veo 3.1 Fast',
     provider: Vendor.Google,
-    isActive: true,
+    isActive: false,
     sources: GOOGLE_SOURCES,
+    lifecycle: 'retired',
+    retirementDate: '2026-10-22',
+    replacementModel: 'gemini-omni-1.2-flash',
+    preferred: false,
     capabilities: {
       durations: [4, 6, 8],
       resolutions: ['720p', '1080p', '4k'], // 1080p/4k require 8s duration
@@ -8194,8 +8463,12 @@ Video Model Registry
     name: 'veo-3.1-generate-preview',
     displayName: 'Veo 3.1',
     provider: Vendor.Google,
-    isActive: true,
+    isActive: false,
     sources: GOOGLE_SOURCES,
+    lifecycle: 'retired',
+    retirementDate: '2026-10-22',
+    replacementModel: 'gemini-omni-1.2-flash',
+    preferred: false,
     capabilities: {
       durations: [4, 6, 8],
       resolutions: ['720p', '1080p', '4k'], // 1080p and 4k require 8s duration
@@ -8223,13 +8496,15 @@ Video Model Registry
     displayName: 'Veo 3.1 Lite',
     provider: Vendor.Google,
     description: 'Cost-efficient Veo 3.1 preview for short 720p and 1080p clips with native audio',
-    isActive: true,
-    lifecycle: 'preview',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
-    preferred: true,
+    preferred: false,
     endpoints: ['video_generation'],
     releaseDate: '2026-06-30',
-    sources: { ...GOOGLE_SOURCES, lastVerified: '2026-08-30' },
+    sources: { ...GOOGLE_SOURCES, lastVerified: '2026-11-11' },
+    retirementDate: '2026-10-22',
+    replacementModel: 'gemini-omni-1.2-flash',
     capabilities: {
       durations: [4, 6, 8],
       resolutions: ['720p', '1080p'],
@@ -8252,19 +8527,20 @@ Video Model Registry
     displayName: 'Gemini Omni Flash',
     provider: Vendor.Google,
     description: 'Conversational 720p video generation and editing through the Interactions API',
-    isActive: true,
-    lifecycle: 'deprecated',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     deprecationDate: '2026-08-27',
     retirementDate: '2026-09-30',
-    replacementModel: 'gemini-omni-1.1-flash',
+    replacementModel: 'gemini-omni-1.2-flash',
     endpoints: ['interactions', 'video_generation', 'video_edit'],
     releaseDate: '2026-06-30',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/omni',
       apiReference: 'https://ai.google.dev/api/interactions-api',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
     capabilities: {
       durations: [3, 4, 5, 6, 7, 8, 9, 10],
       resolutions: ['720p'],
@@ -8278,23 +8554,56 @@ Video Model Registry
     },
     pricing: { perSecond: 0.10, perSecondByResolution: { '720p': 0.10 }, currency: 'USD' },
   }` | - |
+| `'gemini-omni-1.2-flash'` | `{
+    name: 'gemini-omni-1.2-flash',
+    displayName: 'Gemini Omni 1.2 Flash',
+    provider: Vendor.Google,
+    description: 'Native-audio video generation/editing up to 15s; interpolation 3-10s and extension up to 30s total',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['interactions', 'video_generation', 'video_edit'],
+    releaseDate: '2026-11-05',
+    sources: {
+      documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-omni-flash',
+      apiReference: 'https://ai.google.dev/api/interactions-api',
+      pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
+      lastVerified: '2026-11-11',
+    },
+    capabilities: {
+      durations: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      resolutions: ['360p', '720p', '1080p', '4k'],
+      aspectRatios: ['16:9', '9:16'],
+      maxFps: 24,
+      audio: true,
+      textToVideo: true,
+      imageToVideo: true,
+      videoExtension: true,
+      frameControl: true,
+      features: { upscaling: true, styleControl: true, negativePrompt: false, seed: false },
+    },
+    // Output-only estimates: published tokens/second multiplied by $12 / 1M tokens.
+    pricing: { perSecond: 0.069504, perSecondByResolution: { '360p': 0.023172, '720p': 0.069504, '1080p': 0.104256, '4k': 0.208512 }, currency: 'USD' },
+  }` | - |
 | `'gemini-omni-1.1-flash'` | `{
     name: 'gemini-omni-1.1-flash',
     displayName: 'Gemini Omni 1.1 Flash',
     provider: Vendor.Google,
     description: 'Generally available conversational video generation and editing through the Interactions API',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'legacy',
     availability: 'public',
-    preferred: true,
+    preferred: false,
     endpoints: ['interactions', 'video_generation', 'video_edit'],
     releaseDate: '2026-08-27',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-omni-flash',
       apiReference: 'https://ai.google.dev/api/interactions-api',
       pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    replacementModel: 'gemini-omni-1.2-flash',
     capabilities: {
       durations: [3, 4, 5, 6, 7, 8, 9, 10],
       resolutions: ['360p', '720p', '1080p', '4k'],
@@ -8353,7 +8662,7 @@ Video Model Registry
     sources: {
       documentation: 'https://docs.x.ai/developers/models/grok-imagine-video-1.5',
       pricing: 'https://docs.x.ai/developers/models/grok-imagine-video-1.5',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       durations: [1, 5, 8, 10, 15],
@@ -8774,7 +9083,7 @@ subscribe(options: AgentEventSubscriptionOptions = {}): AsyncIterable&lt;AgentRu
 
 ### CodexDriverSession `class`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:201`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:205`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -8844,7 +9153,7 @@ async destroy(): Promise&lt;void&gt;
 
 ### CodexSdkDriver `class`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:85`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:89`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -9146,7 +9455,7 @@ async destroy(): Promise&lt;void&gt;
 
 ### OneRingAIDriver `class`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:83`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:92`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -9202,7 +9511,7 @@ async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&g
 
 ### OneRingDriverSession `class`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:214`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:223`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -9326,7 +9635,7 @@ async openSession(options: OpenAgentSessionOptions): Promise&lt;AgentSession&gt;
 
 ### StreamingSecretRedactor `class`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:865`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:869`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -9851,7 +10160,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### CodexSdkDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:70`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:74`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -10102,7 +10411,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### IncrementalTextState `interface`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:839`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:843`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -10118,7 +10427,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### LocalAgentFactoryContext `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:49`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:58`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -10178,7 +10487,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### NormalizedReasoningControls `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:506`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:515`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -10195,7 +10504,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### OneRingAgentBinding `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:56`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:65`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -10211,7 +10520,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### OneRingAIDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:70`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:79`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -10231,7 +10540,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### OneRingModelReasoningControls `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:61`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:70`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -10269,7 +10578,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### ParsedCodexConfig `interface`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:80`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:84`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -10629,7 +10938,7 @@ type CapabilitySupport = 'native' | 'emulated' | 'unsupported'
 
 ### CodexConstructor `type`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:68`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:72`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 type CodexConstructor = new (options?: CodexOptions) =&gt; Codex
@@ -10664,7 +10973,7 @@ type JsonValue = | null
 
 ### OneRingAgentSource `type`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:44`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:53`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 type OneRingAgentSource = | { type: 'stored-definition'; agentId: string }
@@ -10742,7 +11051,7 @@ function areArtifactsOverLimit&lt;T&gt;(artifacts: T[], maxBytes?: number): bool
 
 ### assertBoundScope `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:370`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:379`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function assertBoundScope(agent: Agent, context?: TrustedRuntimeContext): void
@@ -10772,7 +11081,7 @@ function boundEventData(_type: AgentRunEventType, data: JsonObject, maxJournalBy
 
 ### boundEventText `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:939`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:943`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function boundEventText(text: string): string
@@ -10802,7 +11111,7 @@ function boundText(text: string, maxBytes?: number): string
 
 ### capability `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:995`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:999`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function capability(
@@ -10817,7 +11126,7 @@ function capability(
 
 ### capability `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:566`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:575`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function capability(
@@ -10852,7 +11161,7 @@ export function cloneAndFreezeSpec(spec: RuntimeAgentSpec): Readonly&lt;RuntimeA
 
 ### codexCapabilities `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:952`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:956`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function codexCapabilities(
@@ -10892,7 +11201,7 @@ export function createDeferred&lt;T&gt;(): {
 
 ### createRedactor `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:819`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:823`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function createRedactor(secrets: string[]): (text: string) =&gt; string
@@ -10932,7 +11241,7 @@ function eventSize(event: AgentRunEvent): number
 
 ### failedResult `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:1009`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:1013`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function failedResult(error: AgentNativeExecutionError, cancelled: boolean): DriverRunResult
@@ -10942,7 +11251,7 @@ function failedResult(error: AgentNativeExecutionError, cancelled: boolean): Dri
 
 ### failedResult `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:665`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:674`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function failedResult(error: AgentNativeExecutionError): DriverRunResult
@@ -10952,7 +11261,7 @@ function failedResult(error: AgentNativeExecutionError): DriverRunResult
 
 ### findProjectConfig `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:763`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:767`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 async function findProjectConfig(workspaceRoot: string): Promise&lt;string | undefined&gt;
@@ -10982,7 +11291,7 @@ function hasWorkspaceFileInput(input: AgentRunInput): boolean
 
 ### isInsideWorkspace `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:912`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:916`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function isInsideWorkspace(file: string, workspaceRoot: string): boolean
@@ -11022,7 +11331,7 @@ export function isJsonValue(value: unknown): value is JsonValue
 
 ### isolatedCodexEnvironment `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:786`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:790`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function isolatedCodexEnvironment(codexHome: string): Record&lt;string, string&gt;
@@ -11042,7 +11351,7 @@ function isTextOverLimit(text: string, maxBytes?: number): boolean
 
 ### mapCodexEvents `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:300`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:304`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 async function* mapCodexEvents(
@@ -11061,7 +11370,7 @@ async function* mapCodexEvents(
 
 ### mapCompletedItem `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:514`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:518`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function mapCompletedItem(
@@ -11076,7 +11385,7 @@ function mapCompletedItem(
 
 ### mapOneRingEvent `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:587`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:596`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function mapOneRingEvent(event: StreamEvent): DriverEvent | undefined
@@ -11086,7 +11395,7 @@ function mapOneRingEvent(event: StreamEvent): DriverEvent | undefined
 
 ### mapStartedItem `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:482`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:486`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function mapStartedItem(
@@ -11100,7 +11409,7 @@ function mapStartedItem(
 
 ### mapUsage `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:917`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:921`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function mapUsage(usage: Usage): RuntimeUsage
@@ -11110,7 +11419,7 @@ function mapUsage(usage: Usage): RuntimeUsage
 
 ### mapUsage `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:654`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:663`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function mapUsage(usage: TokenUsage): RuntimeUsage
@@ -11143,7 +11452,7 @@ function mergeRunMetadata(input: AgentRunInput, metadata: AgentRunOptions['metad
 
 ### nextSafeDelta `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:844`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:848`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function nextSafeDelta(
@@ -11159,7 +11468,7 @@ function nextSafeDelta(
 
 ### normalizeFileChange `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:591`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:595`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function normalizeFileChange(kind: 'add' | 'delete' | 'update'): 'created' | 'deleted' | 'modified'
@@ -11169,7 +11478,7 @@ function normalizeFileChange(kind: 'add' | 'delete' | 'update'): 'created' | 'de
 
 ### normalizeModelReasoningControls `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:524`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:533`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function normalizeModelReasoningControls(
@@ -11181,7 +11490,7 @@ function normalizeModelReasoningControls(
 
 ### normalizeModelReasoningEfforts `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:674`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:678`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function normalizeModelReasoningEfforts(
@@ -11203,7 +11512,7 @@ function normalizeObservation(observation?: AgentObservationOptions): Required&l
 
 ### oneRingCapabilities `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:458`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:467`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function oneRingCapabilities(
@@ -11230,7 +11539,7 @@ export function parseAndValidateStructuredOutput(
 
 ### parseDriverConfig `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:694`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:698`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function parseDriverConfig(spec: Readonly&lt;RuntimeAgentSpec&gt;): ParsedCodexConfig
@@ -11240,7 +11549,7 @@ function parseDriverConfig(spec: Readonly&lt;RuntimeAgentSpec&gt;): ParsedCodexC
 
 ### parseSource `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:347`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:356`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function parseSource(spec: Readonly&lt;RuntimeAgentSpec&gt;): OneRingAgentSource
@@ -11250,7 +11559,7 @@ function parseSource(spec: Readonly&lt;RuntimeAgentSpec&gt;): OneRingAgentSource
 
 ### planEvent `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:580`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:584`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function planEvent(
@@ -11274,7 +11583,7 @@ async function raceWithAbort&lt;T&gt;(promise: Promise&lt;T&gt;, signal: AbortSi
 
 ### reasoningControls `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:512`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:521`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function reasoningControls(
@@ -11288,7 +11597,7 @@ function reasoningControls(
 
 ### redactJson `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:827`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:831`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function redactJson(value: unknown, redact: (text: string) =&gt; string): ReturnType&lt;typeof toJsonValue&gt;
@@ -11298,7 +11607,7 @@ function redactJson(value: unknown, redact: (text: string) =&gt; string): Return
 
 ### rejectCommonOverrides `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:362`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:371`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function rejectCommonOverrides(spec: Readonly&lt;RuntimeAgentSpec&gt;): void
@@ -11308,7 +11617,7 @@ function rejectCommonOverrides(spec: Readonly&lt;RuntimeAgentSpec&gt;): void
 
 ### resolveWorkspaceFile `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:748`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:752`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 async function resolveWorkspaceFile(file: string, workspaceRoot: string): Promise&lt;string&gt;
@@ -11351,7 +11660,7 @@ function shouldPublishEvent(
 
 ### toCodexInput `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:728`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:732`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 async function toCodexInput(input: DriverRunRequest['input'], workspaceRoot: string): Promise&lt;Input&gt;
@@ -11381,7 +11690,7 @@ export function toJsonValue(value: unknown): JsonValue
 
 ### toOneRingInput `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:580`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:589`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function toOneRingInput(input: DriverRunRequest['input']): string
@@ -11391,7 +11700,7 @@ function toOneRingInput(input: DriverRunRequest['input']): string
 
 ### toThinkingConfig `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:449`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:458`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function toThinkingConfig(reasoning?: RuntimeReasoningConfig): ThinkingConfig | undefined
@@ -11401,7 +11710,7 @@ function toThinkingConfig(reasoning?: RuntimeReasoningConfig): ThinkingConfig | 
 
 ### toThreadOptions `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:713`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:717`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function toThreadOptions(request: DriverOpenSessionRequest, config: ParsedCodexConfig): ThreadOptions
@@ -11431,7 +11740,7 @@ function truncateUtf8(text: string, maxBytes: number): string
 
 ### truncateUtf8 `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:945`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:949`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function truncateUtf8(text: string, maxBytes: number): string
@@ -11441,7 +11750,7 @@ function truncateUtf8(text: string, maxBytes: number): string
 
 ### usageData `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:928`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:932`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function usageData(usage: RuntimeUsage): JsonObject
@@ -11474,7 +11783,7 @@ function validateChoice(value: unknown, choices: readonly string[], label: strin
 
 ### validateCodexModel `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:633`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:637`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function validateCodexModel(modelName: string): void
@@ -11484,7 +11793,7 @@ function validateCodexModel(modelName: string): void
 
 ### validateCodexReasoning `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:642`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:646`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function validateCodexReasoning(
@@ -11498,7 +11807,7 @@ function validateCodexReasoning(
 
 ### validateConnectorAndModel `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:614`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:618`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function validateConnectorAndModel(context: Parameters&lt;AgentDriver['inspect']&gt;[0]): void
@@ -11508,7 +11817,7 @@ function validateConnectorAndModel(context: Parameters&lt;AgentDriver['inspect']
 
 ### validateModel `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:378`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:387`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function validateModel(model: string, expectedVendor?: string): void
@@ -11528,7 +11837,7 @@ function validatePolicy(policy: AgentExecutionPolicy): void
 
 ### validatePolicy `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:600`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:604`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function validatePolicy(context: Parameters&lt;AgentDriver['inspect']&gt;[0]): void
@@ -11558,7 +11867,7 @@ function validateReasoning(reasoning: NonNullable&lt;AgentRunOptions['reasoning'
 
 ### validateReasoning `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:391`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:400`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function validateReasoning(reasoning?: RuntimeReasoningConfig): void
@@ -11578,7 +11887,7 @@ function validateReasoningEffort(effort: unknown, label: string): void
 
 ### validateReasoningForModel `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:411`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:420`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 function validateReasoningForModel(
@@ -11612,7 +11921,7 @@ function validateSessionOptions(options: OpenAgentSessionOptions): void
 
 ### validateSpec `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:595`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:599`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function validateSpec(spec: Readonly&lt;RuntimeAgentSpec&gt;): void
@@ -11622,7 +11931,7 @@ function validateSpec(spec: Readonly&lt;RuntimeAgentSpec&gt;): void
 
 ### workspaceRelativePath `function`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:905`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:909`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 ```typescript
 function workspaceRelativePath(file: string, workspaceRoot: string): string | undefined
@@ -11639,9 +11948,18 @@ function workspaceRelativePath(file: string, workspaceRoot: string): string | un
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `'gpt-5.6-sol'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
-| `'gpt-5.6-terra'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
-| `'gpt-5.6-luna'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gpt-6-astra'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gpt-6.1-sol'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gpt-6-sol'` | `reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gpt-6-luna'` | `reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gpt-5.6-sol'` | `reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gpt-5.6-terra'` | `reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gpt-5.6-luna'` | `reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gpt-5.6-cyber'` | `reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'claude-opus-5-5'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'claude-sonnet-5-5'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gemini-3.8-flash'` | `reasoningControls(['low', 'medium', 'high'])` | - |
+| `'grok-4.7'` | `reasoningControls(['low', 'medium', 'high', 'xhigh'])` | - |
 | `'gpt-5.3-codex'` | `reasoningControls(['low', 'medium', 'high', 'xhigh'])` | - |
 
 </details>
@@ -11657,6 +11975,10 @@ function workspaceRelativePath(file: string, workspaceRoot: string): string | un
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `'gpt-6-astra'` | `new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra'])` | - |
+| `'gpt-6.1-sol'` | `new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra'])` | - |
+| `'gpt-6-sol'` | `new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra'])` | - |
+| `'gpt-6-luna'` | `new Set(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
 | `'gpt-5.6-sol'` | `new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra'])` | - |
 | `'gpt-5.6-terra'` | `new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra'])` | - |
 | `'gpt-5.6-luna'` | `new Set(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
@@ -15934,7 +16256,7 @@ async shutdown(): Promise&lt;void&gt;
 
 ### ParallelTasksError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:299`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:337`](src/domain/errors/AIErrors.ts)
 
 Error thrown when multiple tasks fail in parallel execution (fail-all mode)
 
@@ -16158,7 +16480,7 @@ async findFacts(filter: FactFilter, opts?: { limit?: number }): Promise&lt;IFact
 
 ### TaskTimeoutError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:252`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:290`](src/domain/errors/AIErrors.ts)
 
 Error thrown when a task execution times out
 
@@ -16186,7 +16508,7 @@ constructor(
 
 ### TaskValidationError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:271`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:309`](src/domain/errors/AIErrors.ts)
 
 Error thrown when task completion validation fails
 
@@ -19197,7 +19519,7 @@ Set to false to skip re-check for performance if you know condition won't change
 
 ### TaskFailure `interface`
 
-📍 [`src/domain/errors/AIErrors.ts:290`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:328`](src/domain/errors/AIErrors.ts)
 
 Task failure info for parallel execution
 
@@ -19978,7 +20300,7 @@ export function addTierPrefix(key: string, tier: MemoryTier): string
 
 ### buildPlanOverview `function`
 
-📍 [`src/core/routineRunner.ts:471`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:479`](src/core/routineRunner.ts)
 
 Build a compact plan overview showing all tasks with statuses and dependencies.
 
@@ -20015,7 +20337,7 @@ export function canTaskExecute(task: Task, allTasks: Task[]): boolean
 
 ### cleanupMemoryKeys `function`
 
-📍 [`src/core/routineRunner.ts:516`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:524`](src/core/routineRunner.ts)
 
 Delete ICM/WM entries matching given prefix lists.
 Shared by injectRoutineContext (dep cleanup) and cleanupRoutineContext (full cleanup).
@@ -20178,7 +20500,7 @@ export function createTaskSnapshots(definition: RoutineDefinition): RoutineTaskS
 
 ### defaultTaskPrompt `function`
 
-📍 [`src/core/routineRunner.ts:271`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:278`](src/core/routineRunner.ts)
 
 Default task prompt builder.
 
@@ -20573,7 +20895,7 @@ export function validateMemoryKey(key: string): void
 
 ### validateTaskCompletion `function`
 
-📍 [`src/core/routineRunner.ts:677`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:685`](src/core/routineRunner.ts)
 
 Validate task completion using LLM self-reflection via agent.runDirect().
 Collects full context (memory state, tool calls) so the validator can verify
@@ -21732,6 +22054,9 @@ async saveFromTemplate(
 Update a connector that was created from a vendor template.
 Merges new credentials with existing: non-empty values override,
 empty values preserve the existing decrypted value ("leave empty to keep").
+Same-method authorization-code updates also preserve saved scopes, prompts,
+token namespaces, PKCE, refresh settings and custom endpoints. Method changes
+require the new method's own credentials; legacy ambiguity requires replacement.
 
 ```typescript
 async updateFromTemplate(
@@ -23243,6 +23568,93 @@ getPath(userId: string | undefined): string
 
 ---
 
+### GoogleLiveSession `class`
+
+📍 [`src/capabilities/google/GoogleLiveSession.ts:17`](src/capabilities/google/GoogleLiveSession.ts)
+
+Connector-first Gemini Live session, including 3.8 background-reasoning status.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(options: GoogleLiveSessionOptions)
+```
+
+**Parameters:**
+- `options`: `GoogleLiveSessionOptions`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `connect()`
+
+```typescript
+async connect(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `sendClientContent()`
+
+```typescript
+sendClientContent(params: Parameters&lt;Session['sendClientContent']&gt;[0]): void
+```
+
+**Parameters:**
+- `params`: `LiveSendClientContentParameters`
+
+**Returns:** `void`
+
+#### `sendRealtimeInput()`
+
+```typescript
+sendRealtimeInput(params: Parameters&lt;Session['sendRealtimeInput']&gt;[0]): void
+```
+
+**Parameters:**
+- `params`: `LiveSendRealtimeInputParameters`
+
+**Returns:** `void`
+
+#### `sendToolResponse()`
+
+```typescript
+sendToolResponse(params: Parameters&lt;Session['sendToolResponse']&gt;[0]): void
+```
+
+**Parameters:**
+- `params`: `LiveSendToolResponseParameters`
+
+**Returns:** `void`
+
+#### `close()`
+
+```typescript
+close(): void
+```
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: Connector` | - |
+| `model` | `model: string` | - |
+| `config?` | `config: LiveConnectConfig | undefined` | - |
+
+</details>
+
+---
+
 ### GrokRealtimeSession `class`
 
 📍 [`src/capabilities/voice/grok/GrokRealtimeSession.ts:17`](src/capabilities/voice/grok/GrokRealtimeSession.ts)
@@ -23284,9 +23696,99 @@ override updateSession(
 
 ---
 
+### OpenAILiveSession `class`
+
+📍 [`src/capabilities/openai/OpenAILiveSession.ts:17`](src/capabilities/openai/OpenAILiveSession.ts)
+
+Connector-first primary WebSocket session for GPT-Live.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(options: OpenAILiveSessionOptions)
+```
+
+**Parameters:**
+- `options`: `OpenAILiveSessionOptions`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `connect()`
+
+```typescript
+async connect(session: LiveAPI.SessionConfig): Promise&lt;LiveAPI.SessionResource&gt;
+```
+
+**Parameters:**
+- `session`: `SessionConfig`
+
+**Returns:** `Promise&lt;SessionResource&gt;`
+
+#### `appendAudio()`
+
+```typescript
+appendAudio(audio: Buffer | string, eventId?: string): void
+```
+
+**Parameters:**
+- `audio`: `string | Buffer&lt;ArrayBufferLike&gt;`
+- `eventId`: `string | undefined` *(optional)*
+
+**Returns:** `void`
+
+#### `send()`
+
+```typescript
+send(event: LiveAPI.ClientEvent): void
+```
+
+**Parameters:**
+- `event`: `ClientEvent`
+
+**Returns:** `void`
+
+#### `events()`
+
+```typescript
+events(): AsyncIterableIterator&lt;LiveStreamMessage&gt;
+```
+
+**Returns:** `AsyncIterableIterator&lt;LiveStreamMessage&gt;`
+
+#### `close()`
+
+```typescript
+close(code = 1000, reason = 'OK'): void
+```
+
+**Parameters:**
+- `code`: `number` *(optional)* (default: `1000`)
+- `reason`: `string` *(optional)* (default: `'OK'`)
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: Connector` | - |
+
+</details>
+
+---
+
 ### OpenAIRealtimeAgentSession `class`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:125`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:143`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
 
 Agent-aware controller for OpenAI Realtime voice sessions.
 
@@ -23497,7 +23999,7 @@ send(event: OpenAIRealtimeClientEvent): void
 
 ### OpenAIRealtimeSession `class`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:68`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:69`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
 
 Connector-first, server-side WebSocket client for OpenAI's GA Realtime API.
 It intentionally exposes the raw event stream while providing helpers for
@@ -23678,6 +24180,123 @@ on&lt;K extends keyof OpenAIRealtimeSessionEvents&gt;(event: K, handler: OpenAIR
 | `connector` | `connector: Connector` | - |
 | `model` | `model: OpenAIRealtimeModel` | - |
 | `initialSession?` | `initialSession: OpenAIRealtimeSessionConfig | OpenAIRealtimeTranscriptionSessionConfig | OpenAIRealtimeTranslationSessionConfig | undefined` | - |
+
+</details>
+
+---
+
+### OpenAIResponsesWebSocketSession `class`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:82`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+Connector-first Responses WebSocket session with GPT-6 Astra steering support.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(options: OpenAIResponsesWebSocketSessionOptions)
+```
+
+**Parameters:**
+- `options`: `OpenAIResponsesWebSocketSessionOptions`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `connect()`
+
+```typescript
+async connect(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `createResponse()`
+
+```typescript
+createResponse(options: OpenAIResponsesCreateEventOptions): void
+```
+
+**Parameters:**
+- `options`: `OpenAIResponsesCreateEventOptions`
+
+**Returns:** `void`
+
+#### `steer()`
+
+Queue additional user input for an active Astra response.
+
+```typescript
+steer(previousResponseId: string, input: ResponseSteerInput): void
+```
+
+**Parameters:**
+- `previousResponseId`: `string`
+- `input`: `ResponseSteerInput`
+
+**Returns:** `void`
+
+#### `send()`
+
+Send an advanced SDK-typed Responses WebSocket event.
+
+```typescript
+send(event: ResponsesAPI.ResponsesClientEvent): void
+```
+
+**Parameters:**
+- `event`: `ResponsesClientEvent`
+
+**Returns:** `void`
+
+#### `events()`
+
+```typescript
+events(): AsyncIterableIterator&lt;ResponsesStreamMessage&gt;
+```
+
+**Returns:** `AsyncIterableIterator&lt;ResponsesStreamMessage&gt;`
+
+#### `close()`
+
+```typescript
+close(code = 1000, reason = 'OK'): void
+```
+
+**Parameters:**
+- `code`: `number` *(optional)* (default: `1000`)
+- `reason`: `string` *(optional)* (default: `'OK'`)
+
+**Returns:** `void`
+
+#### `on()`
+
+```typescript
+override on&lt;K extends keyof OpenAIResponsesWebSocketSessionEvents&gt;(
+    event: K,
+    listener: OpenAIResponsesWebSocketSessionEvents[K],
+  ): this
+```
+
+**Parameters:**
+- `event`: `K`
+- `listener`: `OpenAIResponsesWebSocketSessionEvents[K]`
+
+**Returns:** `this`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: Connector` | - |
 
 </details>
 
@@ -24586,6 +25205,23 @@ Configuration for FileUserInfoStorage
 
 ---
 
+### GoogleLiveSessionOptions `interface`
+
+📍 [`src/capabilities/google/GoogleLiveSession.ts:10`](src/capabilities/google/GoogleLiveSession.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string | Connector;` | - |
+| `model` | `model: string;` | - |
+| `config?` | `config?: LiveConnectConfig;` | - |
+
+</details>
+
+---
+
 ### GrokRealtimeSessionConfig `interface`
 
 📍 [`src/capabilities/voice/openai/RealtimeTypes.ts:150`](src/capabilities/voice/openai/RealtimeTypes.ts)
@@ -24657,9 +25293,27 @@ Unified agent storage interface
 
 ---
 
+### OpenAILiveSessionOptions `interface`
+
+📍 [`src/capabilities/openai/OpenAILiveSession.ts:9`](src/capabilities/openai/OpenAILiveSession.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string | Connector;` | - |
+| `reconnect?` | `reconnect?: LiveWSReconnectOptions | null;` | - |
+| `maxQueueSize?` | `maxQueueSize?: number;` | - |
+| `connectTimeoutMs?` | `connectTimeoutMs?: number;` | - |
+
+</details>
+
+---
+
 ### OpenAIRealtimeAgentSessionEvents `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:81`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:86`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -24691,7 +25345,7 @@ Unified agent storage interface
 
 ### OpenAIRealtimeAgentSessionOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:47`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:48`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -24713,6 +25367,8 @@ automatic response behavior. Default: `per_turn`. |
     request: OpenAIRealtimeMCPApprovalRequest,
   ) =&gt; Promise&lt;OpenAIRealtimeMCPApprovalDecision&gt; | OpenAIRealtimeMCPApprovalDecision;` | Called for provider-hosted MCP tools. Missing handlers reject approval requests. |
 | `sessionExpiryWarningMs?` | `sessionExpiryWarningMs?: number;` | Emit session:expiring before OpenAI's hard 60-minute limit. Default: 55 minutes. |
+| `sessionUpdateTimeoutMs?` | `sessionUpdateTimeoutMs?: number;` | Maximum time to wait for OpenAI to acknowledge a session update. Default: 10 seconds. |
+| `toolDrainTimeoutMs?` | `toolDrainTimeoutMs?: number;` | Maximum time to drain active local tools during shutdown. Default: 5 seconds. |
 
 </details>
 
@@ -24720,7 +25376,7 @@ automatic response behavior. Default: `per_turn`. |
 
 ### OpenAIRealtimeAgentTransport `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:18`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:19`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
 
 Transport contract implemented by WebSocket, WebRTC data-channel, and SIP control adapters.
 
@@ -24871,7 +25527,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeAgentUsage `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:74`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:79`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -24889,7 +25545,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeConnectOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:50`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:51`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -24904,7 +25560,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeMCPApprovalDecision `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:42`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:43`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -24920,7 +25576,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeMCPApprovalRequest `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:35`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:36`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -24991,7 +25647,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeSessionEvents `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:54`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:55`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25010,7 +25666,7 @@ off?(event: string, handler: (...args: any[]) =&gt; void): unknown;
 
 ### OpenAIRealtimeSessionOptions `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:23`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:24`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25101,6 +25757,153 @@ Translation configuration accepted when minting a WebRTC client secret.
       language: string;
     };
   };` | - |
+
+</details>
+
+---
+
+### OpenAIResponseSteerMessage `interface`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:59`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+One user message accepted by the Responses mid-turn steering protocol.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type?` | `type?: 'message';` | - |
+| `role` | `role: 'user';` | - |
+| `content` | `content: string | ResponsesAPI.ResponseSteerInputContent[];` | - |
+
+</details>
+
+---
+
+### OpenAIResponsesWebSocketSessionEvents `interface`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:73`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `event` | `event: (event: ResponsesAPI.ResponsesServerEvent) =&gt; void;` | - |
+| `error` | `error: (error: Error) =&gt; void;` | - |
+| `close` | `close: (code: number, reason: string, unsent: ResponsesUnsentMessage[]) =&gt; void;` | - |
+| `reconnecting` | `reconnecting: (event: ResponsesReconnectingEvent) =&gt; void;` | - |
+| `reconnected` | `reconnected: () =&gt; void;` | - |
+
+</details>
+
+---
+
+### OpenAIResponsesWebSocketSessionOptions `interface`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:32`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string | Connector;` | - |
+| `headers?` | `headers?: Record&lt;string, string&gt;;` | - |
+| `connectTimeoutMs?` | `connectTimeoutMs?: number;` | - |
+| `reconnect?` | `reconnect?: ResponsesWSReconnectOptions | null;` | - |
+| `maxQueueSize?` | `maxQueueSize?: number;` | - |
+| `transportFactory?` | `transportFactory?: (
+    client: OpenAI,
+    options: {
+      headers?: Record&lt;string, string&gt;;
+      reconnect?: ResponsesWSReconnectOptions | null;
+      maxQueueSize?: number;
+    },
+  ) =&gt; OpenAIResponsesWebSocketTransport;` | Test/custom-runtime hook. Normal Node callers should leave this unset. |
+
+</details>
+
+---
+
+### OpenAIResponsesWebSocketTransport `interface`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:24`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `on()`
+
+```typescript
+on(event: string, listener: (...args: any[]) =&gt; void): unknown;
+```
+
+**Parameters:**
+- `event`: `string`
+- `listener`: `(...args: any[]) =&gt; void`
+
+**Returns:** `unknown`
+
+#### `send()`
+
+```typescript
+send(event: ResponsesAPI.ResponsesClientEvent): void;
+```
+
+**Parameters:**
+- `event`: `ResponsesClientEvent`
+
+**Returns:** `void`
+
+#### `stream()`
+
+```typescript
+stream(): AsyncIterableIterator&lt;ResponsesStreamMessage&gt;;
+```
+
+**Returns:** `AsyncIterableIterator&lt;ResponsesStreamMessage&gt;`
+
+#### `close()`
+
+```typescript
+close(props?: { code: number; reason: string }): void;
+```
+
+**Parameters:**
+- `props`: `{ code: number; reason: string; } | undefined` *(optional)*
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `socket` | `readonly socket: WebSocketLike;` | - |
+
+</details>
+
+---
+
+### PendingSessionUpdate `interface`
+
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts:125`](src/capabilities/voice/openai/OpenAIRealtimeAgentSession.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `eventId` | `eventId: string;` | - |
+| `resolve` | `resolve: () =&gt; void;` | - |
+| `reject` | `reject: (error: Error) =&gt; void;` | - |
+| `timer` | `timer: ReturnType&lt;typeof setTimeout&gt;;` | - |
+| `signal?` | `signal?: AbortSignal;` | - |
+| `abort?` | `abort?: () =&gt; void;` | - |
 
 </details>
 
@@ -25517,7 +26320,51 @@ Exposed to lifecycle hooks and event handlers.
 
 ### WebSocketLike `interface`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:14`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:13`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `on()`
+
+```typescript
+on(event: string, listener: (...args: any[]) =&gt; void): void;
+```
+
+**Parameters:**
+- `event`: `string`
+- `listener`: `(...args: any[]) =&gt; void`
+
+**Returns:** `void`
+
+#### `off()`
+
+```typescript
+off(event: string, listener: (...args: any[]) =&gt; void): void;
+```
+
+**Parameters:**
+- `event`: `string`
+- `listener`: `(...args: any[]) =&gt; void`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `readyState` | `readonly readyState: number;` | - |
+
+</details>
+
+---
+
+### WebSocketLike `interface`
+
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeSession.ts:15`](src/capabilities/voice/openai/OpenAIRealtimeSession.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -25579,6 +26426,77 @@ close(code?: number, reason?: string): void;
 | `bufferedAmount?` | `bufferedAmount?: number;` | - |
 
 </details>
+
+---
+
+### OpenAIResponsesCreateEventOptions `type`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:49`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+```typescript
+type OpenAIResponsesCreateEventOptions = Omit&lt;
+  ResponsesAPI.ResponsesClientEvent.ResponseCreate,
+  'type' | 'model' | 'input' | 'tools' | 'stream' | 'background'
+&gt; & {
+  model: string;
+  input: string | InputItem[];
+  tools?: Tool[];
+}
+```
+
+---
+
+### ResponsesCloseMessage `type`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:19`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+```typescript
+type ResponsesCloseMessage = Extract&lt;ResponsesStreamMessage, { type: 'close' }&gt;
+```
+
+---
+
+### ResponsesReconnectingEvent `type`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:22`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+```typescript
+type ResponsesReconnectingEvent = ResponsesReconnectingMessage['reconnect']
+```
+
+---
+
+### ResponsesReconnectingMessage `type`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:20`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+```typescript
+type ResponsesReconnectingMessage = Extract&lt;ResponsesStreamMessage, { type: 'reconnecting' }&gt;
+```
+
+---
+
+### ResponseSteerInput `type`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:69`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+Mid-turn steering accepts a string or a non-empty list of user messages.
+Tool results and general Responses input items are intentionally excluded.
+
+```typescript
+type ResponseSteerInput = | string
+  | [OpenAIResponseSteerMessage, ...OpenAIResponseSteerMessage[]]
+```
+
+---
+
+### ResponsesUnsentMessage `type`
+
+📍 [`src/capabilities/openai/OpenAIResponsesWebSocketSession.ts:21`](src/capabilities/openai/OpenAIResponsesWebSocketSession.ts)
+
+```typescript
+type ResponsesUnsentMessage = ResponsesCloseMessage['unsent'][number]
+```
 
 ---
 
@@ -26393,7 +27311,7 @@ static forIdentities(
 
 ### InvalidToolArgumentsError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:192`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:230`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -27086,7 +28004,7 @@ static reset(): void
 
 ### ToolExecutionError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:73`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:111`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -27974,7 +28892,7 @@ loadState(state: SerializedToolState): void
 
 ### ToolNotFoundError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:105`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:143`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -27994,7 +28912,7 @@ constructor(toolName: string)
 
 ### ToolPermissionDeniedError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:117`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:155`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -28547,7 +29465,7 @@ static isConnectorTool(entry: ToolRegistryEntry | ConnectorToolEntry): entry is 
 
 ### ToolTimeoutError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:90`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:128`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -28630,7 +29548,7 @@ constructor(
 
 ### AsyncToolConfig `interface`
 
-📍 [`src/domain/entities/Tool.ts:82`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:111`](src/domain/entities/Tool.ts)
 
 Configuration for async (non-blocking) tool behavior
 
@@ -28731,7 +29649,7 @@ within this window, it's treated as a timeout error. |
 
 ### BuiltInTool `interface`
 
-📍 [`src/domain/entities/Tool.ts:30`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:57`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -28925,6 +29843,25 @@ Must be unique among all registered tools. |
 
 ---
 
+### CustomToolCallOutputItem `interface`
+
+📍 [`src/domain/entities/Message.ts:66`](src/domain/entities/Message.ts)
+
+Top-level custom-tool result item for Responses continuations.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: 'custom_tool_call_output';` | - |
+| `call_id` | `call_id: string;` | - |
+| `output` | `output: string | ToolCallOutputContent[];` | - |
+
+</details>
+
+---
+
 ### CustomToolDefinition `interface`
 
 📍 [`src/domain/entities/CustomToolDefinition.ts:54`](src/domain/entities/CustomToolDefinition.ts)
@@ -29010,6 +29947,24 @@ Metadata for a custom tool
 
 ---
 
+### CustomToolResultContent `interface`
+
+📍 [`src/domain/entities/Content.ts:68`](src/domain/entities/Content.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: ContentType.CUSTOM_TOOL_RESULT;` | - |
+| `tool_use_id` | `tool_use_id: string;` | - |
+| `content` | `content: string | any;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
 ### CustomToolSummary `interface`
 
 📍 [`src/domain/entities/CustomToolDefinition.ts:80`](src/domain/entities/CustomToolDefinition.ts)
@@ -29048,6 +30003,25 @@ Test case for a custom tool
 | `expectedOutput?` | `expectedOutput?: unknown;` | Expected output (for validation) |
 | `lastResult?` | `lastResult?: unknown;` | Result from last test run |
 | `lastError?` | `lastError?: string;` | Error from last test run |
+
+</details>
+
+---
+
+### CustomToolUseContent `interface`
+
+📍 [`src/domain/entities/Content.ts:59`](src/domain/entities/Content.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: ContentType.CUSTOM_TOOL_USE;` | - |
+| `id` | `id: string;` | - |
+| `name` | `name: string;` | - |
+| `input` | `input: string;` | - |
+| `async?` | `async?: boolean;` | Whether the provider marked this as an async protocol call. |
 
 </details>
 
@@ -29206,6 +30180,29 @@ When set, read_file will automatically convert binary document formats to markdo
 
 ---
 
+### FreeformToolDefinition `interface`
+
+📍 [`src/domain/entities/Tool.ts:46`](src/domain/entities/Tool.ts)
+
+Free-form custom tool definition used by providers that accept text input.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: 'custom';` | - |
+| `name` | `name: string;` | - |
+| `description?` | `description?: string;` | - |
+| `format?` | `format?: Record&lt;string, unknown&gt;;` | - |
+| `async?` | `async?: boolean;` | OpenAI Responses async tool calling protocol flag. |
+| `allowedCallers?` | `allowedCallers?: Array&lt;'direct' | 'programmatic'&gt;;` | - |
+| `deferLoading?` | `deferLoading?: boolean;` | - |
+
+</details>
+
+---
+
 ### FunctionToolDefinition `interface`
 
 📍 [`src/domain/entities/Tool.ts:18`](src/domain/entities/Tool.ts)
@@ -29222,6 +30219,15 @@ When set, read_file will automatically convert binary document formats to markdo
     parameters?: JSONSchema;
     strict?: boolean; // Enforce schema strictly
   };` | - |
+| `async?` | `async?: boolean;` | OpenAI Responses async tool calling. When true, a compatible model may
+continue its turn while the host executes this function. The eventual
+result must be returned with the original call ID.
+
+This is a provider protocol flag and is distinct from `blocking: false`,
+which controls OneRingAI's managed agent execution loop. |
+| `allowedCallers?` | `allowedCallers?: Array&lt;'direct' | 'programmatic'&gt;;` | OpenAI tool invocation contexts. |
+| `deferLoading?` | `deferLoading?: boolean;` | Defer this tool for provider tool-search discovery. |
+| `outputSchema?` | `outputSchema?: JSONSchema;` | Schema for the JSON value encoded in the function output string. |
 | `blocking?` | `blocking?: boolean;` | - |
 | `timeout?` | `timeout?: number;` | - |
 
@@ -29887,7 +30893,7 @@ MCP Tool call result
 
 ### NativeToolEvent `interface`
 
-📍 [`src/domain/entities/Response.ts:36`](src/domain/entities/Response.ts)
+📍 [`src/domain/entities/Response.ts:38`](src/domain/entities/Response.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -29896,7 +30902,10 @@ MCP Tool call result
 |----------|------|-------------|
 | `capability` | `capability: string;` | - |
 | `id?` | `id?: string;` | - |
+| `call_id?` | `call_id?: string;` | Stable call identifier to use when the host must return a tool result. |
 | `status?` | `status?: string;` | - |
+| `phase?` | `phase?: 'call' | 'output';` | Whether this item requests execution or reports its result. |
+| `details?` | `details?: unknown;` | Provider-native call payload. Required for host-executed native tools. |
 | `error?` | `error?: { code?: string; message: string; details?: unknown };` | - |
 
 </details>
@@ -29990,7 +30999,7 @@ Parsed connector category: connector name + optional account alias.
 
 ### PendingAsyncTool `interface`
 
-📍 [`src/domain/entities/Tool.ts:115`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:144`](src/domain/entities/Tool.ts)
 
 Tracks a single async tool execution in flight
 
@@ -30389,7 +31398,7 @@ Default: true |
 
 ### ToolCall `interface`
 
-📍 [`src/domain/entities/Tool.ts:45`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:72`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -30402,6 +31411,7 @@ Default: true |
     name: string;
     arguments: string; // JSON string
   };` | - |
+| `async?` | `async?: boolean;` | Whether the provider marked this as an async protocol call. |
 | `blocking` | `blocking: boolean;` | - |
 | `state` | `state: ToolCallState;` | - |
 | `startTime?` | `startTime?: Date;` | - |
@@ -30414,7 +31424,7 @@ Default: true |
 
 ### ToolCallArgumentsDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:97`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:106`](src/domain/entities/StreamEvent.ts)
 
 Tool call arguments delta - incremental JSON
 
@@ -30436,7 +31446,7 @@ Tool call arguments delta - incremental JSON
 
 ### ToolCallArgumentsDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:109`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:118`](src/domain/entities/StreamEvent.ts)
 
 Tool call arguments complete
 
@@ -30449,6 +31459,8 @@ Tool call arguments complete
 | `tool_call_id` | `tool_call_id: string;` | - |
 | `tool_name` | `tool_name: string;` | - |
 | `arguments` | `arguments: string;` | - |
+| `tool_type?` | `tool_type?: 'function' | 'custom';` | - |
+| `async?` | `async?: boolean;` | - |
 | `incomplete?` | `incomplete?: boolean;` | - |
 
 </details>
@@ -30457,7 +31469,7 @@ Tool call arguments complete
 
 ### ToolCallBuffer `interface`
 
-📍 [`src/domain/entities/StreamState.ts:12`](src/domain/entities/StreamState.ts)
+📍 [`src/domain/entities/StreamState.ts:14`](src/domain/entities/StreamState.ts)
 
 Buffer for accumulating tool call arguments
 
@@ -30470,6 +31482,8 @@ Buffer for accumulating tool call arguments
 | `argumentChunks` | `argumentChunks: string[];` | - |
 | `isComplete` | `isComplete: boolean;` | - |
 | `startTime` | `startTime: Date;` | - |
+| `toolType?` | `toolType?: 'function' | 'custom';` | - |
+| `async?` | `async?: boolean;` | - |
 
 </details>
 
@@ -30496,7 +31510,7 @@ Buffer for accumulating tool call arguments during streaming
 
 ### ToolCallStartEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:85`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:87`](src/domain/entities/StreamEvent.ts)
 
 Tool call detected and starting
 
@@ -30507,8 +31521,12 @@ Tool call detected and starting
 |----------|------|-------------|
 | `type` | `type: StreamEventType.TOOL_CALL_START;` | - |
 | `item_id` | `item_id: string;` | - |
+| `output_index?` | `output_index?: number;` | Provider output position, used to replay mixed text/tool/reasoning output exactly. |
+| `sequence_number?` | `sequence_number?: number;` | - |
 | `tool_call_id` | `tool_call_id: string;` | - |
 | `tool_name` | `tool_name: string;` | - |
+| `tool_type?` | `tool_type?: 'function' | 'custom';` | Provider tool kind. Omitted for legacy converters. |
+| `async?` | `async?: boolean;` | Whether the provider allows the model to continue while the host runs the tool. |
 | `thought_signature?` | `thought_signature?: string;` | Google Gemini 3+ thought signature for round-tripping function calls |
 
 </details>
@@ -30670,7 +31688,7 @@ Resolution order in connector tools:
 
 ### ToolExecutionContext `interface`
 
-📍 [`src/domain/entities/Tool.ts:72`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:101`](src/domain/entities/Tool.ts)
 
 Tool execution context - tracks all tool calls in a generation
 
@@ -30690,7 +31708,7 @@ Tool execution context - tracks all tool calls in a generation
 
 ### ToolExecutionDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:130`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:141`](src/domain/entities/StreamEvent.ts)
 
 Tool execution complete
 
@@ -30772,7 +31790,7 @@ Tool execution result passed to afterToolExecution hook
 
 ### ToolExecutionStartEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:120`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:131`](src/domain/entities/StreamEvent.ts)
 
 Tool execution starting
 
@@ -30792,7 +31810,7 @@ Tool execution starting
 
 ### ToolFunction `interface`
 
-📍 [`src/domain/entities/Tool.ts:201`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:230`](src/domain/entities/Tool.ts)
 
 User-provided tool function
 
@@ -30823,7 +31841,7 @@ Used for logging, UI display, and debugging. |
 
 ### ToolIdempotency `interface`
 
-📍 [`src/domain/entities/Tool.ts:139`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:168`](src/domain/entities/Tool.ts)
 
 Idempotency configuration for tool caching
 
@@ -30947,7 +31965,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolOutputHints `interface`
 
-📍 [`src/domain/entities/Tool.ts:131`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:160`](src/domain/entities/Tool.ts)
 
 Output handling hints for context management
 
@@ -31014,7 +32032,7 @@ If set, session approvals expire after this duration. |
 
 ### ToolPermissionConfig `interface`
 
-📍 [`src/domain/entities/Tool.ts:165`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:194`](src/domain/entities/Tool.ts)
 
 Permission configuration for a tool
 
@@ -31156,7 +32174,7 @@ Metadata for a tool in the registry
 
 ### ToolResult `interface`
 
-📍 [`src/domain/entities/Tool.ts:59`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:88`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -31177,7 +32195,7 @@ Metadata for a tool in the registry
 
 ### ToolResultContent `interface`
 
-📍 [`src/domain/entities/Content.ts:54`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:75`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -31231,6 +32249,27 @@ Options for searching tools
 | `namespace?` | `namespace?: string;` | Filter by namespace |
 | `limit?` | `limit?: number;` | Maximum number of results |
 | `offset?` | `offset?: number;` | Offset for pagination |
+
+</details>
+
+---
+
+### ToolSearchOutputItem `interface`
+
+📍 [`src/domain/entities/Message.ts:116`](src/domain/entities/Message.ts)
+
+Tool definitions returned by a client-executed OpenAI tool-search call.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: 'tool_search_output';` | - |
+| `call_id` | `call_id: string;` | - |
+| `execution` | `execution: 'client';` | - |
+| `tools` | `tools: Array&lt;Record&lt;string, unknown&gt;&gt;;` | - |
+| `status?` | `status?: 'in_progress' | 'completed' | 'incomplete';` | - |
 
 </details>
 
@@ -31319,7 +32358,7 @@ Result from a tool search
 
 ### ToolUseContent `interface`
 
-📍 [`src/domain/entities/Content.ts:45`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:48`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -31330,6 +32369,7 @@ Result from a tool search
 | `id` | `id: string;` | - |
 | `name` | `name: string;` | - |
 | `arguments` | `arguments: string;` | - |
+| `async?` | `async?: boolean;` | Whether the provider marked this as an async protocol call. |
 | `thoughtSignature?` | `thoughtSignature?: string;` | Google Gemini 3+ opaque thought signature for round-tripping function calls |
 
 </details>
@@ -31428,7 +32468,7 @@ Arguments for web_search tool
 
 ### ToolCallState `enum`
 
-📍 [`src/domain/entities/Tool.ts:37`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:64`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -31497,24 +32537,36 @@ type LocalToolResolver = (
 
 ```typescript
 type NativeToolCapability = | 'web_search'
+  | 'x_search'
   | 'web_fetch'
   | 'code_execution'
   | 'file_search'
   | 'remote_mcp'
+  | 'computer_use'
+  | 'hosted_shell'
+  | 'apply_patch'
+  | 'tool_search'
+  | 'image_generation'
 ```
 
 ---
 
 ### NativeToolRequest `type`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:72`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:78`](src/domain/interfaces/IAdvancedInference.ts)
 
 ```typescript
 type NativeToolRequest = | { capability: 'web_search'; options?: Record&lt;string, unknown&gt; }
+  | { capability: 'x_search'; options?: Record&lt;string, unknown&gt; }
   | { capability: 'web_fetch'; options?: Record&lt;string, unknown&gt; }
   | { capability: 'code_execution'; options?: Record&lt;string, unknown&gt; }
   | { capability: 'file_search'; options: FileSearchOptions }
   | { capability: 'remote_mcp'; server: RemoteMcpDescriptor; options?: Record&lt;string, unknown&gt; }
+  | { capability: 'computer_use'; options?: Record&lt;string, unknown&gt; }
+  | { capability: 'hosted_shell'; options?: Record&lt;string, unknown&gt; }
+  | { capability: 'apply_patch'; options?: Record&lt;string, unknown&gt; }
+  | { capability: 'tool_search'; options?: Record&lt;string, unknown&gt; }
+  | { capability: 'image_generation'; options?: Record&lt;string, unknown&gt; }
 ```
 
 ---
@@ -31531,7 +32583,7 @@ type OpenAIRealtimeTool = OpenAIRealtimeFunctionTool | OpenAIRealtimeMCPTool
 
 ### PendingAsyncToolStatus `type`
 
-📍 [`src/domain/entities/Tool.ts:110`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:139`](src/domain/entities/Tool.ts)
 
 Status of a pending async tool execution
 
@@ -31625,10 +32677,22 @@ type ServiceToolFactory = (
 
 ### Tool `type`
 
-📍 [`src/domain/entities/Tool.ts:35`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:62`](src/domain/entities/Tool.ts)
 
 ```typescript
-type Tool = FunctionToolDefinition | BuiltInTool
+type Tool = FunctionToolDefinition | FreeformToolDefinition | BuiltInTool
+```
+
+---
+
+### ToolCallOutputContent `type`
+
+📍 [`src/domain/entities/Message.ts:57`](src/domain/entities/Message.ts)
+
+Top-level function result item for Responses continuations.
+
+```typescript
+type ToolCallOutputContent = InputTextContent | InputImageContent | InputFileContent
 ```
 
 ---
@@ -33347,7 +34411,7 @@ function deepClone&lt;T&gt;(value: T): T
 
 ### defaultDescribeCall `function`
 
-📍 [`src/domain/entities/Tool.ts:277`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:306`](src/domain/entities/Tool.ts)
 
 Default implementation for describeCall.
 Shows the first meaningful argument value.
@@ -33477,13 +34541,13 @@ export function formatTelegramToolError(prefix: string, error: unknown): string
 
 ### formatToolCallLog `function`
 
-📍 [`src/core/routineRunner.ts:384`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:391`](src/core/routineRunner.ts)
 
 Extract a formatted tool call log from the conversation history.
 Shows every tool_use → tool_result pair so the validator can see what actually happened.
 
 ```typescript
-function formatToolCallLog(conversation: ReadonlyArray&lt;OutputItem&gt;): string
+function formatToolCallLog(conversation: ReadonlyArray&lt;InputItem&gt;): string
 ```
 
 ---
@@ -33526,7 +34590,7 @@ function generateExecutionId(useRandomUUID: boolean): string
 
 ### generateToolCallId `function`
 
-📍 [`src/infrastructure/providers/shared/ResponseBuilder.ts:269`](src/infrastructure/providers/shared/ResponseBuilder.ts)
+📍 [`src/infrastructure/providers/shared/ResponseBuilder.ts:270`](src/infrastructure/providers/shared/ResponseBuilder.ts)
 
 Generate a tool call ID with optional provider prefix
 
@@ -33565,7 +34629,7 @@ export function getAllBuiltInTools(): ToolFunction[]
 
 ### getAnthropicNativeTools `function`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:53`](src/infrastructure/providers/anthropic/AnthropicTextProvider.ts)
+📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:54`](src/infrastructure/providers/anthropic/AnthropicTextProvider.ts)
 
 ```typescript
 function getAnthropicNativeTools(model: string): AdvancedTextCapabilities['nativeTools']
@@ -33588,7 +34652,7 @@ function getBuiltInToolFingerprint(
 
 ### getConnectorTools `function`
 
-📍 [`src/connectors/vendors/helpers.ts:461`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:513`](src/connectors/vendors/helpers.ts)
 
 Get all tools for a connector (delegates to ConnectorTools)
 
@@ -33600,7 +34664,7 @@ export function getConnectorTools(connectorName: string): ToolFunction[]
 
 ### getOpenAINativeTools `function`
 
-📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:37`](src/infrastructure/providers/openai/OpenAITextProvider.ts)
+📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:40`](src/infrastructure/providers/openai/OpenAITextProvider.ts)
 
 ```typescript
 function getOpenAINativeTools(model: string): AdvancedTextCapabilities['nativeTools']
@@ -33622,7 +34686,7 @@ export function getToolByName(name: string): ToolRegistryEntry | undefined
 
 ### getToolCallDescription `function`
 
-📍 [`src/domain/entities/Tool.ts:329`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:358`](src/domain/entities/Tool.ts)
 
 Get a human-readable description of a tool call.
 Uses the tool's describeCall method if available, otherwise falls back to default.
@@ -33730,7 +34794,7 @@ function isNormalizedToolFailure(value: unknown): boolean
 
 ### isToolCallArgumentsDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:303`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:358`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDelta(
@@ -33742,7 +34806,7 @@ export function isToolCallArgumentsDelta(
 
 ### isToolCallArgumentsDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:309`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:364`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDone(
@@ -33754,7 +34818,7 @@ export function isToolCallArgumentsDone(
 
 ### isToolCallStart `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:299`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:354`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallStart(event: StreamEvent): event is ToolCallStartEvent
@@ -33772,6 +34836,26 @@ which would cause double-serialization when passed through safeStringify().
 
 ```typescript
 function normalizeBody(body: unknown): unknown
+```
+
+---
+
+### openAINativeToolCapabilityForOutputType `function`
+
+📍 [`src/infrastructure/providers/openai/OpenAIResponsesConverter.ts:26`](src/infrastructure/providers/openai/OpenAIResponsesConverter.ts)
+
+```typescript
+export function openAINativeToolCapabilityForOutputType(type: string): string | undefined
+```
+
+---
+
+### openAINativeToolCapabilityForResultType `function`
+
+📍 [`src/infrastructure/providers/openai/OpenAIResponsesConverter.ts:44`](src/infrastructure/providers/openai/OpenAIResponsesConverter.ts)
+
+```typescript
+function openAINativeToolCapabilityForResultType(type: string): string | undefined
 ```
 
 ---
@@ -34210,7 +35294,7 @@ Real-time streaming of agent responses
 
 ### AnthropicStreamConverter `class`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicStreamConverter.ts:28`](src/infrastructure/providers/anthropic/AnthropicStreamConverter.ts)
+📍 [`src/infrastructure/providers/anthropic/AnthropicStreamConverter.ts:38`](src/infrastructure/providers/anthropic/AnthropicStreamConverter.ts)
 
 Converts Anthropic streaming events to our unified StreamEvent format
 
@@ -34374,13 +35458,15 @@ Create REASONING_DELTA event and accumulate reasoning buffer
 ```typescript
 protected emitReasoningDelta(
     delta: string,
-    itemId?: string
+    itemId?: string,
+    options?: { outputIndex?: number; contentIndex?: number },
   ): StreamEvent
 ```
 
 **Parameters:**
 - `delta`: `string`
 - `itemId`: `string | undefined` *(optional)*
+- `options`: `{ outputIndex?: number | undefined; contentIndex?: number | undefined; } | undefined` *(optional)*
 
 **Returns:** `StreamEvent`
 
@@ -34389,11 +35475,17 @@ protected emitReasoningDelta(
 Create REASONING_DONE event with accumulated reasoning
 
 ```typescript
-protected emitReasoningDone(itemId?: string): StreamEvent
+protected emitReasoningDone(
+    itemId?: string,
+    metadata?: Pick&lt;import('../../../domain/entities/StreamEvent.js').ReasoningDoneEvent, 'signature' | 'encrypted_content' | 'effort'&gt;,
+    options?: { outputIndex?: number },
+  ): StreamEvent
 ```
 
 **Parameters:**
 - `itemId`: `string | undefined` *(optional)*
+- `metadata`: `Pick&lt;ReasoningDoneEvent, "signature" | "encrypted_content" | "effort"&gt; | undefined` *(optional)*
+- `options`: `{ outputIndex?: number | undefined; } | undefined` *(optional)*
 
 **Returns:** `StreamEvent`
 
@@ -34402,13 +35494,19 @@ protected emitReasoningDone(itemId?: string): StreamEvent
 Create TOOL_CALL_START event
 
 ```typescript
-protected emitToolCallStart(toolCallId: string, toolName: string, itemId?: string): StreamEvent
+protected emitToolCallStart(
+    toolCallId: string,
+    toolName: string,
+    itemId?: string,
+    options?: { outputIndex?: number },
+  ): StreamEvent
 ```
 
 **Parameters:**
 - `toolCallId`: `string`
 - `toolName`: `string`
 - `itemId`: `string | undefined` *(optional)*
+- `options`: `{ outputIndex?: number | undefined; } | undefined` *(optional)*
 
 **Returns:** `StreamEvent`
 
@@ -34653,7 +35751,7 @@ reset(): void
 
 ### OpenAIResponsesStreamConverter `class`
 
-📍 [`src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts:22`](src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts)
+📍 [`src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts:23`](src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -34902,7 +36000,7 @@ static async *skip(
 
 ### StreamState `class`
 
-📍 [`src/domain/entities/StreamState.ts:22`](src/domain/entities/StreamState.ts)
+📍 [`src/domain/entities/StreamState.ts:78`](src/domain/entities/StreamState.ts)
 
 StreamState tracks all accumulated data during streaming
 
@@ -34930,12 +36028,13 @@ constructor(responseId: string, model: string, createdAt?: number)
 Accumulate text delta for a specific item
 
 ```typescript
-accumulateTextDelta(itemId: string, delta: string): void
+accumulateTextDelta(itemId: string, delta: string, position: StreamOutputPosition = {}): void
 ```
 
 **Parameters:**
 - `itemId`: `string`
 - `delta`: `string`
+- `position`: `StreamOutputPosition` *(optional)* (default: `{}`)
 
 **Returns:** `void`
 
@@ -34967,12 +36066,17 @@ getAllText(): string
 Accumulate reasoning delta for a specific item
 
 ```typescript
-accumulateReasoningDelta(itemId: string, delta: string): void
+accumulateReasoningDelta(
+    itemId: string,
+    delta: string,
+    position: StreamOutputPosition = {},
+  ): void
 ```
 
 **Parameters:**
 - `itemId`: `string`
 - `delta`: `string`
+- `position`: `StreamOutputPosition` *(optional)* (default: `{}`)
 
 **Returns:** `void`
 
@@ -34999,15 +36103,38 @@ getAllReasoning(): string
 
 **Returns:** `string`
 
-#### `getReasoningEntries()`
+#### `completeReasoning()`
 
 Reasoning blocks with provider item IDs, used by stateless replay APIs.
 
 ```typescript
-getReasoningEntries(): Array&lt;{ itemId: string; thinking: string }&gt;
+completeReasoning(
+    itemId: string,
+    metadata: { signature?: string; encryptedContent?: string; effort?: import('../interfaces/ITextProvider.js').ReasoningEffort },
+    position: StreamOutputPosition = {},
+  ): void
 ```
 
-**Returns:** `{ itemId: string; thinking: string; }[]`
+**Parameters:**
+- `itemId`: `string`
+- `metadata`: `{ signature?: string | undefined; encryptedContent?: string | undefined; effort?: ReasoningEffort | undefined; }`
+- `position`: `StreamOutputPosition` *(optional)* (default: `{}`)
+
+**Returns:** `void`
+
+#### `getReasoningEntries()`
+
+```typescript
+getReasoningEntries(): Array&lt;{
+    itemId: string;
+    thinking: string;
+    signature?: string;
+    encryptedContent?: string;
+    effort?: import('../interfaces/ITextProvider.js').ReasoningEffort;
+  }&gt;
+```
+
+**Returns:** `{ itemId: string; thinking: string; signature?: string | undefined; encryptedContent?: string | undefined; effort?: ReasoningEffort | undefined; }[]`
 
 #### `hasReasoning()`
 
@@ -35019,19 +36146,99 @@ hasReasoning(): boolean
 
 **Returns:** `boolean`
 
+#### `accumulateCompaction()`
+
+```typescript
+accumulateCompaction(item: CompactionItem, position: StreamOutputPosition = {}): void
+```
+
+**Parameters:**
+- `item`: `CompactionItem`
+- `position`: `StreamOutputPosition` *(optional)* (default: `{}`)
+
+**Returns:** `void`
+
+#### `getCompactions()`
+
+```typescript
+getCompactions(): CompactionItem[]
+```
+
+**Returns:** `CompactionItem[]`
+
+#### `hasCompactions()`
+
+```typescript
+hasCompactions(): boolean
+```
+
+**Returns:** `boolean`
+
+#### `accumulateProviderState()`
+
+```typescript
+accumulateProviderState(
+    itemId: string,
+    state: ProviderStateContent,
+    position: StreamOutputPosition = {},
+  ): void
+```
+
+**Parameters:**
+- `itemId`: `string`
+- `state`: `ProviderStateContent`
+- `position`: `StreamOutputPosition` *(optional)* (default: `{}`)
+
+**Returns:** `void`
+
+#### `getProviderStates()`
+
+```typescript
+getProviderStates(): ProviderStateContent[]
+```
+
+**Returns:** `ProviderStateContent[]`
+
+#### `hasProviderStates()`
+
+```typescript
+hasProviderStates(): boolean
+```
+
+**Returns:** `boolean`
+
 #### `startToolCall()`
 
 Start accumulating tool call arguments
 
 ```typescript
-startToolCall(toolCallId: string, toolName: string): void
+startToolCall(
+    toolCallId: string,
+    toolName: string,
+    itemId = toolCallId,
+    position: StreamOutputPosition = {},
+    metadata: { toolType?: 'function' | 'custom'; async?: boolean } = {},
+  ): void
 ```
 
 **Parameters:**
 - `toolCallId`: `string`
 - `toolName`: `string`
+- `itemId`: `string` *(optional)* (default: `toolCallId`)
+- `position`: `StreamOutputPosition` *(optional)* (default: `{}`)
+- `metadata`: `{ toolType?: "function" | "custom" | undefined; async?: boolean | undefined; }` *(optional)* (default: `{}`)
 
 **Returns:** `void`
+
+#### `getOrderedOutputEntries()`
+
+Reconstruct every streamed provider output item in its original order.
+
+```typescript
+getOrderedOutputEntries(): OrderedStreamOutputEntry[]
+```
+
+**Returns:** `OrderedStreamOutputEntry[]`
 
 #### `accumulateToolArguments()`
 
@@ -35231,7 +36438,7 @@ Get summary statistics
 getStatistics()
 ```
 
-**Returns:** `{ responseId: string; model: string; status: "completed" | "failed" | "in_progress" | "incomplete"; iterations: number; totalChunks: number; totalTextDeltas: number; totalToolCalls: number; textItemsCount: number; toolCallBuffersCount: number; completedToolCallsCount: number; durationMs: number; usage: { input_tokens: number; output_tokens: number; total_tokens: number; output_tokens_details?: { reasoning_tokens: number; } | undefined; cached_input_tokens?: number | undefined; cache_creation_input_tokens?: number | undefined; cache_creation_details?: { short_ttl_input_tokens?: number | undefined; extended_ttl_input_tokens?: number | undefined; } | undefined; native_tool_calls?: Record&lt;string, number | undefined&gt; | undefined; processing_mode?: ProcessingMode | undefined; service_tier?: string | undefined; speed?: string | undefined; }; providerStatus: "completed" | "failed" | "incomplete"; stopReason: string | undefined; stopDetails: ProviderStopDetails | undefined; }`
+**Returns:** `{ responseId: string; model: string; status: "completed" | "failed" | "in_progress" | "incomplete"; iterations: number; totalChunks: number; totalTextDeltas: number; totalToolCalls: number; textItemsCount: number; toolCallBuffersCount: number; completedToolCallsCount: number; durationMs: number; usage: { input_tokens: number; output_tokens: number; total_tokens: number; output_tokens_details?: { reasoning_tokens: number; } | undefined; cached_input_tokens?: number | undefined; cache_creation_input_tokens?: number | undefined; cache_creation_details?: { short_ttl_input_tokens?: number | undefined; extended_ttl_input_tokens?: number | undefined; } | undefined; native_tool_calls?: Record&lt;string, number | undefined&gt; | undefined; processing_mode?: ProcessingMode | undefined; service_tier?: string | undefined; speed?: string | undefined; cost_usd_ticks?: number | undefined; }; providerStatus: "completed" | "failed" | "incomplete"; stopReason: string | undefined; stopDetails: ProviderStopDetails | undefined; }`
 
 #### `hasText()`
 
@@ -35271,7 +36478,7 @@ Create a snapshot for checkpointing (error recovery)
 createSnapshot()
 ```
 
-**Returns:** `{ responseId: string; model: string; createdAt: number; textBuffers: Map&lt;string, string[]&gt;; reasoningBuffers: Map&lt;string, string[]&gt;; toolCallBuffers: Map&lt;string, ToolCallBuffer&gt;; completedToolCalls: ToolCall[]; toolResults: Map&lt;string, any&gt;; currentIteration: number; usage: { input_tokens: number; output_tokens: number; total_tokens: number; output_tokens_details?: { reasoning_tokens: number; } | undefined; cached_input_tokens?: number | undefined; cache_creation_input_tokens?: number | undefined; cache_creation_details?: { short_ttl_input_tokens?: number | undefined; extended_ttl_input_tokens?: number | undefined; } | undefined; native_tool_calls?: Record&lt;string, number | undefined&gt; | undefined; processing_mode?: ProcessingMode | undefined; service_tier?: string | undefined; speed?: string | undefined; }; status: "completed" | "failed" | "in_progress" | "incomplete"; providerStatus: "completed" | "failed" | "incomplete"; stopReason: string | undefined; stopDetails: ProviderStopDetails | undefined; startTime: Date; endTime: Date | undefined; }`
+**Returns:** `{ responseId: string; model: string; createdAt: number; textBuffers: Map&lt;string, string[]&gt;; reasoningBuffers: Map&lt;string, string[]&gt;; reasoningMetadata: Map&lt;string, { signature?: string | undefined; encryptedContent?: string | undefined; effort?: ReasoningEffort | undefined; }&gt;; compactions: Map&lt;string, CompactionItem&gt;; providerStates: Map&lt;string, ProviderStateContent&gt;; orderedOutputs: Map&lt;string, OrderedOutputRef&gt;; nextOutputOrdinal: number; toolCallBuffers: Map&lt;string, ToolCallBuffer&gt;; completedToolCalls: ToolCall[]; toolResults: Map&lt;string, any&gt;; currentIteration: number; usage: { input_tokens: number; output_tokens: number; total_tokens: number; output_tokens_details?: { reasoning_tokens: number; } | undefined; cached_input_tokens?: number | undefined; cache_creation_input_tokens?: number | undefined; cache_creation_details?: { short_ttl_input_tokens?: number | undefined; extended_ttl_input_tokens?: number | undefined; } | undefined; native_tool_calls?: Record&lt;string, number | undefined&gt; | undefined; processing_mode?: ProcessingMode | undefined; service_tier?: string | undefined; speed?: string | undefined; cost_usd_ticks?: number | undefined; }; status: "completed" | "failed" | "in_progress" | "incomplete"; providerStatus: "completed" | "failed" | "incomplete"; stopReason: string | undefined; stopDetails: ProviderStopDetails | undefined; continuationToken: string | undefined; startTime: Date; endTime: Date | undefined; }`
 
 </details>
 
@@ -35288,6 +36495,7 @@ createSnapshot()
 | `status` | `status: "completed" | "failed" | "in_progress" | "incomplete"` | - |
 | `providerStatus` | `providerStatus: "completed" | "failed" | "incomplete"` | Status reported by the provider's RESPONSE_COMPLETE event. Defaults to 'incomplete' (safe if never received). |
 | `stopReason?` | `stopReason: string | undefined` | Raw stop reason from provider (e.g., 'end_turn', 'max_tokens', 'SAFETY') |
+| `continuationToken?` | `continuationToken: string | undefined` | Opaque provider token used to resume an incomplete long decode. |
 | `stopDetails?` | `stopDetails: ProviderStopDetails | undefined` | Structured stop detail (Anthropic refusals: which classifier fired + why). |
 | `startTime` | `startTime: Date` | - |
 | `endTime?` | `endTime: Date | undefined` | - |
@@ -35381,7 +36589,7 @@ destroy(): void
 
 ### AudioChunkErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:241`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:294`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk error - TTS synthesis failed for a text chunk
 
@@ -35401,7 +36609,7 @@ Audio chunk error - TTS synthesis failed for a text chunk
 
 ### AudioChunkReadyEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:220`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:273`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk ready - TTS synthesis complete for a text chunk
 
@@ -35425,7 +36633,7 @@ Audio chunk ready - TTS synthesis complete for a text chunk
 
 ### AudioStreamCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:251`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:304`](src/domain/entities/StreamEvent.ts)
 
 Audio stream complete - all TTS chunks have been processed
 
@@ -35445,7 +36653,7 @@ Audio stream complete - all TTS chunks have been processed
 
 ### BaseStreamEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:39`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:41`](src/domain/entities/StreamEvent.ts)
 
 Base interface for all stream events
 
@@ -35461,9 +36669,34 @@ Base interface for all stream events
 
 ---
 
+### CompactionEvent `interface`
+
+📍 [`src/domain/entities/StreamEvent.ts:229`](src/domain/entities/StreamEvent.ts)
+
+Encrypted compaction state emitted by the provider. Preserve this item for
+stateless continuation replay; the content is intentionally opaque.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: StreamEventType.COMPACTION;` | - |
+| `item_id` | `item_id: string;` | - |
+| `output_index` | `output_index: number;` | - |
+| `encrypted_content` | `encrypted_content: string;` | - |
+| `content?` | `content?: string | null;` | Provider-readable summary, when the protocol exposes one. |
+| `signature?` | `signature?: string | null;` | Provider signature that must be replayed verbatim. |
+| `provider_metadata?` | `provider_metadata?: Record&lt;string, unknown&gt;;` | Opaque provider fields that must be replayed verbatim. |
+| `sequence_number` | `sequence_number: number;` | - |
+
+</details>
+
+---
+
 ### ContentBlockInfo `interface`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicStreamConverter.ts:19`](src/infrastructure/providers/anthropic/AnthropicStreamConverter.ts)
+📍 [`src/infrastructure/providers/anthropic/AnthropicStreamConverter.ts:23`](src/infrastructure/providers/anthropic/AnthropicStreamConverter.ts)
 
 Block info tracked during streaming
 
@@ -35475,6 +36708,12 @@ Block info tracked during streaming
 | `type` | `type: string;` | - |
 | `id?` | `id?: string;` | - |
 | `name?` | `name?: string;` | - |
+| `signature?` | `signature?: string;` | - |
+| `content?` | `content?: string | null;` | - |
+| `encryptedContent?` | `encryptedContent?: string | null;` | - |
+| `toolChanges?` | `toolChanges?: unknown;` | - |
+| `rawBlock?` | `rawBlock?: Record&lt;string, unknown&gt;;` | - |
+| `jsonChunks?` | `jsonChunks?: string[];` | - |
 
 </details>
 
@@ -35482,7 +36721,7 @@ Block info tracked during streaming
 
 ### ErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:203`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:256`](src/domain/entities/StreamEvent.ts)
 
 Error event
 
@@ -35577,7 +36816,7 @@ synthesizeStream(options: TTSOptions): AsyncIterableIterator&lt;TTSStreamChunk&g
 
 ### IterationCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:142`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:153`](src/domain/entities/StreamEvent.ts)
 
 Iteration complete - end of agentic loop iteration
 
@@ -35616,7 +36855,7 @@ getTracks(): MediaStreamTrackLike[]
 
 ### MediaStreamState `interface`
 
-📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:104`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
+📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:105`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -35655,9 +36894,31 @@ stop(): void
 
 ---
 
+### OrderedOutputRef `interface`
+
+📍 [`src/domain/entities/StreamState.ts:64`](src/domain/entities/StreamState.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `kind: OrderedStreamOutputEntry['kind'];` | - |
+| `key` | `key: string;` | - |
+| `dataKey` | `dataKey: string;` | - |
+| `itemId` | `itemId: string;` | - |
+| `toolCallId?` | `toolCallId?: string;` | - |
+| `outputIndex?` | `outputIndex?: number;` | - |
+| `contentIndex?` | `contentIndex?: number;` | - |
+| `ordinal` | `ordinal: number;` | - |
+
+</details>
+
+---
+
 ### OutputTextDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:63`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:65`](src/domain/entities/StreamEvent.ts)
 
 Text delta - incremental text output
 
@@ -35679,7 +36940,7 @@ Text delta - incremental text output
 
 ### OutputTextDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:75`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:77`](src/domain/entities/StreamEvent.ts)
 
 Text output complete for this item
 
@@ -35697,9 +36958,31 @@ Text output complete for this item
 
 ---
 
+### ProviderStateEvent `interface`
+
+📍 [`src/domain/entities/StreamEvent.ts:244`](src/domain/entities/StreamEvent.ts)
+
+Opaque provider-owned block that must be replayed on the next request.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: StreamEventType.PROVIDER_STATE;` | - |
+| `item_id` | `item_id: string;` | - |
+| `output_index` | `output_index: number;` | - |
+| `provider` | `provider: string;` | - |
+| `data` | `data: Record&lt;string, unknown&gt;;` | - |
+| `sequence_number` | `sequence_number: number;` | - |
+
+</details>
+
+---
+
 ### ReasoningDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:184`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:197`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking delta - incremental reasoning output
 
@@ -35710,6 +36993,8 @@ Reasoning/thinking delta - incremental reasoning output
 |----------|------|-------------|
 | `type` | `type: StreamEventType.REASONING_DELTA;` | - |
 | `item_id` | `item_id: string;` | - |
+| `output_index?` | `output_index?: number;` | Provider output position for ordered replay. |
+| `content_index?` | `content_index?: number;` | - |
 | `delta` | `delta: string;` | - |
 | `sequence_number` | `sequence_number: number;` | - |
 
@@ -35719,7 +37004,7 @@ Reasoning/thinking delta - incremental reasoning output
 
 ### ReasoningDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:194`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:210`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking complete for this item
 
@@ -35730,7 +37015,12 @@ Reasoning/thinking complete for this item
 |----------|------|-------------|
 | `type` | `type: StreamEventType.REASONING_DONE;` | - |
 | `item_id` | `item_id: string;` | - |
+| `output_index?` | `output_index?: number;` | Provider output position for ordered replay. |
+| `sequence_number?` | `sequence_number?: number;` | - |
 | `thinking` | `thinking: string;` | - |
+| `signature?` | `signature?: string;` | Provider signature required when replaying Anthropic thinking blocks. |
+| `encrypted_content?` | `encrypted_content?: string;` | Opaque OpenAI/xAI reasoning state required for stateless continuation. |
+| `effort?` | `effort?: import('../interfaces/ITextProvider.js').ReasoningEffort;` | Provider-reported reasoning effort, when present. |
 
 </details>
 
@@ -35738,7 +37028,7 @@ Reasoning/thinking complete for this item
 
 ### ResponseCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:152`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:163`](src/domain/entities/StreamEvent.ts)
 
 Response complete - final event
 
@@ -35753,6 +37043,7 @@ Response complete - final event
 | `iterations` | `iterations: number;` | - |
 | `duration_ms?` | `duration_ms?: number;` | - |
 | `stop_reason?` | `stop_reason?: string;` | Raw provider stop reason for diagnostics (e.g., 'end_turn', 'max_tokens', 'SAFETY') |
+| `continuation_token?` | `continuation_token?: string;` | Opaque provider token used to resume an incomplete long decode. |
 | `stop_details?` | `stop_details?: ProviderStopDetails;` | Structured detail accompanying a terminal stop reason, when the provider
 supplies one. Anthropic populates this only for `stop_reason: 'refusal'`
 (`{ type: 'refusal', category, explanation }`) — the `category` names which
@@ -35765,7 +37056,7 @@ is diagnosable rather than an opaque empty response. |
 
 ### ResponseCreatedEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:47`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:49`](src/domain/entities/StreamEvent.ts)
 
 Response created - first event in stream
 
@@ -35784,7 +37075,7 @@ Response created - first event in stream
 
 ### ResponseInProgressEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:56`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:58`](src/domain/entities/StreamEvent.ts)
 
 Response in progress
 
@@ -35801,7 +37092,7 @@ Response in progress
 
 ### RetryEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:173`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:186`](src/domain/entities/StreamEvent.ts)
 
 Retry event - emitted when agent retries an empty/incomplete LLM response
 
@@ -35815,6 +37106,23 @@ Retry event - emitted when agent retries an empty/incomplete LLM response
 | `max_attempts` | `max_attempts: number;` | - |
 | `reason` | `reason: string;` | - |
 | `delay_ms` | `delay_ms: number;` | - |
+
+</details>
+
+---
+
+### StreamOutputPosition `interface`
+
+📍 [`src/domain/entities/StreamState.ts:23`](src/domain/entities/StreamState.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `outputIndex?` | `outputIndex?: number;` | - |
+| `contentIndex?` | `contentIndex?: number;` | - |
+| `sequenceNumber?` | `sequenceNumber?: number;` | - |
 
 </details>
 
@@ -35912,6 +37220,8 @@ Stream event type enum
 | `ITERATION_COMPLETE` | `response.iteration.complete` | - |
 | `REASONING_DELTA` | `response.reasoning.delta` | - |
 | `REASONING_DONE` | `response.reasoning.done` | - |
+| `COMPACTION` | `response.compaction` | - |
+| `PROVIDER_STATE` | `response.provider_state` | - |
 | `RESPONSE_COMPLETE` | `response.complete` | - |
 | `RETRY` | `response.retry` | - |
 | `ERROR` | `response.error` | - |
@@ -35923,9 +37233,51 @@ Stream event type enum
 
 ---
 
+### OrderedStreamOutputEntry `type`
+
+📍 [`src/domain/entities/StreamState.ts:29`](src/domain/entities/StreamState.ts)
+
+```typescript
+type OrderedStreamOutputEntry = | {
+      kind: 'text';
+      itemId: string;
+      outputIndex?: number;
+      contentIndex?: number;
+      text: string;
+    }
+  | {
+      kind: 'reasoning';
+      itemId: string;
+      outputIndex?: number;
+      thinking: string;
+      signature?: string;
+      encryptedContent?: string;
+      effort?: import('../interfaces/ITextProvider.js').ReasoningEffort;
+    }
+  | { kind: 'compaction'; itemId: string; outputIndex?: number; item: CompactionItem }
+  | {
+      kind: 'provider_state';
+      itemId: string;
+      outputIndex?: number;
+      state: ProviderStateContent;
+    }
+  | {
+      kind: 'tool_call';
+      itemId: string;
+      outputIndex?: number;
+      toolCallId: string;
+      toolName: string;
+      arguments: string;
+      toolType?: 'function' | 'custom';
+      async?: boolean;
+    }
+```
+
+---
+
 ### ResponseStreamEvent `type`
 
-📍 [`src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts:20`](src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts)
+📍 [`src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts:21`](src/infrastructure/providers/openai/OpenAIResponsesStreamConverter.ts)
 
 ```typescript
 type ResponseStreamEvent = ResponsesAPI.ResponseStreamEvent
@@ -35935,7 +37287,7 @@ type ResponseStreamEvent = ResponsesAPI.ResponseStreamEvent
 
 ### StreamEvent `type`
 
-📍 [`src/domain/entities/StreamEvent.ts:262`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:315`](src/domain/entities/StreamEvent.ts)
 
 Union type of all stream events
 Discriminated by 'type' field for type narrowing
@@ -35947,6 +37299,8 @@ type StreamEvent = | ResponseCreatedEvent
   | OutputTextDoneEvent
   | ReasoningDeltaEvent
   | ReasoningDoneEvent
+  | CompactionEvent
+  | ProviderStateEvent
   | ToolCallStartEvent
   | ToolCallArgumentsDeltaEvent
   | ToolCallArgumentsDoneEvent
@@ -35975,7 +37329,7 @@ type WireObject = Record&lt;string, any&gt;
 
 ### isAudioChunkError `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:335`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:394`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorEvent
@@ -35985,7 +37339,7 @@ export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorE
 
 ### isAudioChunkReady `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:331`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:390`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyEvent
@@ -35995,7 +37349,7 @@ export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyE
 
 ### isAudioStreamComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:339`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:398`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamCompleteEvent
@@ -36003,9 +37357,19 @@ export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamC
 
 ---
 
+### isCompaction `function`
+
+📍 [`src/domain/entities/StreamEvent.ts:378`](src/domain/entities/StreamEvent.ts)
+
+```typescript
+export function isCompaction(event: StreamEvent): event is CompactionEvent
+```
+
+---
+
 ### isErrorEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:327`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:386`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isErrorEvent(event: StreamEvent): event is ErrorEvent
@@ -36015,7 +37379,7 @@ export function isErrorEvent(event: StreamEvent): event is ErrorEvent
 
 ### isOutputTextDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:295`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:350`](src/domain/entities/StreamEvent.ts)
 
 Type guards for specific events
 
@@ -36027,7 +37391,7 @@ export function isOutputTextDelta(event: StreamEvent): event is OutputTextDeltaE
 
 ### isReasoningDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:315`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:370`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEvent
@@ -36037,7 +37401,7 @@ export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEve
 
 ### isReasoningDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:319`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:374`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
@@ -36047,7 +37411,7 @@ export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
 
 ### isResponseComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:323`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:382`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isResponseComplete(event: StreamEvent): event is ResponseCompleteEvent
@@ -36057,7 +37421,7 @@ export function isResponseComplete(event: StreamEvent): event is ResponseComplet
 
 ### isStreamEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:285`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:340`](src/domain/entities/StreamEvent.ts)
 
 Type guard to check if event is a specific type
 
@@ -36088,7 +37452,7 @@ Model metadata, pricing, and capabilities
 
 ### ModelNotSupportedError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:137`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:175`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -36194,7 +37558,7 @@ Embedding model pricing
 
 ### IBaseModelDescription `interface`
 
-📍 [`src/domain/types/SharedTypes.ts:122`](src/domain/types/SharedTypes.ts)
+📍 [`src/domain/types/SharedTypes.ts:124`](src/domain/types/SharedTypes.ts)
 
 Base model description - shared by all registries
 Every model registry (Image, TTS, STT, Video) extends this
@@ -36245,7 +37609,7 @@ Complete embedding model description
 
 ### ILLMDescription `interface`
 
-📍 [`src/domain/entities/Model.ts:15`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:17`](src/domain/entities/Model.ts)
 
 Complete description of an LLM model including capabilities, pricing, and features
 
@@ -36274,6 +37638,9 @@ Complete description of an LLM model including capabilities, pricing, and featur
 | `features` | `features: {
     /** Supports extended reasoning/thinking */
     reasoning?: boolean;
+
+    /** Verified reasoning-effort values accepted by this model. */
+    reasoningEfforts?: readonly ('none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max')[];
 
     /** Supports streaming responses */
     streaming: boolean;
@@ -36310,6 +37677,21 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
     /** Supports prompt caching */
     promptCaching?: boolean;
+
+    /** Supports Responses async function/custom tool calls. */
+    asyncToolCalling?: boolean;
+
+    /** Supports Responses WebSocket mid-turn steering. */
+    midTurnSteering?: boolean;
+
+    /** Supports conversation-scoped `configuration_update` input items. */
+    configurationUpdates?: boolean;
+
+    /** Participates in OpenAI's asynchronous misalignment monitoring. */
+    misalignmentMonitoring?: boolean;
+
+    /** Provider-hosted tools verified for this exact model. */
+    nativeTools?: readonly NativeToolCapability[];
 
     /** Modality-specific prices. Token prices are USD per million tokens. */
     pricing?: {
@@ -36390,7 +37772,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### LongContextTokenPricing `interface`
 
-📍 [`src/domain/entities/Model.ts:191`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:212`](src/domain/entities/Model.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -36409,7 +37791,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelCapabilities `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:73`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:77`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -36470,7 +37852,7 @@ emitted only when the primitive actually called a connector.
 
 ### TokenPricing `interface`
 
-📍 [`src/domain/entities/Model.ts:200`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:221`](src/domain/entities/Model.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -36511,11 +37893,13 @@ Normalized API surfaces used by the first-party provider adapters.
 
 ```typescript
 type ModelEndpoint = | 'responses'
+  | 'decisions'
   | 'chat_completions'
   | 'completions'
   | 'messages'
   | 'generate_content'
   | 'interactions'
+  | 'live'
   | 'realtime'
   | 'batch'
   | 'image_generation'
@@ -36566,7 +37950,7 @@ type OpenAIRealtimeModel = | 'gpt-realtime-2.1'
 
 ### ProcessingMode `type`
 
-📍 [`src/domain/entities/Model.ts:182`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:202`](src/domain/entities/Model.ts)
 
 ```typescript
 type ProcessingMode = | 'interactive'
@@ -36574,6 +37958,7 @@ type ProcessingMode = | 'interactive'
   | 'batch'
   | 'flex'
   | 'fast'
+  | 'ultrafast'
   | 'priority'
   | 'off_peak'
 ```
@@ -36582,7 +37967,7 @@ type ProcessingMode = | 'interactive'
 
 ### calculateCost `function`
 
-📍 [`src/domain/entities/Model.ts:3941`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:5110`](src/domain/entities/Model.ts)
 
 Calculate the cost for a given model and token usage
 
@@ -36617,7 +38002,7 @@ export function calculateCost(
 
 ### calculateEmbeddingCost `function`
 
-📍 [`src/domain/entities/EmbeddingModel.ts:659`](src/domain/entities/EmbeddingModel.ts)
+📍 [`src/domain/entities/EmbeddingModel.ts:699`](src/domain/entities/EmbeddingModel.ts)
 
 Calculate embedding cost for a given model and token count
 
@@ -36633,7 +38018,7 @@ export function calculateEmbeddingCost(
 
 ### getActiveModels `function`
 
-📍 [`src/domain/entities/Model.ts:3922`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:5091`](src/domain/entities/Model.ts)
 
 Get all currently active models
 
@@ -36645,7 +38030,7 @@ export function getActiveModels(): ILLMDescription[]
 
 ### getDeprecatedModels `function`
 
-📍 [`src/domain/entities/Model.ts:3927`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:5096`](src/domain/entities/Model.ts)
 
 Get callable models carrying an explicit vendor deprecation notice.
 
@@ -36657,7 +38042,7 @@ export function getDeprecatedModels(): ILLMDescription[]
 
 ### getEmbeddingModelsWithFeature `function`
 
-📍 [`src/domain/entities/EmbeddingModel.ts:641`](src/domain/entities/EmbeddingModel.ts)
+📍 [`src/domain/entities/EmbeddingModel.ts:681`](src/domain/entities/EmbeddingModel.ts)
 
 Get embedding models that support a specific feature
 
@@ -36671,7 +38056,7 @@ export function getEmbeddingModelsWithFeature(
 
 ### getModelInfo `function`
 
-📍 [`src/domain/entities/Model.ts:3899`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:5068`](src/domain/entities/Model.ts)
 
 Get model information by name
 
@@ -36683,7 +38068,7 @@ export function getModelInfo(modelName: string): ILLMDescription | undefined
 
 ### getModelsByVendor `function`
 
-📍 [`src/domain/entities/Model.ts:3914`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:5083`](src/domain/entities/Model.ts)
 
 Get all models for a specific vendor
 
@@ -36723,7 +38108,7 @@ export function resolveModelCapabilities(
 
 ### resolveModelName `function`
 
-📍 [`src/domain/entities/Model.ts:3905`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:5074`](src/domain/entities/Model.ts)
 
 Resolve a direct model ID or floating alias to the registry's canonical ID.
 
@@ -36735,10 +38120,10 @@ export function resolveModelName(modelName: string): string | undefined
 
 ### EMBEDDING_MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/EmbeddingModel.ts:146`](src/domain/entities/EmbeddingModel.ts)
+📍 [`src/domain/entities/EmbeddingModel.ts:147`](src/domain/entities/EmbeddingModel.ts)
 
 Complete embedding model registry
-Last full audit: August 2026
+Last catalog audit: November 2026
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -36841,6 +38226,43 @@ Last full audit: August 2026
       currency: 'USD',
     },
   }` | - |
+| `'gemini-embedding-2-preview'` | `{
+    name: 'gemini-embedding-2-preview',
+    displayName: 'Gemini Embedding 2 Preview (redirected)',
+    provider: Vendor.Google,
+    description: 'Current multimodal embedding model mapping text, images, audio, video, and PDFs into one vector space',
+    isActive: false,
+    lifecycle: 'retired',
+    availability: 'public',
+    preferred: false,
+    endpoints: ['embeddings', 'batch'],
+    sources: {
+      documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-embedding-2',
+      pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
+      lastVerified: '2026-11-11',
+    },
+    retirementDate: '2026-11-06',
+    replacementModel: 'gemini-embedding-2',
+    capabilities: {
+      maxTokens: 8192,
+      defaultDimensions: 3072,
+      maxDimensions: 3072,
+      inputModalities: ['text', 'image', 'audio', 'video', 'document'],
+      features: { matryoshka: true, instructionAware: true, batchInput: true, multilingual: true },
+      limits: { maxBatchSize: 100 },
+    },
+    pricing: {
+      perMTokens: 0.20,
+      perMImageTokens: 0.45,
+      perMAudioTokens: 6.50,
+      perMVideoTokens: 12,
+      perImage: 0.00012,
+      perAudioSecond: 0.00016,
+      perVideoFrame: 0.00079,
+      batchMultiplier: 0.5,
+      currency: 'USD',
+    },
+  }` | - |
 | `'gemini-embedding-2'` | `{
     name: 'gemini-embedding-2',
     displayName: 'Gemini Embedding 2',
@@ -36851,11 +38273,11 @@ Last full audit: August 2026
     availability: 'public',
     preferred: true,
     endpoints: ['embeddings', 'batch'],
-    releaseDate: '2026-04-28',
+    releaseDate: '2026-04-22',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-embedding-2',
       pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       maxTokens: 8192,
@@ -37202,16 +38624,190 @@ Last full audit: August 2026
 
 ### MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/Model.ts:356`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:430`](src/domain/entities/Model.ts)
 
 Complete model registry with all model metadata
-Registry schema v2. Last full first-party documentation audit: 2026-08-30.
+Registry schema v2. Last vendor model update: 2026-11-11.
 
 <details>
 <summary><strong>Properties</strong></summary>
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `'gpt-6-cyber'` | `{
+    name: 'gpt-6-cyber',
+    provider: Vendor.OpenAI,
+    description: 'Access-controlled cybersecurity reasoning for approved Daybreak Red organizations',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'limited',
+    preferred: false,
+    endpoints: ['responses', 'chat_completions'],
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6-cyber', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-11' },
+    features: {
+      reasoning: true,
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: false, promptCaching: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 20, cpmCached: 2 },
+      output: { tokens: 128000, text: true, cpm: 100 },
+      pricing: {
+        text: {
+          input: 20, cachedInput: 2, cacheWrite: 25, output: 100,
+          longContext: { thresholdTokens: 272000, input: 40, cachedInput: 4, output: 150 },
+        },
+      },
+    },
+  }` | - |
+| `'gpt-6-astra'` | `{
+    name: 'gpt-6-astra',
+    provider: Vendor.OpenAI,
+    description: 'OpenAI\'s most capable model for complex reasoning, coding, computer use, research, and document creation',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    releaseDate: '2026-09-04',
+    knowledgeCutoff: '2026-04-30',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6-astra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      asyncToolCalling: true, midTurnSteering: true, configurationUpdates: true,
+      misalignmentMonitoring: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 10, cpmCached: 1 },
+      output: { tokens: 128000, text: true, cpm: 50 },
+      pricing: {
+        text: {
+          input: 10, cachedInput: 1, cacheWrite: 12.5, output: 50,
+          longContext: { thresholdTokens: 272000, input: 20, cachedInput: 2, cacheWrite: 25, output: 75 },
+        },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  }` | - |
+| `'gpt-6.1-terra'` | `{
+    name: 'gpt-6.1-terra',
+    provider: Vendor.OpenAI,
+    description: 'Fast visual reasoning, precise computer use, and natural writing; tool calls require Responses; sampling requires reasoning effort none',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6.1-terra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-11' },
+    features: {
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      parameters: { temperature: true, topP: true, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 1, cpmCached: 0.05 },
+      output: { tokens: 128_000, text: true, cpm: 5 },
+      pricing: {
+        text: {
+          input: 1, cachedInput: 0.05, cacheWrite: 1.25, output: 5,
+          longContext: { thresholdTokens: 272_000, input: 2, cachedInput: 0.1, cacheWrite: 2.5, output: 7.5 },
+        },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  }` | - |
+| `'gpt-6.1-sol'` | `{
+    name: 'gpt-6.1-sol',
+    provider: Vendor.OpenAI,
+    description: 'Latest GPT-6 workhorse for coding, professional work, and long-running agents',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    releaseDate: '2026-09-29',
+    knowledgeCutoff: '2026-04-30',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6.1-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      asyncToolCalling: true, midTurnSteering: true, configurationUpdates: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 2, cpmCached: 0.1 },
+      output: { tokens: 128_000, text: true, cpm: 10 },
+      pricing: {
+        text: {
+          input: 2, cachedInput: 0.1, cacheWrite: 2.5, output: 10,
+          longContext: { thresholdTokens: 272_000, input: 4, cachedInput: 0.2, cacheWrite: 5, output: 15 },
+        },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  }` | - |
+| `'gpt-6-sol'` | `{
+    name: 'gpt-6-sol',
+    provider: Vendor.OpenAI,
+    description: 'GPT-6 workhorse model for coding, professional work, and agentic workloads',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    releaseDate: '2026-09-22',
+    knowledgeCutoff: '2026-04-20',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      asyncToolCalling: true, midTurnSteering: true, configurationUpdates: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 2, cpmCached: 0.2 },
+      output: { tokens: 128_000, text: true, cpm: 10 },
+      pricing: {
+        text: {
+          input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 10,
+          longContext: { thresholdTokens: 272_000, input: 4, cachedInput: 0.4, cacheWrite: 5, output: 15 },
+        },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  }` | - |
+| `'gpt-6-luna'` | `{
+    name: 'gpt-6-luna',
+    provider: Vendor.OpenAI,
+    description: 'Fast, economical GPT-6 model for high-throughput workloads and Decisions API classification',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'decisions', 'chat_completions', 'batch'],
+    releaseDate: '2026-09-22',
+    knowledgeCutoff: '2026-05-18',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6-luna', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      asyncToolCalling: true, midTurnSteering: true, configurationUpdates: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 0.1, cpmCached: 0.01 },
+      output: { tokens: 128_000, text: true, cpm: 0.5 },
+      pricing: {
+        text: {
+          input: 0.1, cachedInput: 0.01, cacheWrite: 0.125, output: 0.5,
+          longContext: { thresholdTokens: 272_000, input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 0.75 },
+        },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  }` | - |
 | `'gpt-5.6-sol'` | `{
     name: 'gpt-5.6-sol',
     provider: Vendor.OpenAI,
@@ -37220,14 +38816,15 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    aliases: ['gpt-5.6'],
+    aliases: ['gpt-5.6', 'gpt-daybreak-blue-latest'],
     snapshots: ['gpt-5.6-sol-2026-07-09'],
     endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-07-09',
     knowledgeCutoff: '2026-02-16',
     sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
     features: {
-      reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
       audio: false, video: false, batchAPI: true, promptCaching: true,
       parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
@@ -37256,7 +38853,8 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     knowledgeCutoff: '2026-02-16',
     sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-terra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
     features: {
-      reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
       audio: false, video: false, batchAPI: true, promptCaching: true,
       parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
@@ -37284,7 +38882,8 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     knowledgeCutoff: '2026-02-16',
     sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-luna', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
     features: {
-      reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
       audio: false, video: false, batchAPI: true, promptCaching: true,
       parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
@@ -37297,6 +38896,52 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
         },
         processingMultipliers: { batch: 0.5, fast: 2 },
       },
+    },
+  }` | - |
+| `'gpt-5.6-cyber'` | `{
+    name: 'gpt-5.6-cyber',
+    provider: Vendor.OpenAI,
+    description: 'Purpose-trained cybersecurity model for approved defenders conducting authorized vulnerability research, exploit validation, and security testing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'limited',
+    aliases: ['gpt-daybreak-red-latest'],
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    knowledgeCutoff: '2026-02-16',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-cyber', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 400_000, text: true, image: true, cpm: 12.5, cpmCached: 1.25 },
+      output: { tokens: 128_000, text: true, cpm: 75 },
+      pricing: {
+        text: { input: 12.5, cachedInput: 1.25, cacheWrite: 15.625, output: 75 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  }` | - |
+| `'gpt-rosalind-research'` | `{
+    name: 'gpt-rosalind-research',
+    provider: Vendor.OpenAI,
+    description: 'Specialized GPT-Rosalind model for approved internal life-sciences research through OpenAI trusted access',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'limited',
+    endpoints: ['responses'],
+    releaseDate: '2026-09-08',
+    sources: { documentation: 'https://developers.openai.com/api/docs/changelog', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true,
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: false, promptCaching: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: null, text: true, image: true, cpm: 5, cpmCached: 0.5 },
+      output: { tokens: null, text: true, cpm: 25 },
+      pricing: { text: { input: 5, cachedInput: 0.5, output: 25 } },
     },
   }` | - |
 | `'gpt-5.5-pro'` | `{
@@ -37456,6 +39101,12 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     releaseDate: '2026-03-17',
     knowledgeCutoff: '2025-08-31',
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-01',
+    retirementDate: '2027-04-01',
+    replacementModel: 'gpt-6-luna',
+    preferred: false,
+    sources: { documentation: 'https://developers.openai.com/api/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: true,
       streaming: true,
@@ -37535,6 +39186,12 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     releaseDate: '2026-02-01',
     knowledgeCutoff: '2025-08-31',
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-01',
+    retirementDate: '2027-04-01',
+    replacementModel: 'gpt-6-sol',
+    preferred: false,
+    sources: { documentation: 'https://developers.openai.com/api/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: true,
       streaming: true,
@@ -37777,6 +39434,12 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     releaseDate: '2025-10-01',
     knowledgeCutoff: '2024-09-30',
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-01',
+    retirementDate: '2027-04-01',
+    replacementModel: 'gpt-6-sol',
+    preferred: false,
+    sources: { documentation: 'https://developers.openai.com/api/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: true,
       streaming: true,
@@ -38189,6 +39852,12 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     releaseDate: '2025-04-14',
     knowledgeCutoff: '2024-06-01',
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-14',
+    retirementDate: '2027-01-14',
+    replacementModel: 'gpt-6-luna',
+    preferred: false,
+    sources: { documentation: 'https://developers.openai.com/api/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: false,
       streaming: true,
@@ -38223,6 +39892,12 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     releaseDate: '2025-04-14',
     knowledgeCutoff: '2024-06-01',
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-14',
+    retirementDate: '2027-01-14',
+    replacementModel: 'gpt-6-luna',
+    preferred: false,
+    sources: { documentation: 'https://developers.openai.com/api/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: false,
       streaming: true,
@@ -38254,13 +39929,15 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     name: 'gpt-4.1-nano',
     provider: Vendor.OpenAI,
     description: 'Fastest and cheapest model with 1M context. 80.1% MMLU, ideal for classification/autocompletion',
-    isActive: true,
-    lifecycle: 'deprecated',
+    isActive: false,
+    lifecycle: 'retired',
     deprecationDate: '2026-04-22',
     retirementDate: '2026-10-23',
     replacementModel: 'gpt-5.6-luna',
     releaseDate: '2025-04-14',
     knowledgeCutoff: '2024-06-01',
+    preferred: false,
+    sources: { documentation: 'https://developers.openai.com/api/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: false,
       streaming: true,
@@ -38295,6 +39972,12 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     releaseDate: '2024-05-13',
     knowledgeCutoff: '2023-10-01',
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-14',
+    retirementDate: '2027-01-14',
+    replacementModel: 'gpt-6-luna',
+    preferred: false,
+    sources: { documentation: 'https://developers.openai.com/api/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: false,
       streaming: true,
@@ -38329,6 +40012,12 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     releaseDate: '2024-07-18',
     knowledgeCutoff: '2023-10-01',
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-10-14',
+    retirementDate: '2027-01-14',
+    replacementModel: 'gpt-6-luna',
+    preferred: false,
+    sources: { documentation: 'https://developers.openai.com/api/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: false,
       streaming: true,
@@ -38465,6 +40154,28 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
         audio: true,
         cpm: 2.4,
       },
+    },
+  }` | - |
+| `'gpt-live-1'` | `{
+    name: 'gpt-live-1',
+    provider: Vendor.OpenAI,
+    description: 'Full-duplex voice model for natural conversations, smooth interruptions, and delegation to a backend Responses agent',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['live'],
+    releaseDate: '2026-09-22',
+    knowledgeCutoff: '2025-07-31',
+    voices: OPENAI_REALTIME_VOICES,
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-live-1', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: false, streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: true, vision: false,
+      audio: true, video: false, batchAPI: false, promptCaching: false,
+      pricing: { audioDurationPerMinute: 0.05 },
+      input: { tokens: 128_000, text: true, audio: true, cpm: 0 },
+      output: { tokens: null, text: true, audio: true, cpm: 0 },
     },
   }` | - |
 | `'gpt-realtime-2.1'` | `{
@@ -39011,20 +40722,207 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
       },
     },
   }` | - |
-| `'claude-opus-5'` | `{
-    name: 'claude-opus-5',
+| `'claude-fable-5-2'` | `{
+    name: 'claude-fable-5-2',
     provider: Vendor.Anthropic,
-    description: 'Frontier Claude model for complex agentic coding and enterprise work; adaptive thinking is enabled by default',
+    description: 'Demanding reasoning and long-horizon agentic work; adaptive thinking is always on',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
     endpoints: ['messages', 'batch'],
-    releaseDate: '2026-07-01',
-    knowledgeCutoff: '2026-05-01',
-    sources: { documentation: 'https://platform.claude.com/docs/en/about-claude/models/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-08-30' },
+    releaseDate: '2026-11-09',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/fable-5-2/overview', pricing: 'https://platform.claude.com/docs/en/models/fable-5-2/overview', lastVerified: '2026-11-11' },
     features: {
-      reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_000_000, text: true, image: true, cpm: 8, cpmCached: 0.2 },
+      output: { tokens: 128_000, text: true, cpm: 40 },
+      pricing: {
+        text: { input: 8, cachedInput: 0.2, cacheWrite: 10, output: 40 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  }` | - |
+| `'claude-mythos-5-2'` | `{
+    name: 'claude-mythos-5-2',
+    provider: Vendor.Anthropic,
+    description: 'Demanding reasoning and long-horizon agentic work; adaptive thinking is always on; organization verification required',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'invite_only',
+    endpoints: ['messages', 'batch'],
+    releaseDate: '2026-11-09',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/mythos-5-2/overview', pricing: 'https://platform.claude.com/docs/en/models/mythos-5-2/overview', lastVerified: '2026-11-11' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_000_000, text: true, image: true, cpm: 8, cpmCached: 0.2 },
+      output: { tokens: 128_000, text: true, cpm: 40 },
+      pricing: {
+        text: { input: 8, cachedInput: 0.2, cacheWrite: 10, output: 40 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  }` | - |
+| `'claude-haiku-5-5'` | `{
+    name: 'claude-haiku-5-5',
+    provider: Vendor.Anthropic,
+    description: 'Low-latency Claude with adaptive thinking; prompts over 100K tokens use the higher all-token price tier',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['messages', 'batch'],
+    releaseDate: '2026-10-07',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/haiku-5-5/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-11-11' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_000_000, text: true, image: true, cpm: 0.1, cpmCached: 0.01 },
+      output: { tokens: 128_000, text: true, cpm: 0.5 },
+      pricing: {
+        text: {
+          input: 0.1, cachedInput: 0.01, cacheWrite: 0.125, output: 0.5,
+          longContext: { thresholdTokens: 100_001, input: 0.5, cachedInput: 0.05, cacheWrite: 0.625, output: 2.5 },
+        },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  }` | - |
+| `'claude-opus-5-5'` | `{
+    name: 'claude-opus-5-5',
+    provider: Vendor.Anthropic,
+    description: 'Anthropic flagship for the most demanding reasoning, coding, and long-horizon agentic work',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['messages', 'batch'],
+    releaseDate: '2026-09-22',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/opus-5-5/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_000_000, text: true, image: true, cpm: 4, cpmCached: 0.2 },
+      output: { tokens: 128_000, text: true, cpm: 20 },
+      pricing: {
+        text: { input: 4, cachedInput: 0.2, cacheWrite: 5, output: 20 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  }` | - |
+| `'claude-sonnet-5-5'` | `{
+    name: 'claude-sonnet-5-5',
+    provider: Vendor.Anthropic,
+    description: 'Latest balanced Claude model for coding, agents, and production knowledge work',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['messages', 'batch'],
+    releaseDate: '2026-09-28',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/sonnet-5-5/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-11-11' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_000_000, text: true, image: true, cpm: 2, cpmCached: 0.1 },
+      output: { tokens: 128_000, text: true, cpm: 10 },
+      pricing: {
+        text: { input: 2, cachedInput: 0.1, cacheWrite: 2.5, output: 10 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  }` | - |
+| `'claude-fable-5-1'` | `{
+    name: 'claude-fable-5-1',
+    provider: Vendor.Anthropic,
+    description: 'Anthropic\'s most capable public model for demanding reasoning and long-horizon agentic work; adaptive thinking is always on',
+    isActive: true,
+    lifecycle: 'legacy',
+    availability: 'public',
+    preferred: false,
+    endpoints: ['messages', 'batch'],
+    releaseDate: '2026-09-01',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/fable-5-1/overview', pricing: 'https://platform.claude.com/docs/en/models/fable-5-1/overview', lastVerified: '2026-11-11' },
+    replacementModel: 'claude-fable-5-2',
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_000_000, text: true, image: true, cpm: 10, cpmCached: 0.25 },
+      output: { tokens: 128_000, text: true, cpm: 50 },
+      pricing: {
+        text: { input: 10, cachedInput: 0.25, cacheWrite: 12.5, output: 50 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  }` | - |
+| `'claude-mythos-5-1'` | `{
+    name: 'claude-mythos-5-1',
+    provider: Vendor.Anthropic,
+    description: 'Invite-only Project Glasswing counterpart to Claude Fable 5.1 with the same specifications, capabilities, and pricing',
+    isActive: true,
+    lifecycle: 'legacy',
+    availability: 'invite_only',
+    endpoints: ['messages', 'batch'],
+    releaseDate: '2026-09-01',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/mythos-5-1/overview', pricing: 'https://platform.claude.com/docs/en/models/mythos-5-1/overview', lastVerified: '2026-11-11' },
+    preferred: false,
+    replacementModel: 'claude-mythos-5-2',
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_000_000, text: true, image: true, cpm: 10, cpmCached: 0.25 },
+      output: { tokens: 128_000, text: true, cpm: 50 },
+      pricing: {
+        text: { input: 10, cachedInput: 0.25, cacheWrite: 12.5, output: 50 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  }` | - |
+| `'claude-opus-5'` | `{
+    name: 'claude-opus-5',
+    provider: Vendor.Anthropic,
+    description: 'Frontier Claude model for complex agentic coding and enterprise work; adaptive thinking is enabled by default',
+    isActive: true,
+    lifecycle: 'legacy',
+    availability: 'public',
+    replacementModel: 'claude-opus-5-5',
+    endpoints: ['messages', 'batch'],
+    releaseDate: '2026-07-24',
+    knowledgeCutoff: '2026-05-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/opus-5/overview', pricing: 'https://platform.claude.com/docs/en/models/opus-5/overview', lastVerified: '2026-09-04' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
       audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
       parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
@@ -39041,14 +40939,16 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     provider: Vendor.Anthropic,
     description: 'Limited-release counterpart to Claude Fable 5 without its safety classifiers; always-on adaptive thinking',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'legacy',
     availability: 'invite_only',
+    replacementModel: 'claude-mythos-5-1',
     endpoints: ['messages', 'batch'],
     releaseDate: '2026-06-09',
     knowledgeCutoff: '2026-01-01',
-    sources: { documentation: 'https://platform.claude.com/docs/en/about-claude/models/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/mythos-5/overview', pricing: 'https://platform.claude.com/docs/en/models/mythos-5/overview', lastVerified: '2026-09-04' },
     features: {
-      reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
       audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
       parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
@@ -39063,12 +40963,11 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
 | `'claude-opus-4-8'` | `{
     name: 'claude-opus-4-8',
     provider: Vendor.Anthropic,
-    description: 'Most capable Opus-tier model — highly autonomous, state-of-the-art long-horizon agentic work, knowledge work, and memory. 1M context, 128K output, adaptive thinking (low/medium/high/xhigh/max effort), high-resolution vision. Does not accept `temperature`.',
+    description: 'Previous-generation active Opus model for autonomous long-horizon agentic work, knowledge work, and memory. 1M context, 128K output, adaptive thinking (low/medium/high/xhigh/max effort), high-resolution vision. Does not accept `temperature`.',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
     endpoints: ['messages', 'batch'],
-    preferred: true,
     releaseDate: '2026-05-01',
     knowledgeCutoff: '2026-01-01',
     features: {
@@ -39107,14 +41006,16 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     provider: Vendor.Anthropic,
     description: 'Best combination of speed and intelligence; near-Opus quality on coding and agentic work. 1M context, 128K output, adaptive thinking on by default (low/medium/high/xhigh/max effort), high-resolution vision. New tokenizer. Does not accept `temperature`.',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'legacy',
     availability: 'public',
     endpoints: ['messages', 'batch'],
-    preferred: true,
-    releaseDate: '2026-05-01',
+    replacementModel: 'claude-sonnet-5-5',
+    releaseDate: '2026-06-30',
     knowledgeCutoff: '2026-01-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/sonnet-5/overview', pricing: 'https://platform.claude.com/docs/en/models/sonnet-5/overview', lastVerified: '2026-09-04' },
     features: {
       reasoning: true,
+      reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true,
       structuredOutput: true,
       functionCalling: true,
@@ -39134,29 +41035,35 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
         tokens: 1000000,
         text: true,
         image: true,
-        cpm: 3,
-        cpmCached: 0.3,
+        cpm: 2,
+        cpmCached: 0.2,
       },
       output: {
         tokens: 128000,
         text: true,
-        cpm: 15,
+        cpm: 10,
+      },
+      pricing: {
+        text: { input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 10 },
+        processingMultipliers: { batch: 0.5 },
       },
     },
   }` | - |
 | `'claude-fable-5'` | `{
     name: 'claude-fable-5',
     provider: Vendor.Anthropic,
-    description: 'Anthropic\'s most capable widely released model, for the most demanding reasoning and long-horizon agentic work. 1M context, 128K output, thinking always on (raw chain of thought never returned). Does not accept `temperature`. Requires 30-day data retention.',
+    description: 'Legacy Fable model for demanding reasoning and long-horizon agentic work. 1M context, 128K output, thinking always on (raw chain of thought never returned). Does not accept `temperature`. Requires 30-day data retention.',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'legacy',
     availability: 'public',
+    replacementModel: 'claude-fable-5-1',
     endpoints: ['messages', 'batch'],
     releaseDate: '2026-06-09',
     knowledgeCutoff: '2026-01-01',
-    sources: { documentation: 'https://platform.claude.com/docs/en/about-claude/models/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/fable-5/overview', pricing: 'https://platform.claude.com/docs/en/models/fable-5/overview', lastVerified: '2026-09-04' },
     features: {
       reasoning: true,
+      reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true,
       structuredOutput: true,
       functionCalling: true,
@@ -39406,7 +41313,7 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: false,
     lifecycle: 'retired',
     retirementDate: '2026-08-05',
-    replacementModel: 'claude-opus-5',
+    replacementModel: 'claude-opus-4-8',
     releaseDate: '2025-08-05',
     knowledgeCutoff: '2025-01-01',
     features: {
@@ -39444,7 +41351,7 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: false,
     lifecycle: 'retired',
     retirementDate: '2026-06-15',
-    replacementModel: 'claude-opus-5',
+    replacementModel: 'claude-opus-4-8',
     releaseDate: '2025-05-14',
     knowledgeCutoff: '2025-01-01',
     features: {
@@ -39482,7 +41389,7 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: false,
     lifecycle: 'retired',
     retirementDate: '2026-06-15',
-    replacementModel: 'claude-sonnet-5',
+    replacementModel: 'claude-sonnet-4-6',
     releaseDate: '2025-05-14',
     knowledgeCutoff: '2025-01-01',
     features: {
@@ -39520,7 +41427,7 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: false,
     lifecycle: 'retired',
     retirementDate: '2026-02-19',
-    replacementModel: 'claude-sonnet-5',
+    replacementModel: 'claude-sonnet-4-6',
     releaseDate: '2025-02-19',
     knowledgeCutoff: '2024-10-01',
     features: {
@@ -39551,19 +41458,144 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
       },
     },
   }` | - |
-| `'gemini-3.7-flash'` | `{
-    name: 'gemini-3.7-flash',
+| `'gemini-3.8-live'` | `{
+    name: 'gemini-3.8-live',
     provider: Vendor.Google,
-    description: 'Latest production Gemini Flash model for agentic workflows and multimodal reasoning',
+    description: 'Default low-latency Gemini audio-to-audio model with interleaved reasoning and asynchronous function calling',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    aliases: ['gemini-flash-latest'],
+    endpoints: ['live'],
+    releaseDate: '2026-09-15',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: true, vision: true,
+      audio: true, video: true, batchAPI: false, promptCaching: false,
+      parameters: { temperature: true, topP: true, topK: true, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 131_072, text: true, image: true, audio: true, video: true, cpm: 0.75 },
+      output: { tokens: 65_536, text: true, audio: true, cpm: 4.5 },
+      pricing: {
+        text: { input: 0.75, output: 4.5 },
+        audio: { input: 3, output: 12 },
+        image: { input: 1 },
+      },
+    },
+  }` | - |
+| `'gemini-3.8-live-extended-thinking'` | `{
+    name: 'gemini-3.8-live-extended-thinking',
+    provider: Vendor.Google,
+    description: 'High-reasoning Gemini audio-to-audio model with background reasoning and asynchronous tool execution',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['live'],
+    releaseDate: '2026-09-15',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live-extended-thinking', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high'],
+      streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: true, vision: true,
+      audio: true, video: true, batchAPI: false, promptCaching: false,
+      parameters: { temperature: true, topP: true, topK: true, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 131_072, text: true, image: true, audio: true, video: true, cpm: 0.75 },
+      output: { tokens: 65_536, text: true, audio: true, cpm: 4.5 },
+      pricing: {
+        text: { input: 0.75, output: 4.5 },
+        audio: { input: 3, output: 12 },
+        image: { input: 1 },
+      },
+    },
+  }` | - |
+| `'gemini-4-carbon'` | `{
+    name: 'gemini-4-carbon',
+    provider: Vendor.Google,
+    description: 'Gemini 4 multimodal reasoning with a unified 1M context; synchronous output 65K, opt-in long decode up to remaining context. Introductory token prices through 2026-11-30; double from 2026-12-01.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['generate_content', 'interactions', 'batch'],
+    releaseDate: '2026-11-10',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-4-carbon', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-11-11' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: true, video: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_048_576, text: true, image: true, audio: true, video: true, cpm: 2, cpmCached: 0.1 },
+      output: { tokens: 65_536, text: true, cpm: 10 },
+      pricing: {
+        text: { input: 2, cachedInput: 0.1, output: 10 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, priority: 1.8 },
+      },
+    },
+  }` | - |
+| `'gemini-4-argon'` | `{
+    name: 'gemini-4-argon',
+    provider: Vendor.Google,
+    description: 'Gemini 4 multimodal reasoning with a unified 1M context; synchronous output 65K, opt-in long decode up to remaining context. Introductory token prices through 2026-11-30; double from 2026-12-01.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['generate_content', 'interactions', 'batch'],
+    releaseDate: '2026-10-13',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-4-argon', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-11-11' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: true, video: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_048_576, text: true, image: true, audio: true, video: true, cpm: 2, cpmCached: 0.1 },
+      output: { tokens: 65_536, text: true, cpm: 10 },
+      pricing: {
+        text: { input: 2, cachedInput: 0.1, output: 10 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, priority: 1.8 },
+      },
+    },
+  }` | - |
+| `'gemini-3.8-flash'` | `{
+    name: 'gemini-3.8-flash',
+    provider: Vendor.Google,
+    description: 'Google\'s most intelligent Flash model for long-horizon software engineering, autonomous agents, and complex enterprise workflows',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['generate_content', 'interactions', 'batch'],
+    releaseDate: '2026-09-02',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-09-04' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: true, video: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: true, topP: true, topK: true, frequencyPenalty: false, presencePenalty: false },
+      deprecatedParameters: ['temperature', 'topP', 'topK'],
+      input: { tokens: 1_048_576, text: true, image: true, audio: true, video: true, cpm: 0.75, cpmCached: 0.075 },
+      output: { tokens: 65_536, text: true, cpm: 3.75 },
+      pricing: {
+        text: { input: 0.75, cachedInput: 0.075, output: 3.75 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, priority: 1.8 },
+      },
+    },
+  }` | - |
+| `'gemini-3.7-flash'` | `{
+    name: 'gemini-3.7-flash',
+    provider: Vendor.Google,
+    description: 'Previous-generation production Gemini Flash model for agentic workflows and multimodal reasoning',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
     endpoints: ['generate_content', 'interactions', 'batch'],
     releaseDate: '2026-08-13',
     knowledgeCutoff: '2026-01-01',
-    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-11-11' },
     features: {
       reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
@@ -39610,6 +41642,7 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
+    aliases: ['gemini-flash-latest'],
     endpoints: ['generate_content', 'interactions', 'batch'],
     releaseDate: '2026-05-01',
     knowledgeCutoff: '2026-01-01',
@@ -39800,8 +41833,13 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     provider: Vendor.Google,
     description: 'Low-latency Live API model for real-time audio dialogue with multimodal awareness',
     isActive: true,
+    lifecycle: 'legacy',
+    availability: 'public',
+    replacementModel: 'gemini-3.8-live',
+    endpoints: ['live'],
     releaseDate: '2026-03-01',
     knowledgeCutoff: '2025-01-01',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-live-preview', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
     features: {
       reasoning: true,
       streaming: true,
@@ -39912,6 +41950,13 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     releaseDate: '2025-03-01',
     knowledgeCutoff: '2025-01-01',
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-11-02',
+    retirementDate: '2026-12-01',
+    replacementModel: 'gemini-3.8-flash',
+    preferred: false,
+    availability: 'limited',
+    sources: { documentation: 'https://aistudio.google.com/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: true,
       streaming: true,
@@ -39948,6 +41993,13 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     releaseDate: '2025-06-17',
     knowledgeCutoff: '2025-01-01',
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-11-02',
+    retirementDate: '2026-12-01',
+    replacementModel: 'gemini-3.5-flash-lite',
+    preferred: false,
+    availability: 'limited',
+    sources: { documentation: 'https://aistudio.google.com/docs/deprecations', lastVerified: '2026-11-11' },
     features: {
       reasoning: true,
       streaming: true,
@@ -40046,6 +42098,35 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
       },
     },
   }` | - |
+| `'grok-4.7'` | `{
+    name: 'grok-4.7',
+    provider: Vendor.Grok,
+    description: 'Latest xAI frontier reasoning model with a 500K context window and native agent tools',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    releaseDate: '2026-09-21',
+    knowledgeCutoff: '2026-05-01',
+    sources: { documentation: 'https://docs.x.ai/developers/grok-4-7', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: false, promptCaching: true,
+      nativeTools: ['web_search', 'x_search', 'code_execution'],
+      parameters: { temperature: true, topP: true, frequencyPenalty: true, presencePenalty: true },
+      input: { tokens: 500_000, text: true, image: true, cpm: 2, cpmCached: 0.5 },
+      output: { tokens: null, text: true, cpm: 6 },
+      pricing: {
+        text: {
+          input: 2, cachedInput: 0.5, output: 6,
+          longContext: { thresholdTokens: 200_000, input: 4, cachedInput: 1, output: 12 },
+        },
+      },
+    },
+  }` | - |
 | `'grok-4.6'` | `{
     name: 'grok-4.6',
     provider: Vendor.Grok,
@@ -40053,13 +42134,13 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
-    preferred: true,
-    endpoints: ['responses', 'chat_completions', 'messages', 'completions'],
+    endpoints: ['responses', 'chat_completions'],
     releaseDate: '2026-08-12',
     knowledgeCutoff: '2026-02-01',
-    sources: { documentation: 'https://docs.x.ai/developers/models/grok-4.6', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://docs.x.ai/developers/grok-4-6', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-09-04' },
     features: {
-      reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
+      streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
       audio: false, video: false, batchAPI: false, promptCaching: true,
       parameters: { temperature: true, topP: true, frequencyPenalty: true, presencePenalty: true },
@@ -40106,7 +42187,6 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
-    preferred: true,
     endpoints: ['responses', 'chat_completions', 'messages'],
     releaseDate: '2026-05-15',
     knowledgeCutoff: '2026-02-01',
@@ -40152,19 +42232,66 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
       },
     },
   }` | - |
-| `'grok-voice-think-fast-2.0'` | `{
-    name: 'grok-voice-think-fast-2.0',
+| `'grok-voice-3.0'` | `{
+    name: 'grok-voice-3.0',
     provider: Vendor.Grok,
-    description: 'Current xAI speech-to-speech reasoning model for low-latency voice agents',
+    description: 'Flagship xAI speech-to-speech model; the grok-voice-latest alias points here',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
     aliases: ['grok-voice-latest'],
     endpoints: ['realtime'],
+    releaseDate: '2026-10-14',
+    sources: { documentation: 'https://docs.x.ai/developers/model-capabilities/audio/speech-to-speech', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-11-11' },
+    voices: XAI_VOICES,
+    features: {
+      reasoning: true, reasoningEfforts: ['none', 'high'], streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: true, vision: false,
+      audio: true, video: false, batchAPI: false, promptCaching: false,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: null, text: true, audio: true, cpm: 0 },
+      output: { tokens: null, text: true, audio: true, cpm: 0 },
+      pricing: { audioDurationPerMinute: 0.08 },
+    },
+  }` | - |
+| `'grok-voice-2.0'` | `{
+    name: 'grok-voice-2.0',
+    provider: Vendor.Grok,
+    description: 'Previous xAI speech-to-speech model, deprecated in favor of Grok Voice 3.0',
+    isActive: true,
+    lifecycle: 'deprecated',
+    availability: 'public',
+    preferred: false,
+    endpoints: ['realtime'],
+    releaseDate: '2026-07-29',
+    sources: { documentation: 'https://docs.x.ai/developers/models/voice-agent-api', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-11-11' },
+    voices: XAI_VOICES,
+    replacementModel: 'grok-voice-3.0',
+    deprecationDate: '2026-10-14',
+    features: {
+      reasoning: true, streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: true, vision: false,
+      audio: true, video: false, batchAPI: false, promptCaching: false,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: null, text: true, audio: true, cpm: 0 },
+      output: { tokens: null, text: true, audio: true, cpm: 0 },
+      pricing: { audioDurationPerMinute: 0.08 },
+    },
+  }` | - |
+| `'grok-voice-think-fast-2.0'` | `{
+    name: 'grok-voice-think-fast-2.0',
+    provider: Vendor.Grok,
+    description: 'Current xAI speech-to-speech reasoning model for low-latency voice agents',
+    isActive: true,
+    lifecycle: 'legacy',
+    availability: 'public',
+    preferred: false,
+    endpoints: ['realtime'],
     releaseDate: '2026-07-29',
     sources: { documentation: 'https://docs.x.ai/developers/models/voice-agent-api', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-08-30' },
     voices: XAI_VOICES,
+    replacementModel: 'grok-voice-3.0',
     features: {
       reasoning: true, streaming: true, structuredOutput: false, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: true, vision: false,
@@ -40220,7 +42347,6 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     provider: Vendor.Grok,
     description: 'Grok 4.20 reasoning model with a 1M-token context window and vision support',
     isActive: true,
-    preferred: true,
     releaseDate: '2026-03-09',
     knowledgeCutoff: '2024-11-01',
     features: {
@@ -40408,21 +42534,75 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
       },
     },
   }` | - |
+| `'deepseek-flash'` | `{
+    name: 'deepseek-flash',
+    provider: Vendor.DeepSeek,
+    description: 'DeepSeek V4.1 Flash 1017 with text/image input; current first-party Flash model',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['responses', 'chat_completions', 'messages'],
+    releaseDate: '2026-10-17',
+    sources: {
+      documentation: 'https://api-docs.deepseek.com/guides/vision/',
+      pricing: 'https://api-docs.deepseek.com/quick_start/pricing/',
+      lastVerified: '2026-11-11',
+    },
+    preferred: true,
+    snapshots: ['DeepSeek-V4.1-Flash-1017'],
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: false,
+      promptCaching: true,
+      parameters: {
+        temperature: true,
+        topP: true,
+        frequencyPenalty: true,
+        presencePenalty: true,
+      },
+      input: {
+        tokens: 1_000_000,
+        text: true,
+        image: true,
+        cpm: 0.3,
+        cpmCached: 0.006,
+      },
+      output: {
+        tokens: 384_000,
+        text: true,
+        cpm: 1.2,
+      },
+      pricing: {
+        text: { input: 0.3, cachedInput: 0.006, output: 1.2 },
+        processingMultipliers: { off_peak: 0.5 },
+      },
+    },
+  }` | - |
 | `'deepseek-v4-flash'` | `{
     name: 'deepseek-v4-flash',
     provider: Vendor.DeepSeek,
     description: 'DeepSeek V4 Flash reasoning model with first-party Responses and Chat Completions support',
-    isActive: true,
-    lifecycle: 'active',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
-    preferred: true,
+    preferred: false,
     endpoints: ['responses', 'chat_completions', 'messages'],
     releaseDate: '2026-04-24',
     sources: {
       documentation: 'https://api-docs.deepseek.com/quick_start/pricing/',
       pricing: 'https://api-docs.deepseek.com/quick_start/pricing/',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    replacementModel: 'deepseek-flash',
     features: {
       reasoning: true,
       streaming: true,
@@ -40472,7 +42652,7 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     sources: {
       documentation: 'https://api-docs.deepseek.com/quick_start/pricing/',
       pricing: 'https://api-docs.deepseek.com/quick_start/pricing/',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     features: {
       reasoning: true,
@@ -40514,16 +42694,18 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
     name: 'deepseek-v4-flash-vision-exp',
     provider: Vendor.DeepSeek,
     description: 'Experimental DeepSeek V4 Flash variant with image understanding',
-    isActive: true,
-    lifecycle: 'preview',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     endpoints: ['responses', 'chat_completions', 'messages'],
     releaseDate: '2026-08-21',
     sources: {
       documentation: 'https://api-docs.deepseek.com/guides/vision/',
       pricing: 'https://api-docs.deepseek.com/quick_start/pricing/',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
+    replacementModel: 'deepseek-flash',
     features: {
       reasoning: true,
       streaming: true,
@@ -40605,6 +42787,295 @@ Registry schema v2. Last full first-party documentation audit: 2026-08-30.
       output: { tokens: 384_000, text: true, cpm: 0.28 },
     },
   }` | - |
+| `'openai/gpt-oss-120b'` | `{
+    name: 'openai/gpt-oss-120b',
+    provider: Vendor.Groq,
+    description: 'openai/gpt-oss-120b on Groq',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions'],
+    sources: { documentation: 'https://console.groq.com/docs/model/openai/gpt-oss-120b', pricing: 'https://console.groq.com/docs/model/openai/gpt-oss-120b', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, reasoning: true, vision: false, promptCaching: true,
+      input: { tokens: 131072, text: true, image: false, cpm: 0.15, cpmCached: 0.075 },
+      output: { tokens: 65536, text: true, cpm: 0.6 },
+      pricing: { text: { input: 0.15, cachedInput: 0.075, output: 0.6 } },
+    },
+  }` | - |
+| `'qwen/qwen3.8-27b'` | `{
+    name: 'qwen/qwen3.8-27b',
+    provider: Vendor.Groq,
+    description: 'qwen/qwen3.8-27b on Groq',
+    isActive: true,
+    lifecycle: 'preview',
+    availability: 'public',
+    preferred: false,
+    endpoints: ['responses', 'chat_completions'],
+    sources: { documentation: 'https://console.groq.com/docs/model/qwen/qwen3.8-27b', pricing: 'https://console.groq.com/docs/model/qwen/qwen3.8-27b', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, reasoning: true, vision: true,
+      input: { tokens: 131072, text: true, image: true, cpm: 0.8 },
+      output: { tokens: 16384, text: true, cpm: 4 },
+      pricing: { text: { input: 0.8, output: 4 } },
+    },
+  }` | - |
+| `'mistral-large-4'` | `{
+    name: 'mistral-large-4',
+    provider: Vendor.Mistral,
+    description: 'mistral-large-4 on Mistral',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['chat_completions', 'batch'],
+    sources: { documentation: 'https://docs.mistral.ai/models/mistral-large-4-0', pricing: 'https://docs.mistral.ai/models/mistral-large-4-0', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, vision: true, promptCaching: true,
+      input: { tokens: 1048576, text: true, image: true, cpm: 0.7, cpmCached: 0.07 },
+      output: { tokens: null, text: true, cpm: 2.1 },
+      pricing: { text: { input: 0.7, cachedInput: 0.07, output: 2.1 } },
+    },
+  }` | - |
+| `'mistral-small-2603'` | `{
+    name: 'mistral-small-2603',
+    provider: Vendor.Mistral,
+    description: 'mistral-small-2603 on Mistral',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['chat_completions', 'batch'],
+    sources: { documentation: 'https://docs.mistral.ai/models/mistral-small-4-0-26-03', pricing: 'https://docs.mistral.ai/models/mistral-small-4-0-26-03', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, reasoning: true, vision: true,
+      input: { tokens: 256000, text: true, image: true, cpm: 0.15 },
+      output: { tokens: null, text: true, cpm: 0.6 },
+      pricing: { text: { input: 0.15, output: 0.6 } },
+    },
+  }` | - |
+| `'perplexity/sonar'` | `{
+    name: 'perplexity/sonar',
+    provider: Vendor.Perplexity,
+    description: 'perplexity/sonar on Perplexity',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.perplexity.ai/docs/agent-api/models', pricing: 'https://docs.perplexity.ai/docs/agent-api/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, promptCaching: true,
+      input: { tokens: null, text: true, cpm: 0.25, cpmCached: 0.0625 },
+      output: { tokens: null, text: true, cpm: 2.5 },
+      pricing: { text: { input: 0.25, cachedInput: 0.0625, output: 2.5 } },
+    },
+  }` | - |
+| `'ripple-preview'` | `{
+    name: 'ripple-preview',
+    provider: Vendor.Ollama,
+    description: 'Local inference; zero API token fees exclude hardware/runtime costs. ripple-preview on Ollama',
+    isActive: true,
+    lifecycle: 'preview',
+    availability: 'public',
+    preferred: false,
+    endpoints: ['responses', 'chat_completions'],
+    sources: { documentation: 'https://ollama.com/library/ripple-preview', pricing: 'https://ollama.com/library/ripple-preview', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, reasoning: true, vision: false,
+      input: { tokens: 1000000, text: true, image: false, cpm: 0 },
+      output: { tokens: null, text: true, cpm: 0 },
+      pricing: { text: { input: 0, output: 0 } },
+    },
+  }` | - |
+| `'lfm3-vl'` | `{
+    name: 'lfm3-vl',
+    provider: Vendor.Ollama,
+    description: 'Local inference; zero API token fees exclude hardware/runtime costs. lfm3-vl on Ollama; image input supported, video is not yet available',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions'],
+    sources: { documentation: 'https://ollama.com/library/lfm3-vl', pricing: 'https://ollama.com/library/lfm3-vl', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, reasoning: true, vision: true,
+      input: { tokens: 131072, text: true, image: true, cpm: 0 },
+      output: { tokens: null, text: true, cpm: 0 },
+      pricing: { text: { input: 0, output: 0 } },
+    },
+  }` | - |
+| `'deepseek-ai/DeepSeek-V4.1-Flash-1017'` | `{
+    name: 'deepseek-ai/DeepSeek-V4.1-Flash-1017',
+    provider: Vendor.Together,
+    description: 'deepseek-ai/DeepSeek-V4.1-Flash-1017 on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
+      input: { tokens: 1000000, text: true, cpm: 0.3, cpmCached: 0.006 },
+      output: { tokens: null, text: true, cpm: 1.2 },
+      pricing: { text: { input: 0.3, cachedInput: 0.006, output: 1.2 } },
+    },
+  }` | - |
+| `'deepseek-ai/DeepSeek-V4-Pro-0813'` | `{
+    name: 'deepseek-ai/DeepSeek-V4-Pro-0813',
+    provider: Vendor.Together,
+    description: 'deepseek-ai/DeepSeek-V4-Pro-0813 on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, vision: false, promptCaching: true,
+      input: { tokens: 1048576, text: true, image: false, cpm: 1.32, cpmCached: 0.13 },
+      output: { tokens: null, text: true, cpm: 3.96 },
+      pricing: { text: { input: 1.32, cachedInput: 0.13, output: 3.96 } },
+    },
+  }` | - |
+| `'moonshotai/Kimi-K3.1-Pro'` | `{
+    name: 'moonshotai/Kimi-K3.1-Pro',
+    provider: Vendor.Together,
+    description: 'moonshotai/Kimi-K3.1-Pro on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, vision: true, promptCaching: true,
+      input: { tokens: 1048576, text: true, image: true, cpm: 2, cpmCached: 0.2 },
+      output: { tokens: null, text: true, cpm: 10 },
+      pricing: { text: { input: 2, cachedInput: 0.2, output: 10 } },
+    },
+  }` | - |
+| `'MiniMaxAI/MiniMax-M3.1-Flash'` | `{
+    name: 'MiniMaxAI/MiniMax-M3.1-Flash',
+    provider: Vendor.Together,
+    description: 'MiniMaxAI/MiniMax-M3.1-Flash on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
+      input: { tokens: 1048576, text: true, cpm: 0.15, cpmCached: 0.015 },
+      output: { tokens: null, text: true, cpm: 0.6 },
+      pricing: { text: { input: 0.15, cachedInput: 0.015, output: 0.6 } },
+    },
+  }` | - |
+| `'meta-models/Muse-Spark-Open-816B-A42B'` | `{
+    name: 'meta-models/Muse-Spark-Open-816B-A42B',
+    provider: Vendor.Together,
+    description: 'meta-models/Muse-Spark-Open-816B-A42B on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
+      input: { tokens: 1048576, text: true, cpm: 1.25, cpmCached: 0.15 },
+      output: { tokens: null, text: true, cpm: 4.25 },
+      pricing: { text: { input: 1.25, cachedInput: 0.15, output: 4.25 } },
+    },
+  }` | - |
+| `'nvidia/NVIDIA-Nemotron-3.5-Super-VL'` | `{
+    name: 'nvidia/NVIDIA-Nemotron-3.5-Super-VL',
+    provider: Vendor.Together,
+    description: 'nvidia/NVIDIA-Nemotron-3.5-Super-VL on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, vision: true, promptCaching: true,
+      input: { tokens: 262144, text: true, image: true, cpm: 0.15, cpmCached: 0.02 },
+      output: { tokens: null, text: true, cpm: 0.5 },
+      pricing: { text: { input: 0.15, cachedInput: 0.02, output: 0.5 } },
+    },
+  }` | - |
+| `'Qwen/Qwen3.8-Flash'` | `{
+    name: 'Qwen/Qwen3.8-Flash',
+    provider: Vendor.Together,
+    description: 'Qwen/Qwen3.8-Flash on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true,
+      input: { tokens: 1000000, text: true, cpm: 0.15 },
+      output: { tokens: null, text: true, cpm: 0.47 },
+      pricing: { text: { input: 0.15, output: 0.47 } },
+    },
+  }` | - |
+| `'zai-org/GLM-5.3'` | `{
+    name: 'zai-org/GLM-5.3',
+    provider: Vendor.Together,
+    description: 'zai-org/GLM-5.3 on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
+      input: { tokens: 1048575, text: true, cpm: 1.4, cpmCached: 0.26 },
+      output: { tokens: null, text: true, cpm: 4.4 },
+      pricing: { text: { input: 1.4, cachedInput: 0.26, output: 4.4 } },
+    },
+  }` | - |
+| `'zai-org/GLM-5.3-Flash'` | `{
+    name: 'zai-org/GLM-5.3-Flash',
+    provider: Vendor.Together,
+    description: 'zai-org/GLM-5.3-Flash on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
+      input: { tokens: 1048575, text: true, cpm: 0.15, cpmCached: 0.03 },
+      output: { tokens: null, text: true, cpm: 0.5 },
+      pricing: { text: { input: 0.15, cachedInput: 0.03, output: 0.5 } },
+    },
+  }` | - |
+| `'reflection/Beam-1.0-501B-A23B'` | `{
+    name: 'reflection/Beam-1.0-501B-A23B',
+    provider: Vendor.Together,
+    description: 'reflection/Beam-1.0-501B-A23B on Together',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
+      input: { tokens: 1048576, text: true, cpm: 0.4, cpmCached: 0.04 },
+      output: { tokens: null, text: true, cpm: 1.2 },
+      pricing: { text: { input: 0.4, cachedInput: 0.04, output: 1.2 } },
+    },
+  }` | - |
 
 </details>
 
@@ -40616,7 +43087,7 @@ OAuth 2.0 authentication for external services
 
 ### AuthCodePKCEFlow `class`
 
-📍 [`src/connectors/oauth/flows/AuthCodePKCE.ts:33`](src/connectors/oauth/flows/AuthCodePKCE.ts)
+📍 [`src/connectors/oauth/flows/AuthCodePKCE.ts:26`](src/connectors/oauth/flows/AuthCodePKCE.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -40655,7 +43126,7 @@ async getAuthorizationUrl(userId?: string, accountId?: string): Promise&lt;strin
 Exchange authorization code for access token
 
 ```typescript
-async exchangeCode(code: string, state: string, userId?: string, accountId?: string): Promise&lt;void&gt;
+async exchangeCode(code: string, state: string, userId?: string, accountId?: string): Promise&lt;OAuthCallbackResult&gt;
 ```
 
 **Parameters:**
@@ -40664,7 +43135,7 @@ async exchangeCode(code: string, state: string, userId?: string, accountId?: str
 - `userId`: `string | undefined` *(optional)*
 - `accountId`: `string | undefined` *(optional)*
 
-**Returns:** `Promise&lt;void&gt;`
+**Returns:** `Promise&lt;OAuthCallbackResult&gt;`
 
 #### `getToken()`
 
@@ -41012,8 +43483,11 @@ async startAuthFlow(userId?: string, accountId?: string): Promise&lt;string&gt;
 Handle OAuth callback (Authorization Code only)
 Call this with the callback URL after user authorizes
 
+Returns an optional raw ID token for caller-side OIDC verification. The ID
+token is not verified or persisted by the library; non-OIDC flows return {}.
+
 ```typescript
-async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise&lt;void&gt;
+async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise&lt;OAuthCallbackResult&gt;
 ```
 
 **Parameters:**
@@ -41021,7 +43495,7 @@ async handleCallback(callbackUrl: string, userId?: string, accountId?: string): 
 - `userId`: `string | undefined` *(optional)*
 - `accountId`: `string | undefined` *(optional)*
 
-**Returns:** `Promise&lt;void&gt;`
+**Returns:** `Promise&lt;OAuthCallbackResult&gt;`
 
 #### `revokeToken()`
 
@@ -41366,6 +43840,24 @@ async listAccounts(userId?: string): Promise&lt;string[]&gt;
 
 ---
 
+### ApplyRefreshStrategyOptions `interface`
+
+📍 [`src/connectors/vendors/helpers.ts:118`](src/connectors/vendors/helpers.ts)
+
+Options for applying provider refresh requirements to an existing configuration.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `enforce?` | `enforce?: boolean;` | Enforce the strategy's authorization parameter over a conflicting value. Default: false. |
+| `requiredScope?` | `requiredScope?: string;` | Other required scope tokens to preserve and merge, without importing template scopes. |
+
+</details>
+
+---
+
 ### AuthTemplate `interface`
 
 📍 [`src/connectors/vendors/types.ts:44`](src/connectors/vendors/types.ts)
@@ -41390,8 +43882,25 @@ Defines a single authentication method (e.g., API key, OAuth user flow)
 | `scopeDescriptions?` | `scopeDescriptions?: Record&lt;string, string&gt;;` | Human-readable descriptions for scopes (key = scope ID) |
 | `refreshStrategy?` | `refreshStrategy?: RefreshStrategy;` | How this vendor issues refresh tokens. **Required** when
 `flow === 'authorization_code'`; ignored otherwise. Drives the force-merge
-that guarantees refresh-capable tokens without operator intervention.
+that requests refresh-capable access; provider consent/setup still applies.
 Validated at registry-init time — missing on an auth-code template throws. |
+
+</details>
+
+---
+
+### BuildAuthConfigOptions `interface`
+
+📍 [`src/connectors/vendors/helpers.ts:181`](src/connectors/vendors/helpers.ts)
+
+Options for editing a same-method authorization-code configuration.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `existingAuth?` | `existingAuth?: ConnectorAuth;` | Preserve saved settings; nonempty supplied template credentials replace their fields. |
 
 </details>
 
@@ -41497,6 +44006,23 @@ listKeys?(): Promise&lt;string[]&gt;;
 
 ---
 
+### OAuthCallbackResult `interface`
+
+📍 [`src/connectors/oauth/types.ts:80`](src/connectors/oauth/types.ts)
+
+Result of one authorization-code exchange; never persisted by token storage.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `idToken?` | `idToken?: string;` | Raw, unverified ID token. Verify signature, issuer, audience, expiry and nonce before using its claims; do not log or expose it to untrusted clients. |
+
+</details>
+
+---
+
 ### OAuthConfig `interface`
 
 📍 [`src/connectors/oauth/types.ts:9`](src/connectors/oauth/types.ts)
@@ -41538,7 +44064,8 @@ token acts as that user. When unset, `sub` defaults to `clientId`
 | `staticToken?` | `staticToken?: string;` | - |
 | `authorizationParams?` | `authorizationParams?: Record&lt;string, string&gt;;` | Extra query parameters appended to the authorization URL.
  Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`
- to obtain a refresh token. |
+ to obtain a refresh token. `scope` here is a legacy fallback only when the
+ dedicated `scope` field is absent; it cannot override `requiredScope`. |
 | `autoRefresh?` | `autoRefresh?: boolean;` | - |
 | `refreshBeforeExpiry?` | `refreshBeforeExpiry?: number;` | - |
 | `storage?` | `storage?: ITokenStorage;` | - |
@@ -41588,7 +44115,9 @@ into `scope` at URL-build time so operator scope overrides
 | `refreshBeforeExpiry?` | `refreshBeforeExpiry?: number;` | - |
 | `storageKey?` | `storageKey?: string;` | - |
 | `authorizationParams?` | `authorizationParams?: Record&lt;string, string&gt;;` | Extra query parameters appended to the authorization URL.
- Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`. |
+ Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`.
+ `scope` here is a legacy fallback only when the dedicated `scope` field is
+ absent; it cannot override `requiredScope`. |
 | `extra?` | `extra?: Record&lt;string, string&gt;;` | Vendor-specific extra credentials |
 
 </details>
@@ -41665,7 +44194,7 @@ Simple Icons icon data structure
 
 ### StoredToken `interface`
 
-📍 [`src/connectors/oauth/types.ts:86`](src/connectors/oauth/types.ts)
+📍 [`src/connectors/oauth/types.ts:95`](src/connectors/oauth/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -41708,7 +44237,7 @@ All implementations must encrypt tokens at rest
 
 ### TokenResponse `interface`
 
-📍 [`src/connectors/oauth/types.ts:78`](src/connectors/oauth/types.ts)
+📍 [`src/connectors/oauth/types.ts:85`](src/connectors/oauth/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -41720,6 +44249,7 @@ All implementations must encrypt tokens at rest
 | `expires_in` | `expires_in: number;` | - |
 | `refresh_token?` | `refresh_token?: string;` | - |
 | `scope?` | `scope?: string;` | - |
+| `id_token?` | `id_token?: string;` | Returned only to the callback caller; not included in StoredToken. |
 
 </details>
 
@@ -41727,7 +44257,7 @@ All implementations must encrypt tokens at rest
 
 ### VendorInfo `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:468`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:520`](src/connectors/vendors/helpers.ts)
 
 Get vendor template information for display
 
@@ -41875,8 +44405,8 @@ type OAuthFlow = 'authorization_code' | 'client_credentials' | 'jwt_bearer' | 's
 📍 [`src/connectors/vendors/types.ts:33`](src/connectors/vendors/types.ts)
 
 How a vendor issues refresh tokens for `authorization_code` flows. Determines
-what (if anything) the library force-merges into authorize URLs to guarantee
-long-lived sessions without manual re-auth. **Required** for every
+what (if anything) the library merges into authorize URLs to request renewal
+capability. Issuance still depends on provider policy and existing consent. **Required** for every
 `authorization_code` template — the registry initializer fails fast if absent.
 
 - `automatic`: vendor issues a refresh token unconditionally (Discord, Asana,
@@ -41921,26 +44451,24 @@ type TemplateCredentials = {
 
 ### applyRefreshStrategy `function`
 
-📍 [`src/connectors/vendors/helpers.ts:150`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:136`](src/connectors/vendors/helpers.ts)
 
-Apply a `RefreshStrategy` to an OAuth config under construction.
-- `scope`: stamps `requiredScope` and force-merges into `scope`.
-- `auth_param`: stamps the key/value into `authorizationParams` without
-  clobbering pre-existing operator-set keys.
-- `automatic` / `never_expires` / `manual_setup`: no-op on the wire.
-
-Returns a new partial config; caller merges into the OAuth config.
-
-Exported for the legacy-config backfill path in `Connector.initOAuthManager`
-— re-applies the strategy when reconstructing a Connector from a DB config
-that pre-dates the `requiredScope` annotation. Other call sites should not
-use this directly; they should go through `buildAuthConfig`.
+Apply only a provider's refresh requirements. Pure and idempotent: configured
+API scopes and unrelated parameters (including prompt) are preserved.
+`scope` is authoritative, including an explicit empty string. When absent,
+fall back to `authorizationParams.scope`; remove that duplicate parameter
+from the returned patch so it cannot override edits or required scopes.
+With enforce enabled, a missing strategy is an error and the strategy's
+authorization parameter wins. Existing three-argument calls keep their
+operator-value precedence. This requests renewal capability; it does not
+guarantee a refresh token in every response or perform manual provider setup.
 
 ```typescript
 export function applyRefreshStrategy(
-  scope: string,
+  scope: string | undefined,
   authorizationParams: Record&lt;string, string&gt; | undefined,
-  strategy: RefreshStrategy | undefined
+  strategy: RefreshStrategy | undefined,
+  options: ApplyRefreshStrategyOptions = {},
 ): {
   scope: string;
   requiredScope: string | undefined;
@@ -42012,14 +44540,17 @@ function base64URLEncode(buffer: Buffer): string
 
 ### buildAuthConfig `function`
 
-📍 [`src/connectors/vendors/helpers.ts:191`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:259`](src/connectors/vendors/helpers.ts)
 
-Build ConnectorAuth from auth template and credentials
+Build ConnectorAuth from a template and credentials. Creation uses template
+defaults. With existingAuth, preserve saved authorization-code settings and
+apply only the nonempty credential patch plus provider refresh requirements.
 
 ```typescript
 export function buildAuthConfig(
   authTemplate: AuthTemplate,
-  credentials: TemplateCredentials
+  credentials: TemplateCredentials,
+  options: BuildAuthConfigOptions = {},
 ): ConnectorAuth
 ```
 
@@ -42027,7 +44558,7 @@ export function buildAuthConfig(
 
 ### buildOAuthScope `function`
 
-📍 [`src/connectors/vendors/helpers.ts:126`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:107`](src/connectors/vendors/helpers.ts)
 
 Build the final OAuth scope sent to the provider.
 
@@ -42087,7 +44618,7 @@ const personalEmails = await personalFetch('/me/messages');
 
 ### createConnectorFromTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:400`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:452`](src/connectors/vendors/helpers.ts)
 
 Create a Connector from a vendor template
 
@@ -42140,7 +44671,7 @@ export function encrypt(text: string, password: string): string
 
 ### extractNonSecretCredentials `function`
 
-📍 [`src/connectors/vendors/helpers.ts:341`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:393`](src/connectors/vendors/helpers.ts)
 
 Extract non-secret credentials from a raw credentials dict.
 Used by ConnectorConfigStore.saveFromTemplate() to preserve
@@ -42220,7 +44751,7 @@ export function getAllVendorLogos(): Map&lt;string, VendorLogo&gt;
 
 ### getAllVendorTemplates `function`
 
-📍 [`src/connectors/vendors/helpers.ts:64`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:65`](src/connectors/vendors/helpers.ts)
 
 Get all vendor templates
 
@@ -42244,7 +44775,7 @@ export function getAuthTemplate(vendorId: string, authId: string): AuthTemplate 
 
 ### getCredentialsSetupURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:551`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:603`](src/connectors/vendors/helpers.ts)
 
 Get credentials setup URL for a vendor
 
@@ -42256,7 +44787,7 @@ export function getCredentialsSetupURL(vendorId: string): string | undefined
 
 ### getDocsURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:559`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:611`](src/connectors/vendors/helpers.ts)
 
 Get docs URL for a vendor
 
@@ -42294,7 +44825,7 @@ function getSimpleIcon(slug: string): SimpleIcon | undefined
 
 ### getVendorAuthTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:76`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:77`](src/connectors/vendors/helpers.ts)
 
 Get auth template for a vendor
 
@@ -42333,7 +44864,7 @@ export function getVendorColor(vendorId: string): string | undefined
 
 ### getVendorInfo `function`
 
-📍 [`src/connectors/vendors/helpers.ts:488`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:540`](src/connectors/vendors/helpers.ts)
 
 Get vendor information suitable for display
 
@@ -42427,7 +44958,7 @@ export function getVendorsByCategory(category: ServiceCategory): VendorRegistryE
 
 ### getVendorTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:52`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:53`](src/connectors/vendors/helpers.ts)
 
 Get vendor template by ID
 
@@ -42463,7 +44994,7 @@ export function hasVendorLogo(vendorId: string): boolean
 
 ### initVendorRegistry `function`
 
-📍 [`src/connectors/vendors/helpers.ts:31`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:32`](src/connectors/vendors/helpers.ts)
 
 Initialize the vendor registry (called by generated registry file).
 
@@ -42481,7 +45012,7 @@ export function initVendorRegistry(templates: VendorTemplate[]): void
 
 ### isPublicClientError `function`
 
-📍 [`src/connectors/oauth/flows/AuthCodePKCE.ts:447`](src/connectors/oauth/flows/AuthCodePKCE.ts)
+📍 [`src/connectors/oauth/flows/AuthCodePKCE.ts:448`](src/connectors/oauth/flows/AuthCodePKCE.ts)
 
 Detect OAuth errors indicating the app is a public client that must not
 present a client_secret. Covers:
@@ -42508,7 +45039,7 @@ export function listAllVendorIds(): string[]
 
 ### listVendorIds `function`
 
-📍 [`src/connectors/vendors/helpers.ts:88`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:89`](src/connectors/vendors/helpers.ts)
 
 List all vendor IDs
 
@@ -42520,7 +45051,7 @@ export function listVendorIds(): string[]
 
 ### listVendors `function`
 
-📍 [`src/connectors/vendors/helpers.ts:513`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:565`](src/connectors/vendors/helpers.ts)
 
 List all vendors with basic info
 
@@ -42532,7 +45063,7 @@ export function listVendors(): VendorInfo[]
 
 ### listVendorsByAuthType `function`
 
-📍 [`src/connectors/vendors/helpers.ts:542`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:594`](src/connectors/vendors/helpers.ts)
 
 List vendors that support a specific auth type
 
@@ -42544,7 +45075,7 @@ export function listVendorsByAuthType(authType: 'api_key' | 'oauth'): VendorInfo
 
 ### listVendorsByCategory `function`
 
-📍 [`src/connectors/vendors/helpers.ts:535`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:587`](src/connectors/vendors/helpers.ts)
 
 List vendors by category
 
@@ -42566,9 +45097,24 @@ export function listVendorsWithLogos(): string[]
 
 ---
 
+### mergeOAuthScopes `function`
+
+📍 [`src/connectors/oauth/utils/scopes.ts:7`](src/connectors/oauth/utils/scopes.ts)
+
+Merge required scope tokens into a space-separated scope string.
+Idempotent: returns the input unchanged if the token is already present.
+Empty / undefined input yields the required token alone (so the IdP at
+least gets refresh-grant guidance). Preserves token order.
+
+```typescript
+export function mergeOAuthScopes(scope: string | undefined, required: string): string
+```
+
+---
+
 ### mergeRequiredScope `function`
 
-📍 [`src/connectors/oauth/flows/AuthCodePKCE.ts:21`](src/connectors/oauth/flows/AuthCodePKCE.ts)
+📍 [`src/connectors/oauth/flows/AuthCodePKCE.ts:22`](src/connectors/oauth/flows/AuthCodePKCE.ts)
 
 Force-merge a vendor-required scope token into a space-separated scope
 string. Idempotent: returns the input unchanged if the token is already
@@ -42582,21 +45128,6 @@ vendor template's `RefreshStrategy` stamped at config-build time.
 
 ```typescript
 function mergeRequiredScope(scope: string | undefined, required: string | undefined): string | undefined
-```
-
----
-
-### mergeScope `function`
-
-📍 [`src/connectors/vendors/helpers.ts:103`](src/connectors/vendors/helpers.ts)
-
-Merge a single required scope token into a space-separated scope string.
-Idempotent: returns the input unchanged if the token is already present.
-Empty / undefined input yields the required token alone (so the IdP at
-least gets refresh-grant guidance). Preserves token order.
-
-```typescript
-function mergeScope(scope: string | undefined, required: string): string
 ```
 
 ---
@@ -42616,6 +45147,18 @@ function normalizePrivateKeyPem(pem: string): string
 
 ---
 
+### resolveOAuthUrl `function`
+
+📍 [`src/connectors/vendors/helpers.ts:193`](src/connectors/vendors/helpers.ts)
+
+Resolve only placeholders declared in the template, using supplied credentials.
+
+```typescript
+function resolveOAuthUrl(url: string | undefined, credentials: Record&lt;string, string | undefined&gt;): string | undefined
+```
+
+---
+
 ### slugToKey `function`
 
 📍 [`src/connectors/vendors/logos.ts:162`](src/connectors/vendors/logos.ts)
@@ -42628,9 +45171,25 @@ function slugToKey(slug: string): string
 
 ---
 
+### updateAuthorizationCodeAuth `function`
+
+📍 [`src/connectors/vendors/helpers.ts:200`](src/connectors/vendors/helpers.ts)
+
+Update auth settings without re-importing creation defaults or losing token namespaces.
+
+```typescript
+function updateAuthorizationCodeAuth(
+  authTemplate: AuthTemplate,
+  credentials: TemplateCredentials,
+  existingAuth: ConnectorAuth,
+): ConnectorAuth
+```
+
+---
+
 ### validateCredentials `function`
 
-📍 [`src/connectors/vendors/helpers.ts:361`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:413`](src/connectors/vendors/helpers.ts)
 
 Validate that all required fields are provided
 
@@ -46904,9 +49463,36 @@ constructor(
 
 ---
 
+### ConnectorNotFoundError `class`
+
+📍 [`src/domain/errors/AIErrors.ts:25`](src/domain/errors/AIErrors.ts)
+
+A connector could not be resolved in the current registry scope.
+Scoped registries use the same error for missing and hidden connectors so
+callers cannot distinguish their existence. Other lookup failures must retain
+their original type. Hosts decide whether absence permits a fallback; no HTTP
+status is assigned. Diagnostic messages must only list visible connectors.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message = 'Connector not found in current scope.', originalError?: Error)
+```
+
+**Parameters:**
+- `message`: `string` *(optional)* (default: `'Connector not found in current scope.'`)
+- `originalError`: `Error | undefined` *(optional)*
+
+</details>
+
+---
+
 ### ContextOverflowError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:386`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:424`](src/domain/errors/AIErrors.ts)
 
 Error thrown when context cannot be reduced to fit within limits
 after all graceful degradation levels have been exhausted.
@@ -46962,7 +49548,7 @@ getTopConsumers(count = 5): Array&lt;{ component: string; tokens: number }&gt;
 
 ### DependencyCycleError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:232`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:270`](src/domain/errors/AIErrors.ts)
 
 Error thrown when a dependency cycle is detected in a plan
 
@@ -46990,7 +49576,7 @@ constructor(
 
 ### DocumentReadError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:334`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:372`](src/domain/errors/AIErrors.ts)
 
 Error thrown when document reading fails
 
@@ -47296,7 +49882,7 @@ constructor(
 
 ### InvalidConfigError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:184`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:222`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -47637,7 +50223,7 @@ constructor()
 
 ### ProviderAmbiguousOperationError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:166`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:204`](src/domain/errors/AIErrors.ts)
 
 A paid/external submission may have succeeded even though no handle was received.
 
@@ -47667,7 +50253,7 @@ constructor(
 
 ### ProviderAuthError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:30`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:45`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -47688,7 +50274,7 @@ constructor(providerName: string, message: string = 'Authentication failed')
 
 ### ProviderCapabilityNotSupportedError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:149`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:187`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -47714,7 +50300,7 @@ constructor(
 
 ### ProviderContextLengthError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:57`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:95`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -47740,7 +50326,7 @@ constructor(
 
 ### ProviderError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:209`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:247`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -47768,7 +50354,7 @@ constructor(
 
 ### ProviderErrorMapper `class`
 
-📍 [`src/infrastructure/providers/base/ProviderErrorMapper.ts:24`](src/infrastructure/providers/base/ProviderErrorMapper.ts)
+📍 [`src/infrastructure/providers/base/ProviderErrorMapper.ts:25`](src/infrastructure/providers/base/ProviderErrorMapper.ts)
 
 Maps provider-specific errors to our unified error types
 
@@ -47807,9 +50393,52 @@ static extractErrorDetails(error: any): Record&lt;string, unknown&gt;
 
 ---
 
+### ProviderMisalignmentError `class`
+
+📍 [`src/domain/errors/AIErrors.ts:58`](src/domain/errors/AIErrors.ts)
+
+OpenAI safety monitor stopped a request for a potential misalignment policy violation.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(
+    public readonly providerName: string,
+    message: string,
+    public readonly requestId?: string,
+    public readonly responseId?: string,
+    public readonly details?: unknown,
+    originalError?: Error,
+  )
+```
+
+**Parameters:**
+- `providerName`: `string`
+- `message`: `string`
+- `requestId`: `string | undefined` *(optional)*
+- `responseId`: `string | undefined` *(optional)*
+- `details`: `unknown` *(optional)*
+- `originalError`: `Error | undefined` *(optional)*
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `providerCode` | `providerCode: "misalignment_policy_violation"` | - |
+
+</details>
+
+---
+
 ### ProviderNotFoundError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:18`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:33`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -47829,7 +50458,7 @@ constructor(providerName: string)
 
 ### ProviderRateLimitError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:42`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:80`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -48073,7 +50702,7 @@ constructor(message: string)
 
 ### UnsupportedFormatError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:354`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:392`](src/domain/errors/AIErrors.ts)
 
 Error thrown when a document format is not supported
 
@@ -48127,7 +50756,7 @@ constructor(
 
 ### ContextOverflowBudget `interface`
 
-📍 [`src/domain/errors/AIErrors.ts:374`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:412`](src/domain/errors/AIErrors.ts)
 
 Detailed budget information for context overflow diagnosis
 
@@ -48300,7 +50929,7 @@ Normalized error result returned when a tool returns undefined/null or throws.
 
 ### ProviderErrorContext `interface`
 
-📍 [`src/infrastructure/providers/base/ProviderErrorMapper.ts:15`](src/infrastructure/providers/base/ProviderErrorMapper.ts)
+📍 [`src/infrastructure/providers/base/ProviderErrorMapper.ts:16`](src/infrastructure/providers/base/ProviderErrorMapper.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -48332,7 +50961,7 @@ type StepErrorStrategy = 'fail' | 'continue' | 'skip-remaining'
 
 ### abortError `function`
 
-📍 [`src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts:423`](src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts)
+📍 [`src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts:425`](src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts)
 
 ```typescript
 function abortError(reason: unknown): Error
@@ -48389,7 +51018,7 @@ export function isErrorPage(statusCode: number, html: string, text: string): boo
 
 ### isTransientError `function`
 
-📍 [`src/core/routineRunner.ts:446`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:453`](src/core/routineRunner.ts)
 
 Determine if an error is transient (worth retrying) or permanent (should fail immediately).
 Unknown errors default to transient — safer to retry than to give up prematurely.
@@ -48402,7 +51031,7 @@ function isTransientError(error: unknown): boolean
 
 ### toError `function`
 
-📍 [`src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts:430`](src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts)
+📍 [`src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts:432`](src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts)
 
 ```typescript
 function toError(value: unknown, fallback: string): Error
@@ -49000,7 +51629,7 @@ TypeScript interfaces for extensibility
 
 ### AdvancedTextCapabilities `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:79`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:91`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -49031,6 +51660,12 @@ TypeScript interfaces for extensibility
     /** Whether the adapter can surface and resume a host-managed MCP approval. */
     remoteMcpApproval: boolean;
   };` | - |
+| `responsesExtensions?` | `responsesExtensions?: {
+    asyncToolCalling: boolean;
+    midTurnSteering: boolean;
+    configurationUpdates: boolean;
+    misalignmentMonitoring: boolean;
+  };` | Responses-protocol extensions exposed through this provider/library integration. |
 | `dataHandling` | `dataHandling: {
     promptCaching: 'none' | 'provider_managed';
     batch: 'none' | 'provider_retained';
@@ -49105,7 +51740,7 @@ Agent definition summary for listing
 
 ### BatchHandle `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:133`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:152`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -49134,7 +51769,7 @@ Agent definition summary for listing
 
 ### BatchSubmitOptions `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:127`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:146`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -49151,7 +51786,7 @@ Agent definition summary for listing
 
 ### BatchTextRequest `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:121`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:140`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -49167,7 +51802,7 @@ Agent definition summary for listing
 
 ### BatchTextResult `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:151`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:170`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -49254,7 +51889,7 @@ Summary of a stored correlation
 
 ### DataHandlingPolicy `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:52`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:58`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -49319,7 +51954,7 @@ Response from an embedding request
 
 ### FileSearchOptions `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:67`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:73`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -49643,7 +52278,7 @@ destroy(): Promise&lt;void&gt;;
 
 ### IAsyncTextBatchProvider `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:164`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:183`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -49827,7 +52462,10 @@ listAll(): Promise&lt;StoredConnectorConfig[]&gt;;
 
 #### `get()`
 
-Get a connector by name. Throws if not found (or not accessible).
+Get a connector by name. Throw ConnectorNotFoundError when missing or hidden
+in this scope, with no disclosure of inaccessible connectors. Propagate
+authentication, configuration and storage failures without reclassifying
+them as absence. Connector.get() preserves custom-registry errors unchanged.
 
 ```typescript
 get(name: string): Connector;
@@ -49904,6 +52542,7 @@ getInfo(): Record&lt;string, { displayName: string; description: string; baseURL
 #### `getById()?`
 
 Get a connector by ID. Optional — not all registries support ID-based lookup.
+Uses the same ConnectorNotFoundError contract as get().
 
 ```typescript
 getById?(id: string): Connector;
@@ -51457,7 +54096,7 @@ translate?(options: STTOptions): Promise&lt;STTResponse&gt;;
 
 ### ITextProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:83`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:87`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -51849,7 +54488,7 @@ Base provider interface
 
 ### RemoteMcpDescriptor `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:38`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:44`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -52076,7 +54715,7 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
 
 ### TextGenerateOptions `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:37`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:39`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -52096,6 +54735,7 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
   };` | - |
 | `parallel_tool_calls?` | `parallel_tool_calls?: boolean;` | - |
 | `previous_response_id?` | `previous_response_id?: string;` | - |
+| `continuation_token?` | `continuation_token?: string;` | Opaque provider token used to resume an incomplete long decode. |
 | `metadata?` | `metadata?: Record&lt;string, string&gt;;` | - |
 | `prompt_cache?` | `prompt_cache?: PromptCachePolicy;` | Provider-neutral prompt-cache policy. Unsupported strict requests fail
 before execution. `mode: 'off'` suppresses library-requested cache controls
@@ -52121,6 +54761,7 @@ but cannot disable provider-implicit caching. |
 | Property | Type | Description |
 |----------|------|-------------|
 | `enabled` | `enabled: boolean;` | - |
+| `mode?` | `mode?: 'adaptive' | 'enabled' | 'between_tools' | 'disabled';` | Provider thinking mode. `between_tools` and `disabled` are currently Anthropic-specific. |
 | `budgetTokens?` | `budgetTokens?: number;` | Fixed reasoning-token budget for models that still expose budget-based thinking. |
 | `effort?` | `effort?: ReasoningEffort;` | Model-selected reasoning depth for OpenAI, Anthropic, and Gemini models. |
 
@@ -52178,7 +54819,7 @@ Word-level timestamp
 
 ### BatchProcessingState `type`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:112`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:131`](src/domain/interfaces/IAdvancedInference.ts)
 
 ```typescript
 type BatchProcessingState = | 'queued'
@@ -52876,7 +55517,7 @@ protected getMaxRetries(): number
 
 ### BaseTextProvider `class`
 
-📍 [`src/infrastructure/providers/base/BaseTextProvider.ts:22`](src/infrastructure/providers/base/BaseTextProvider.ts)
+📍 [`src/infrastructure/providers/base/BaseTextProvider.ts:26`](src/infrastructure/providers/base/BaseTextProvider.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -53117,7 +55758,7 @@ export function hasAsyncConvert(
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:136`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:137`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -53852,7 +56493,7 @@ getAll(): string[]
 
 ### AnthropicConverter `class`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicConverter.ts:43`](src/infrastructure/providers/anthropic/AnthropicConverter.ts)
+📍 [`src/infrastructure/providers/anthropic/AnthropicConverter.ts:60`](src/infrastructure/providers/anthropic/AnthropicConverter.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -53937,7 +56578,7 @@ protected mapProviderStatus(status: unknown): ResponseStatus
 
 ### AnthropicTextProvider `class`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:62`](src/infrastructure/providers/anthropic/AnthropicTextProvider.ts)
+📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:63`](src/infrastructure/providers/anthropic/AnthropicTextProvider.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -54241,7 +56882,7 @@ killAll(): void
 
 ### BaseAgent `class`
 
-📍 [`src/core/BaseAgent.ts:326`](src/core/BaseAgent.ts)
+📍 [`src/core/BaseAgent.ts:339`](src/core/BaseAgent.ts)
 
 Abstract base class for all agent types.
 
@@ -57393,7 +60034,7 @@ async listModels(): Promise&lt;string[]&gt;
 
 ### GoogleInteractionsConverter `class`
 
-📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:36`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
+📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:37`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
 
 Current (May 2026+) Gemini Interactions `steps` schema adapter.
 
@@ -57426,11 +60067,14 @@ convertResponse(interaction: Interaction, model: string): LLMResponse
 #### `convertStream()`
 
 ```typescript
-async *convertStream(stream: AsyncIterable&lt;any&gt;, model: string): AsyncIterableIterator&lt;StreamEvent&gt;
+async *convertStream(
+    stream: AsyncIterable&lt;Interactions.InteractionSSEEvent&gt;,
+    model: string,
+  ): AsyncIterableIterator&lt;StreamEvent&gt;
 ```
 
 **Parameters:**
-- `stream`: `AsyncIterable&lt;any&gt;`
+- `stream`: `AsyncIterable&lt;InteractionSSEEvent&gt;`
 - `model`: `string`
 
 **Returns:** `AsyncIterableIterator&lt;StreamEvent&gt;`
@@ -57708,6 +60352,88 @@ async waitForCompletion(jobId: string, timeoutMs: number = 600000): Promise&lt;V
 
 ---
 
+### GoogleVoices `class`
+
+📍 [`src/capabilities/google/GoogleVoices.ts:14`](src/capabilities/google/GoogleVoices.ts)
+
+Connector-first access to Google's prebuilt, designed, and replicated voices.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(connector: string | Connector)
+```
+
+**Parameters:**
+- `connector`: `string | Connector`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `create()`
+
+```typescript
+async create(params: GoogleVoiceCreateParams): Promise&lt;GoogleVoice&gt;
+```
+
+**Parameters:**
+- `params`: `CreateVoiceRequest_2 & { api_version?: string | undefined; }`
+
+**Returns:** `Promise&lt;VoiceOutput&gt;`
+
+#### `list()`
+
+```typescript
+async list(params?: GoogleVoiceListParams): Promise&lt;GoogleVoiceListResponse&gt;
+```
+
+**Parameters:**
+- `params`: `ListVoicesRequest | null | undefined` *(optional)*
+
+**Returns:** `Promise&lt;ListVoicesResponse&gt;`
+
+#### `get()`
+
+```typescript
+async get(id: string, params?: GoogleVoiceGetParams): Promise&lt;GoogleVoice&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `params`: `GetVoiceParams | null | undefined` *(optional)*
+
+**Returns:** `Promise&lt;VoiceOutput&gt;`
+
+#### `delete()`
+
+```typescript
+async delete(id: string, params?: GoogleVoiceDeleteParams): Promise&lt;unknown&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `params`: `DeleteVoiceParams | null | undefined` *(optional)*
+
+**Returns:** `Promise&lt;unknown&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: Connector` | - |
+
+</details>
+
+---
+
 ### GrokImagineProvider `class`
 
 📍 [`src/infrastructure/providers/grok/GrokImagineProvider.ts:67`](src/infrastructure/providers/grok/GrokImagineProvider.ts)
@@ -57871,6 +60597,55 @@ async referCall(callId: string, targetUri: string): Promise&lt;void&gt;
 | Property | Type | Description |
 |----------|------|-------------|
 | `connector` | `connector: Connector` | - |
+
+</details>
+
+---
+
+### GrokTextProvider `class`
+
+📍 [`src/infrastructure/providers/grok/GrokTextProvider.ts:12`](src/infrastructure/providers/grok/GrokTextProvider.ts)
+
+xAI's text API uses the OpenAI Responses wire format, but its hosted tools,
+reasoning replay requirements, and billing metadata are vendor-specific.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(name: string, config: GenericOpenAIConfig)
+```
+
+**Parameters:**
+- `name`: `string`
+- `config`: `GenericOpenAIConfig`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `getAdvancedCapabilities()`
+
+```typescript
+override getAdvancedCapabilities(model: string): AdvancedTextCapabilities
+```
+
+**Parameters:**
+- `model`: `string`
+
+**Returns:** `AdvancedTextCapabilities`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `nativeToolVendor` | `nativeToolVendor: "grok"` | - |
 
 </details>
 
@@ -58999,6 +61774,53 @@ async handle(
 
 ---
 
+### OpenAIDecisions `class`
+
+📍 [`src/capabilities/openai/OpenAIDecisions.ts:10`](src/capabilities/openai/OpenAIDecisions.ts)
+
+Connector-first access to OpenAI's ordered classification/scoring API.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(connector: string | Connector)
+```
+
+**Parameters:**
+- `connector`: `string | Connector`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `create()`
+
+```typescript
+async create(params: DecisionCreateParams): Promise&lt;Decision&gt;
+```
+
+**Parameters:**
+- `params`: `DecisionCreateParams`
+
+**Returns:** `Promise&lt;Decision&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: Connector` | - |
+
+</details>
+
+---
+
 ### OpenAIEmbeddingProvider `class`
 
 📍 [`src/infrastructure/providers/openai/OpenAIEmbeddingProvider.ts:23`](src/infrastructure/providers/openai/OpenAIEmbeddingProvider.ts)
@@ -59431,7 +62253,7 @@ onError(handler: (error: Error) =&gt; void): () =&gt; void
 
 ### OpenAIResponsesConverter `class`
 
-📍 [`src/infrastructure/providers/openai/OpenAIResponsesConverter.ts:24`](src/infrastructure/providers/openai/OpenAIResponsesConverter.ts)
+📍 [`src/infrastructure/providers/openai/OpenAIResponsesConverter.ts:55`](src/infrastructure/providers/openai/OpenAIResponsesConverter.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -59487,11 +62309,15 @@ convertTools(tools: Tool[]): ResponsesAPI.Tool[]
 #### `convertNativeTools()`
 
 ```typescript
-convertNativeTools(tools: import('../../../domain/interfaces/IAdvancedInference.js').NativeToolRequest[]): ResponsesAPI.Tool[]
+convertNativeTools(
+    tools: import('../../../domain/interfaces/IAdvancedInference.js').NativeToolRequest[],
+    vendor: 'openai' | 'grok' = 'openai',
+  ): ResponsesAPI.Tool[]
 ```
 
 **Parameters:**
 - `tools`: `NativeToolRequest[]`
+- `vendor`: `"openai" | "grok"` *(optional)* (default: `'openai'`)
 
 **Returns:** `Tool[]`
 
@@ -59532,9 +62358,56 @@ convertResponseFormat(
 
 ---
 
+### OpenAISafetyAPI `class`
+
+📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:7`](src/capabilities/openai/OpenAISafetyAPI.ts)
+
+Connector-first access to OpenAI safety-alert records.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(connector: string | Connector)
+```
+
+**Parameters:**
+- `connector`: `string | Connector`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `retrieveAlert()`
+
+```typescript
+async retrieveAlert(id: string): Promise&lt;SafetyAlert&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Promise&lt;SafetyAlert&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: Connector` | - |
+
+</details>
+
+---
+
 ### OpenAISoraProvider `class`
 
-📍 [`src/infrastructure/providers/openai/OpenAISoraProvider.ts:27`](src/infrastructure/providers/openai/OpenAISoraProvider.ts)
+📍 [`src/infrastructure/providers/openai/OpenAISoraProvider.ts:25`](src/infrastructure/providers/openai/OpenAISoraProvider.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -59555,120 +62428,93 @@ constructor(config: OpenAIMediaConfig)
 
 #### `generateVideo()`
 
-Generate a video from a text prompt
-
 ```typescript
-async generateVideo(options: VideoGenerateOptions): Promise&lt;VideoResponse&gt;
+async generateVideo(_options: VideoGenerateOptions): Promise&lt;VideoResponse&gt;
 ```
 
 **Parameters:**
-- `options`: `VideoGenerateOptions`
+- `_options`: `VideoGenerateOptions`
 
 **Returns:** `Promise&lt;VideoResponse&gt;`
 
 #### `getVideoStatus()`
 
-Get the status of a video generation job
-
 ```typescript
-async getVideoStatus(jobId: string): Promise&lt;VideoResponse&gt;
+async getVideoStatus(_jobId: string): Promise&lt;VideoResponse&gt;
 ```
 
 **Parameters:**
-- `jobId`: `string`
+- `_jobId`: `string`
 
 **Returns:** `Promise&lt;VideoResponse&gt;`
 
 #### `downloadVideo()`
 
-Download a completed video
-
 ```typescript
-async downloadVideo(jobId: string): Promise&lt;Buffer&gt;
+async downloadVideo(_jobId: string): Promise&lt;Buffer&gt;
 ```
 
 **Parameters:**
-- `jobId`: `string`
+- `_jobId`: `string`
 
 **Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt;&gt;`
 
 #### `extendVideo()`
 
-Extend a completed video by generating an additional segment.
-Calls SDK `videos.extend()` (added in openai 6.28). The `seconds`
-parameter controls the *new* segment length, not total duration.
-
-`direction` is currently unused — the OpenAI Videos API extends from
-the end of the source clip. The field is kept on `VideoExtendOptions`
-for future provider parity.
-
 ```typescript
-async extendVideo(options: VideoExtendOptions): Promise&lt;VideoResponse&gt;
+async extendVideo(_options: VideoExtendOptions): Promise&lt;VideoResponse&gt;
 ```
 
 **Parameters:**
-- `options`: `VideoExtendOptions`
+- `_options`: `VideoExtendOptions`
 
 **Returns:** `Promise&lt;VideoResponse&gt;`
 
 #### `remixVideo()`
 
-Remix a completed video — same length, prompt-steered re-generation.
-
 ```typescript
-async remixVideo(options: VideoRemixOptions): Promise&lt;VideoResponse&gt;
+async remixVideo(_options: VideoRemixOptions): Promise&lt;VideoResponse&gt;
 ```
 
 **Parameters:**
-- `options`: `VideoRemixOptions`
+- `_options`: `VideoRemixOptions`
 
 **Returns:** `Promise&lt;VideoResponse&gt;`
 
 #### `editVideo()`
 
-Edit a completed video — apply a prompt-described change.
-
 ```typescript
-async editVideo(options: VideoEditOptions): Promise&lt;VideoResponse&gt;
+async editVideo(_options: VideoEditOptions): Promise&lt;VideoResponse&gt;
 ```
 
 **Parameters:**
-- `options`: `VideoEditOptions`
+- `_options`: `VideoEditOptions`
 
 **Returns:** `Promise&lt;VideoResponse&gt;`
 
 #### `createCharacter()`
 
-Create a reusable character from a reference video (Sora character API).
-Returns the character id, which can later be passed back to
-`generateVideo` via `vendorOptions.characterId` (raw API plumbing —
-the unified `VideoGenerateOptions` does not yet model character refs).
-
 ```typescript
-async createCharacter(options: CreateCharacterOptions): Promise&lt;CharacterRef&gt;
+async createCharacter(_options: CreateCharacterOptions): Promise&lt;CharacterRef&gt;
 ```
 
 **Parameters:**
-- `options`: `CreateCharacterOptions`
+- `_options`: `CreateCharacterOptions`
 
 **Returns:** `Promise&lt;CharacterRef&gt;`
 
 #### `getCharacter()`
 
-Look up an existing character by id.
-
 ```typescript
-async getCharacter(characterId: string): Promise&lt;CharacterRef&gt;
+async getCharacter(_characterId: string): Promise&lt;CharacterRef&gt;
 ```
 
 **Parameters:**
-- `characterId`: `string`
+- `_characterId`: `string`
 
 **Returns:** `Promise&lt;CharacterRef&gt;`
 
 #### `listModels()`
-
-List available video models
 
 ```typescript
 async listModels(): Promise&lt;string[]&gt;
@@ -59678,14 +62524,14 @@ async listModels(): Promise&lt;string[]&gt;
 
 #### `cancelJob()`
 
-Cancel/delete a pending job
+No remote cancellation is possible; preserve the existing boolean result.
 
 ```typescript
-async cancelJob(jobId: string): Promise&lt;boolean&gt;
+async cancelJob(_jobId: string): Promise&lt;boolean&gt;
 ```
 
 **Parameters:**
-- `jobId`: `string`
+- `_jobId`: `string`
 
 **Returns:** `Promise&lt;boolean&gt;`
 
@@ -59706,7 +62552,7 @@ async cancelJob(jobId: string): Promise&lt;boolean&gt;
 
 ### OpenAITextProvider `class`
 
-📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:42`](src/infrastructure/providers/openai/OpenAITextProvider.ts)
+📍 [`src/infrastructure/providers/openai/OpenAITextProvider.ts:54`](src/infrastructure/providers/openai/OpenAITextProvider.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -59842,7 +62688,55 @@ async listModels(): Promise&lt;string[]&gt;
 |----------|------|-------------|
 | `name` | `name: string` | - |
 | `capabilities` | `capabilities: ProviderCapabilities` | - |
+| `nativeToolVendor` | `nativeToolVendor: "openai" | "grok"` | - |
 | `batch` | `batch: IAsyncTextBatchProvider&lt;TextGenerateOptions, LLMResponse&gt;` | - |
+
+</details>
+
+---
+
+### OpenAIVoices `class`
+
+📍 [`src/capabilities/openai/OpenAIVoices.ts:9`](src/capabilities/openai/OpenAIVoices.ts)
+
+Connector-first creation of prompt-designed and consent-based OpenAI voices.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(connector: string | Connector)
+```
+
+**Parameters:**
+- `connector`: `string | Connector`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `create()`
+
+```typescript
+async create(params: OpenAIVoiceCreateParams): Promise&lt;OpenAIVoice&gt;
+```
+
+**Parameters:**
+- `params`: `VoiceCreateParams`
+
+**Returns:** `Promise&lt;Voice & { _request_id?: string | null | undefined; }&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: Connector` | - |
 
 </details>
 
@@ -61757,7 +64651,7 @@ evaluate(ctx: PolicyContext): PolicyDecision
 
 ### ScopedConnectorRegistry `class`
 
-📍 [`src/core/ScopedConnectorRegistry.ts:15`](src/core/ScopedConnectorRegistry.ts)
+📍 [`src/core/ScopedConnectorRegistry.ts:16`](src/core/ScopedConnectorRegistry.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -63213,7 +66107,7 @@ async destroy(): Promise&lt;void&gt;
 
 ### TwilioAdapter `class`
 
-📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:123`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
+📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:124`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
 
 <details>
 <summary><strong>Static Methods</strong></summary>
@@ -64712,7 +67606,7 @@ Provider configuration types
 
 ### APIKeyConnectorAuth `interface`
 
-📍 [`src/domain/entities/Connector.ts:93`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:95`](src/domain/entities/Connector.ts)
 
 Static API key authentication
 For services like OpenAI, Anthropic, many SaaS APIs
@@ -64758,7 +67652,7 @@ Runtime-only OpenAI API key provider.
 
 ### APIKeyProviderConnectorAuth `interface`
 
-📍 [`src/domain/entities/Connector.ts:119`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:121`](src/domain/entities/Connector.ts)
 
 Host-local rotating API key authentication. This runtime-only form is not
 serializable and ConnectorConfigStore deliberately refuses to persist it.
@@ -64770,6 +67664,26 @@ serializable and ConnectorConfigStore deliberately refuses to persist it.
 |----------|------|-------------|
 | `type` | `type: 'api_key_provider';` | - |
 | `getApiKey` | `getApiKey: () =&gt; Promise&lt;string&gt;;` | - |
+
+</details>
+
+---
+
+### ApplyPatchCallOutputItem `interface`
+
+📍 [`src/domain/entities/Message.ts:108`](src/domain/entities/Message.ts)
+
+Result returned after applying an OpenAI apply-patch operation.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: 'apply_patch_call_output';` | - |
+| `call_id` | `call_id: string;` | - |
+| `status` | `status: 'completed' | 'failed';` | - |
+| `output?` | `output?: string | null;` | - |
 
 </details>
 
@@ -65100,7 +68014,7 @@ Agent subclasses typically extend their own event interfaces.
 
 ### BaseContent `interface`
 
-📍 [`src/domain/entities/Content.ts:15`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:18`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -65692,7 +68606,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionItem `interface`
 
-📍 [`src/domain/entities/Message.ts:21`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:22`](src/domain/entities/Message.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -65702,6 +68616,9 @@ estimateTokens(item: InputItem): number;
 | `type` | `type: 'compaction';` | - |
 | `id` | `id: string;` | - |
 | `encrypted_content` | `encrypted_content: string;` | - |
+| `content?` | `content?: string | null;` | Provider-readable summary when the compaction protocol exposes one. |
+| `signature?` | `signature?: string | null;` | Provider signature that must be replayed verbatim. |
+| `providerMetadata?` | `providerMetadata?: Record&lt;string, unknown&gt;;` | Opaque provider fields that must be replayed verbatim. |
 
 </details>
 
@@ -65722,6 +68639,23 @@ Result of compact() operation.
 | `messagesRemoved` | `messagesRemoved: number;` | Number of messages removed from conversation |
 | `pluginsCompacted` | `pluginsCompacted: string[];` | Names of plugins that were compacted |
 | `log` | `log: string[];` | Log of actions taken during compaction |
+
+</details>
+
+---
+
+### CompactionTriggerItem `interface`
+
+📍 [`src/domain/entities/Message.ts:52`](src/domain/entities/Message.ts)
+
+Explicit in-band compaction request. Must be the final input item.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: 'compaction_trigger';` | - |
 
 </details>
 
@@ -65800,9 +68734,60 @@ resolveDisplayNames(ids: EntityId[]): Promise&lt;Array&lt;string | null&gt;&gt;;
 
 ---
 
+### ComputerCallOutputItem `interface`
+
+📍 [`src/domain/entities/Message.ts:73`](src/domain/entities/Message.ts)
+
+Screenshot result returned after executing an OpenAI computer-use call.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: 'computer_call_output';` | - |
+| `call_id` | `call_id: string;` | - |
+| `output` | `output: ({
+    type: 'computer_screenshot';
+  } & (
+    | { image_url: string; file_id?: string }
+    | { file_id: string; image_url?: string }
+  ));` | - |
+| `acknowledged_safety_checks?` | `acknowledged_safety_checks?: Array&lt;{
+    id: string;
+    code?: string | null;
+    message?: string | null;
+  }&gt;;` | - |
+| `status?` | `status?: 'in_progress' | 'completed' | 'incomplete';` | - |
+
+</details>
+
+---
+
+### ConfigurationUpdateItem `interface`
+
+📍 [`src/domain/entities/Message.ts:43`](src/domain/entities/Message.ts)
+
+GPT-6 Astra conversation-scoped reasoning-effort update.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: 'configuration_update';` | - |
+| `id?` | `id?: string;` | - |
+| `reasoning` | `reasoning: {
+    effort: ReasoningEffort;
+  };` | - |
+
+</details>
+
+---
+
 ### ConnectorConfig `interface`
 
-📍 [`src/domain/entities/Connector.ts:147`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:149`](src/domain/entities/Connector.ts)
 
 Complete connector configuration
 Used for BOTH AI providers AND external APIs
@@ -65876,7 +68861,7 @@ Used for BOTH AI providers AND external APIs
 
 ### ConnectorConfigResult `interface`
 
-📍 [`src/domain/entities/Connector.ts:251`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:253`](src/domain/entities/Connector.ts)
 
 Result from ProviderConfigAgent
 Includes setup instructions and environment variables
@@ -67169,9 +70154,14 @@ Options for direct LLM calls (bypassing AgentContext).
 |----------|------|-------------|
 | `instructions?` | `instructions?: string;` | System instructions (optional) |
 | `includeTools?` | `includeTools?: boolean;` | Include registered tools in the call. Default: false |
+| `tools?` | `tools?: Tool[];` | Explicit provider tool definitions for this direct call. This is useful for
+protocol-managed function/custom tools whose outputs the caller will return
+manually. When set, it takes precedence over `includeTools`. |
+| `toolChoice?` | `toolChoice?: TextGenerateOptions['tool_choice'];` | Tool selection for explicit direct-call tools. |
 | `temperature?` | `temperature?: number;` | Temperature for generation |
 | `maxOutputTokens?` | `maxOutputTokens?: number;` | Maximum output tokens |
 | `previousResponseId?` | `previousResponseId?: string;` | Continue a provider-stored response/interaction without resending its history. |
+| `continuationToken?` | `continuationToken?: string;` | Resume an incomplete provider decode using the token returned by the prior call. |
 | `responseFormat?` | `responseFormat?: ResponseFormat;` | Vendor-agnostic structured (JSON) output. When set, the response is
 constrained to JSON — via the vendor's native mechanism where supported,
 otherwise a strict prompt instruction — and parsed into
@@ -68090,7 +71080,7 @@ reset(): void;
 
 ### ExecuteRoutineOptions `interface`
 
-📍 [`src/core/routineRunner.ts:87`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:94`](src/core/routineRunner.ts)
 
 Options for executing a routine.
 
@@ -69200,6 +72190,23 @@ predicate / value / details / etc. come from here. |
 | `family` | `family: DocumentFamily;` | - |
 | `mimeType` | `mimeType: string;` | - |
 | `confidence` | `confidence: 'high' | 'medium' | 'low';` | - |
+
+</details>
+
+---
+
+### FunctionCallOutputItem `interface`
+
+📍 [`src/domain/entities/Message.ts:59`](src/domain/entities/Message.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: 'function_call_output';` | - |
+| `call_id` | `call_id: string;` | - |
+| `output` | `output: string | ToolCallOutputContent[];` | - |
 
 </details>
 
@@ -72737,7 +75744,7 @@ resolver falls back to legacy behavior. |
 
 ### InputFileContent `interface`
 
-📍 [`src/domain/entities/Content.ts:34`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:37`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -72753,7 +75760,7 @@ resolver falls back to legacy behavior. |
 
 ### InputTextContent `interface`
 
-📍 [`src/domain/entities/Content.ts:21`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:24`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -73151,7 +76158,7 @@ search(query: string, options?: SearchOptions): Promise&lt;SearchResponse&gt;;
 
 ### ISourceLinks `interface`
 
-📍 [`src/domain/types/SharedTypes.ts:78`](src/domain/types/SharedTypes.ts)
+📍 [`src/domain/types/SharedTypes.ts:80`](src/domain/types/SharedTypes.ts)
 
 Source links for model documentation and maintenance
 Used to track where information came from and when it was last verified
@@ -73888,7 +76895,7 @@ destroy(): Promise&lt;void&gt;;
 
 ### JWTConnectorAuth `interface`
 
-📍 [`src/domain/entities/Connector.ts:128`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:130`](src/domain/entities/Connector.ts)
 
 JWT Bearer token authentication
 For service accounts (Google, Salesforce)
@@ -74273,7 +77280,7 @@ optional fields (`identifiers`, `aliases`, `metadata`, `permissions`,
 
 ### LLMResponse `interface`
 
-📍 [`src/domain/entities/Response.ts:58`](src/domain/entities/Response.ts)
+📍 [`src/domain/entities/Response.ts:66`](src/domain/entities/Response.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -74308,6 +77315,7 @@ See `src/core/StructuredOutput.ts`. |
 | `structured_output_enforcement?` | `structured_output_enforcement?: 'native' | 'prompt' | 'repair';` | How a requested structured response was enforced. |
 | `native_tool_events?` | `native_tool_events?: NativeToolEvent[];` | Provider-hosted tool lifecycle/error details, when the provider returns them. |
 | `stop_reason?` | `stop_reason?: string;` | Raw provider stop reason (e.g. 'end_turn', 'max_tokens', 'refusal'), when known. |
+| `continuation_token?` | `continuation_token?: string;` | Opaque provider token used to resume an incomplete long decode. |
 | `stop_details?` | `stop_details?: ProviderStopDetails;` | Structured stop detail accompanying a terminal stop reason. Anthropic
 populates this for refusals — names which safety classifier fired. Undefined
 for ordinary completions. |
@@ -74775,7 +77783,7 @@ Identical to MeetingSlotSuggestion in both google and microsoft types.
 
 ### Message `interface`
 
-📍 [`src/domain/entities/Message.ts:14`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:15`](src/domain/entities/Message.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -75651,8 +78659,8 @@ SDP answer returned by a server-created OpenAI Realtime WebRTC call.
 | `dataChannelLabel?` | `dataChannelLabel?: string;` | - |
 | `connectTimeoutMs?` | `connectTimeoutMs?: number;` | - |
 | `maxBufferedAmountBytes?` | `maxBufferedAmountBytes?: number;` | - |
-| `maxPendingMessages?` | `maxPendingMessages?: number;` | Maximum event count retained before the first message subscriber. Default: 256. |
-| `maxPendingMessageBytes?` | `maxPendingMessageBytes?: number;` | Maximum UTF-8 bytes retained before the first message subscriber. Default: 1 MiB. |
+| `maxPendingMessages?` | `maxPendingMessages?: number;` | Maximum event count retained before the first raw-message or parsed-event subscriber. Default: 256. |
+| `maxPendingMessageBytes?` | `maxPendingMessageBytes?: number;` | Maximum UTF-8 bytes retained before the first raw-message or parsed-event subscriber. Default: 1 MiB. |
 | `stopLocalTracksOnClose?` | `stopLocalTracksOnClose?: boolean;` | - |
 | `onRemoteTrack?` | `onRemoteTrack?: (streamOrTrack: unknown) =&gt; void;` | - |
 
@@ -75775,7 +78783,7 @@ Configuration for initiating an outbound call.
 
 ### OutputContract `interface`
 
-📍 [`src/core/routineRunner.ts:227`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:234`](src/core/routineRunner.ts)
 
 Describes what a downstream control flow task needs from the current task's output.
 
@@ -75795,7 +78803,7 @@ Describes what a downstream control flow task needs from the current task's outp
 
 ### OutputTextContent `interface`
 
-📍 [`src/domain/entities/Content.ts:39`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:42`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -76154,7 +79162,7 @@ close(): void;
 
 ### PendingPlaybackMark `interface`
 
-📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:99`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
+📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:100`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -76878,9 +79886,30 @@ lower-level structure each provider converter already understands.
 
 ---
 
+### ProviderStateContent `interface`
+
+📍 [`src/domain/entities/Content.ts:107`](src/domain/entities/Content.ts)
+
+Opaque provider-owned content that must be replayed verbatim. This is used
+for protocol state such as Anthropic server-tool calls/results; applications
+should persist it but must not interpret or manufacture it.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: ContentType.PROVIDER_STATE;` | - |
+| `provider` | `provider: string;` | - |
+| `data` | `data: Record&lt;string, unknown&gt;;` | - |
+
+</details>
+
+---
+
 ### ProviderStopDetails `interface`
 
-📍 [`src/domain/entities/Response.ts:49`](src/domain/entities/Response.ts)
+📍 [`src/domain/entities/Response.ts:57`](src/domain/entities/Response.ts)
 
 Structured stop detail from a provider. Currently populated for Anthropic
 refusals (`{ type: 'refusal', category, explanation }`) — `category` names
@@ -77431,7 +80460,7 @@ when this callback is omitted. |
 
 ### ReasoningItem `interface`
 
-📍 [`src/domain/entities/Message.ts:27`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:34`](src/domain/entities/Message.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -79411,6 +82440,46 @@ Service info lookup (derived from SERVICE_DEFINITIONS)
 
 ---
 
+### ShellCallOutputContent `interface`
+
+📍 [`src/domain/entities/Message.ts:90`](src/domain/entities/Message.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `stdout` | `stdout: string;` | - |
+| `stderr` | `stderr: string;` | - |
+| `outcome` | `outcome:
+    | { type: 'exit'; exit_code: number }
+    | { type: 'timeout' };` | - |
+
+</details>
+
+---
+
+### ShellCallOutputItem `interface`
+
+📍 [`src/domain/entities/Message.ts:99`](src/domain/entities/Message.ts)
+
+Result returned after executing an OpenAI client shell call.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `type: 'shell_call_output';` | - |
+| `call_id` | `call_id: string;` | - |
+| `output` | `output: ShellCallOutputContent[];` | - |
+| `max_output_length?` | `max_output_length?: number | null;` | - |
+| `status?` | `status?: 'in_progress' | 'completed' | 'incomplete';` | - |
+
+</details>
+
+---
+
 ### SignalBreakdown `interface`
 
 📍 [`src/memory/dedup.ts:91`](src/memory/dedup.ts)
@@ -80431,7 +83500,7 @@ Stdio transport configuration
 
 ### StepExecutionContext `interface`
 
-📍 [`src/core/routineRunner.ts:743`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:751`](src/core/routineRunner.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -80454,7 +83523,7 @@ Stdio transport configuration
 
 ### StepExecutionResult `interface`
 
-📍 [`src/core/routineRunner.ts:755`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:763`](src/core/routineRunner.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81287,7 +84356,7 @@ Text pipeline configuration — STT → Agent → TTS
 
 ### ThinkingContent `interface`
 
-📍 [`src/domain/entities/Content.ts:67`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:88`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -81369,6 +84438,7 @@ Token usage statistics
 | `processing_mode?` | `processing_mode?: import('./Model.js').ProcessingMode;` | - |
 | `service_tier?` | `service_tier?: string;` | - |
 | `speed?` | `speed?: string;` | Provider-reported inference speed, currently Anthropic `standard`/`fast`. |
+| `cost_usd_ticks?` | `cost_usd_ticks?: number;` | xAI provider-reported total cost in one-billionth USD ticks. |
 
 </details>
 
@@ -81557,7 +84627,7 @@ Options for twilioFetch
 
 ### TwilioMediaMessage `interface`
 
-📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:52`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
+📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:53`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
 
 Twilio → Server messages
 
@@ -81629,7 +84699,7 @@ Twilio → Server messages
 
 ### TwilioOutboundMessage `interface`
 
-📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:84`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
+📍 [`src/capabilities/voice/adapters/twilio/TwilioAdapter.ts:85`](src/capabilities/voice/adapters/twilio/TwilioAdapter.ts)
 
 Server → Twilio messages
 
@@ -82190,7 +85260,7 @@ Result from evaluating user rules against a tool call.
 
 ### ValidationContext `interface`
 
-📍 [`src/core/routineRunner.ts:184`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:191`](src/core/routineRunner.ts)
 
 Context snapshot passed to the validation prompt builder.
 Contains everything the validator needs to evaluate task completion
@@ -82212,7 +85282,7 @@ WITHOUT conversation history.
 
 ### VendorOptionSchema `interface`
 
-📍 [`src/domain/types/SharedTypes.ts:95`](src/domain/types/SharedTypes.ts)
+📍 [`src/domain/types/SharedTypes.ts:97`](src/domain/types/SharedTypes.ts)
 
 Vendor-specific option schema for validation and documentation
 Used to describe vendor-specific options that fall outside semantic options
@@ -82731,7 +85801,10 @@ Content types based on OpenAI Responses API format
 | `OUTPUT_TEXT` | `output_text` | - |
 | `TOOL_USE` | `tool_use` | - |
 | `TOOL_RESULT` | `tool_result` | - |
+| `CUSTOM_TOOL_USE` | `custom_tool_use` | - |
+| `CUSTOM_TOOL_RESULT` | `custom_tool_result` | - |
 | `THINKING` | `thinking` | - |
+| `PROVIDER_STATE` | `provider_state` | - |
 
 </details>
 
@@ -82739,7 +85812,7 @@ Content types based on OpenAI Responses API format
 
 ### MessageRole `enum`
 
-📍 [`src/domain/entities/Message.ts:8`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:9`](src/domain/entities/Message.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -82825,7 +85898,7 @@ type AgentPackageProtocolVersion = typeof AGENT_PACKAGE_PROTOCOL_VERSION
 
 ### AgentResponse `type`
 
-📍 [`src/domain/entities/Response.ts:122`](src/domain/entities/Response.ts)
+📍 [`src/domain/entities/Response.ts:132`](src/domain/entities/Response.ts)
 
 ```typescript
 type AgentResponse = LLMResponse
@@ -82850,9 +85923,19 @@ type AgentStatus = | 'idle'         // Created but not started
 
 ---
 
+### AnthropicThinkingMode `type`
+
+📍 [`src/infrastructure/providers/anthropic/AnthropicConverter.ts:44`](src/infrastructure/providers/anthropic/AnthropicConverter.ts)
+
+```typescript
+type AnthropicThinkingMode = 'adaptive' | 'enabled' | 'between_tools' | 'disabled'
+```
+
+---
+
 ### AspectRatio `type`
 
-📍 [`src/domain/types/SharedTypes.ts:52`](src/domain/types/SharedTypes.ts)
+📍 [`src/domain/types/SharedTypes.ts:54`](src/domain/types/SharedTypes.ts)
 
 Aspect ratios - normalized across all visual modalities (images, video)
 
@@ -82891,7 +85974,7 @@ type AudioEncoding = 'pcm_s16le' | 'mulaw' | 'alaw'
 
 ### AudioFormat `type`
 
-📍 [`src/domain/types/SharedTypes.ts:63`](src/domain/types/SharedTypes.ts)
+📍 [`src/domain/types/SharedTypes.ts:65`](src/domain/types/SharedTypes.ts)
 
 Audio output formats
 
@@ -83116,7 +86199,7 @@ type ConnectorAuth = | OAuthConnectorAuth
 
 ### Content `type`
 
-📍 [`src/domain/entities/Content.ts:81`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:113`](src/domain/entities/Content.ts)
 
 ```typescript
 type Content = | InputTextContent
@@ -83125,7 +86208,10 @@ type Content = | InputTextContent
   | OutputTextContent
   | ToolUseContent
   | ToolResultContent
+  | CustomToolUseContent
+  | CustomToolResultContent
   | ThinkingContent
+  | ProviderStateContent
 ```
 
 ---
@@ -83382,6 +86468,66 @@ type FactKind = 'atomic' | 'document'
 
 ---
 
+### GoogleVoice `type`
+
+📍 [`src/capabilities/google/GoogleVoices.ts:10`](src/capabilities/google/GoogleVoices.ts)
+
+```typescript
+type GoogleVoice = Awaited&lt;ReturnType&lt;VoicesClient['create']&gt;&gt;
+```
+
+---
+
+### GoogleVoiceCreateParams `type`
+
+📍 [`src/capabilities/google/GoogleVoices.ts:6`](src/capabilities/google/GoogleVoices.ts)
+
+```typescript
+type GoogleVoiceCreateParams = Parameters&lt;VoicesClient['create']&gt;[0]
+```
+
+---
+
+### GoogleVoiceDeleteParams `type`
+
+📍 [`src/capabilities/google/GoogleVoices.ts:9`](src/capabilities/google/GoogleVoices.ts)
+
+```typescript
+type GoogleVoiceDeleteParams = Parameters&lt;VoicesClient['delete']&gt;[1]
+```
+
+---
+
+### GoogleVoiceGetParams `type`
+
+📍 [`src/capabilities/google/GoogleVoices.ts:8`](src/capabilities/google/GoogleVoices.ts)
+
+```typescript
+type GoogleVoiceGetParams = Parameters&lt;VoicesClient['get']&gt;[1]
+```
+
+---
+
+### GoogleVoiceListParams `type`
+
+📍 [`src/capabilities/google/GoogleVoices.ts:7`](src/capabilities/google/GoogleVoices.ts)
+
+```typescript
+type GoogleVoiceListParams = Parameters&lt;VoicesClient['list']&gt;[0]
+```
+
+---
+
+### GoogleVoiceListResponse `type`
+
+📍 [`src/capabilities/google/GoogleVoices.ts:11`](src/capabilities/google/GoogleVoices.ts)
+
+```typescript
+type GoogleVoiceListResponse = Awaited&lt;ReturnType&lt;VoicesClient['list']&gt;&gt;
+```
+
+---
+
 ### GrokRealtimeAudioFormat `type`
 
 📍 [`src/capabilities/voice/openai/RealtimeTypes.ts:39`](src/capabilities/voice/openai/RealtimeTypes.ts)
@@ -83504,17 +86650,27 @@ type InContextPriority = 'low' | 'normal' | 'high' | 'critical'
 
 ### InputItem `type`
 
-📍 [`src/domain/entities/Message.ts:35`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:124`](src/domain/entities/Message.ts)
 
 ```typescript
-type InputItem = Message | CompactionItem
+type InputItem = | Message
+  | CompactionItem
+  | ReasoningItem
+  | ConfigurationUpdateItem
+  | CompactionTriggerItem
+  | FunctionCallOutputItem
+  | CustomToolCallOutputItem
+  | ComputerCallOutputItem
+  | ShellCallOutputItem
+  | ApplyPatchCallOutputItem
+  | ToolSearchOutputItem
 ```
 
 ---
 
 ### Interaction `type`
 
-📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:15`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
+📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:16`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
 
 ```typescript
 type Interaction = Record&lt;string, any&gt;
@@ -83524,7 +86680,7 @@ type Interaction = Record&lt;string, any&gt;
 
 ### InteractionStep `type`
 
-📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:14`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
+📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:15`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
 
 ```typescript
 type InteractionStep = Record&lt;string, any&gt;
@@ -83676,7 +86832,7 @@ type NewFact = Omit&lt;IFact, 'id' | 'createdAt'&gt;
 
 ### NormalizedInteractionStatus `type`
 
-📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:16`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
+📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:17`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
 
 ```typescript
 type NormalizedInteractionStatus = 'completed' | 'failed' | 'incomplete'
@@ -83749,6 +86905,16 @@ type OpenAIRealtimeVoice = | 'alloy'
 
 ---
 
+### OpenAISafetyAlert `type`
+
+📍 [`src/capabilities/openai/OpenAISafetyAPI.ts:31`](src/capabilities/openai/OpenAISafetyAPI.ts)
+
+```typescript
+type OpenAISafetyAlert = SafetyAlert
+```
+
+---
+
 ### OpenAISDKAPIKey `type`
 
 📍 [`src/infrastructure/providers/openai/OpenAIAuth.ts:7`](src/infrastructure/providers/openai/OpenAIAuth.ts)
@@ -83759,9 +86925,29 @@ type OpenAISDKAPIKey = string | (() =&gt; Promise&lt;string&gt;)
 
 ---
 
+### OpenAIVoice `type`
+
+📍 [`src/capabilities/openai/OpenAIVoices.ts:5`](src/capabilities/openai/OpenAIVoices.ts)
+
+```typescript
+type OpenAIVoice = Awaited&lt;ReturnType&lt;OpenAI['audio']['voices']['create']&gt;&gt;
+```
+
+---
+
+### OpenAIVoiceCreateParams `type`
+
+📍 [`src/capabilities/openai/OpenAIVoices.ts:6`](src/capabilities/openai/OpenAIVoices.ts)
+
+```typescript
+type OpenAIVoiceCreateParams = Parameters&lt;OpenAI['audio']['voices']['create']&gt;[0]
+```
+
+---
+
 ### OutputFormat `type`
 
-📍 [`src/domain/types/SharedTypes.ts:68`](src/domain/types/SharedTypes.ts)
+📍 [`src/domain/types/SharedTypes.ts:70`](src/domain/types/SharedTypes.ts)
 
 Output format preference for media
 
@@ -83773,7 +86959,7 @@ type OutputFormat = 'url' | 'base64' | 'buffer'
 
 ### OutputItem `type`
 
-📍 [`src/domain/entities/Message.ts:36`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:136`](src/domain/entities/Message.ts)
 
 ```typescript
 type OutputItem = Message | CompactionItem | ReasoningItem
@@ -84033,7 +87219,7 @@ type ProviderConstructor = new (connector: Connector) =&gt; IScrapeProvider
 
 ### QualityLevel `type`
 
-📍 [`src/domain/types/SharedTypes.ts:58`](src/domain/types/SharedTypes.ts)
+📍 [`src/domain/types/SharedTypes.ts:60`](src/domain/types/SharedTypes.ts)
 
 Quality levels - normalized across vendors
 Providers map these to vendor-specific quality settings
@@ -84214,7 +87400,7 @@ type ResponseFormat = | { type: 'json_object' }
 
 ### ResponsesAPIInputItem `type`
 
-📍 [`src/infrastructure/providers/openai/OpenAIResponsesConverter.ts:21`](src/infrastructure/providers/openai/OpenAIResponsesConverter.ts)
+📍 [`src/infrastructure/providers/openai/OpenAIResponsesConverter.ts:23`](src/infrastructure/providers/openai/OpenAIResponsesConverter.ts)
 
 ```typescript
 type ResponsesAPIInputItem = ResponsesAPI.ResponseInputItem
@@ -84224,7 +87410,7 @@ type ResponsesAPIInputItem = ResponsesAPI.ResponseInputItem
 
 ### ResponsesAPIResponse `type`
 
-📍 [`src/infrastructure/providers/openai/OpenAIResponsesConverter.ts:22`](src/infrastructure/providers/openai/OpenAIResponsesConverter.ts)
+📍 [`src/infrastructure/providers/openai/OpenAIResponsesConverter.ts:24`](src/infrastructure/providers/openai/OpenAIResponsesConverter.ts)
 
 ```typescript
 type ResponsesAPIResponse = ResponsesAPI.Response
@@ -84701,6 +87887,16 @@ type VoiceBridgeConfig = VoiceAgentSource & (
 
 ---
 
+### VoicesClient `type`
+
+📍 [`src/capabilities/google/GoogleVoices.ts:5`](src/capabilities/google/GoogleVoices.ts)
+
+```typescript
+type VoicesClient = GoogleGenAI['voices']
+```
+
+---
+
 ### WireObject `type`
 
 📍 [`src/infrastructure/providers/deepseek/DeepSeekConverter.ts:12`](src/infrastructure/providers/deepseek/DeepSeekConverter.ts)
@@ -85020,6 +88216,21 @@ function assertNestedObject(
 
 ```typescript
 function assertNonEmptyString(value: unknown, field: string): asserts value is string
+```
+
+---
+
+### assertNoRegistryAliasCollisions `function`
+
+📍 [`src/domain/entities/RegistryUtils.ts:10`](src/domain/entities/RegistryUtils.ts)
+
+Fail fast when an alias is ambiguous or shadowed by a canonical registry key.
+
+```typescript
+export function assertNoRegistryAliasCollisions&lt;T extends { aliases?: readonly string[] }&gt;(
+  registry: Record&lt;string, T&gt;,
+  registryName = 'model registry',
+): void
 ```
 
 ---
@@ -85767,7 +88978,7 @@ function cleanMapKeys(icmPlugin: InContextMemoryPluginNextGen | null): void
 
 ### cleanupRoutineContext `function`
 
-📍 [`src/core/routineRunner.ts:649`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:657`](src/core/routineRunner.ts)
 
 Clean up all routine-managed keys from ICM and WM.
 
@@ -85903,7 +89114,7 @@ async function collectFacts(
 
 ### collectValidationContext `function`
 
-📍 [`src/core/routineRunner.ts:414`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:421`](src/core/routineRunner.ts)
 
 Collect all context the validator needs: memory state + tool call log.
 
@@ -86071,7 +89282,7 @@ export function createAgentState(id: string, config: AgentConfig, plan: Plan): A
 
 ### createCapabilityFilter `function`
 
-📍 [`src/domain/entities/RegistryUtils.ts:85`](src/domain/entities/RegistryUtils.ts)
+📍 [`src/domain/entities/RegistryUtils.ts:103`](src/domain/entities/RegistryUtils.ts)
 
 Creates feature-based filter for registries with capabilities
 Used to find models that support specific features
@@ -86232,7 +89443,7 @@ const result = await orchestrator.run('Build an auth module with JWT, tests, and
 
 ### createRegistryHelpers `function`
 
-📍 [`src/domain/entities/RegistryUtils.ts:21`](src/domain/entities/RegistryUtils.ts)
+📍 [`src/domain/entities/RegistryUtils.ts:39`](src/domain/entities/RegistryUtils.ts)
 
 Creates standard helper functions for any model registry
 This eliminates the need to write the same helper functions for each registry
@@ -86492,7 +89703,7 @@ export function defaultSkepticPrompt(ctx: SkepticPromptContext): string
 
 ### defaultSystemPrompt `function`
 
-📍 [`src/core/routineRunner.ts:202`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:209`](src/core/routineRunner.ts)
 
 Default system prompt for routine execution.
 
@@ -86504,7 +89715,7 @@ function defaultSystemPrompt(definition: RoutineDefinition): string
 
 ### defaultValidationPrompt `function`
 
-📍 [`src/core/routineRunner.ts:328`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:335`](src/core/routineRunner.ts)
 
 Default validation prompt builder.
 Receives the full validation context: response text, memory state, and tool call log.
@@ -86828,7 +90039,7 @@ export function encodeSharingUrl(webUrl: string): string
 
 ### enforceContextLimit `function`
 
-📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:161`](src/infrastructure/providers/shared/enforceContextLimit.ts)
+📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:168`](src/infrastructure/providers/shared/enforceContextLimit.ts)
 
 Enforce context limit on TextGenerateOptions.
 
@@ -87132,7 +90343,7 @@ function estimateInputItemTokens(item: InputItem): number
 
 ### estimateInputTokens `function`
 
-📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:56`](src/infrastructure/providers/shared/enforceContextLimit.ts)
+📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:59`](src/infrastructure/providers/shared/enforceContextLimit.ts)
 
 ```typescript
 function estimateInputTokens(input: string | InputItem[]): number
@@ -87160,7 +90371,7 @@ function estimateProfileGenInputChars(
 
 ### estimateTokens `function`
 
-📍 [`src/core/routineRunner.ts:464`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:472`](src/core/routineRunner.ts)
 
 Simple token estimator: ~4 chars per token.
 
@@ -87236,7 +90447,7 @@ export async function executeControlFlow(
 
 ### executeDeterministicSteps `function`
 
-📍 [`src/core/routineRunner.ts:769`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:777`](src/core/routineRunner.ts)
 
 Execute an array of deterministic steps (no LLM).
 
@@ -87271,7 +90482,7 @@ export async function executeInVM(
 
 ### executeRoutine `function`
 
-📍 [`src/core/routineRunner.ts:875`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:883`](src/core/routineRunner.ts)
 
 Execute a routine definition.
 
@@ -87495,7 +90706,7 @@ export function extractOpenAICompatConfig(connector: Connector, providerLabel?: 
 
 ### extractProviderConfig `function`
 
-📍 [`src/agents/ProviderConfigAgent.ts:248`](src/agents/ProviderConfigAgent.ts)
+📍 [`src/agents/ProviderConfigAgent.ts:246`](src/agents/ProviderConfigAgent.ts)
 
 Extract a provider configuration JSON object from an LLM response that
 wraps the config between `===CONFIG_START===` and `===CONFIG_END===`
@@ -88454,7 +91665,7 @@ function getOrCreateAgent(
 
 ### getOutputContracts `function`
 
-📍 [`src/core/routineRunner.ts:238`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:245`](src/core/routineRunner.ts)
 
 Scan the execution plan for downstream control flow tasks that reference
 the current task via source.task. Returns output storage contracts.
@@ -88761,6 +91972,16 @@ function hasAccountIds(context: ToolContext | undefined): boolean
 
 ---
 
+### hasInputType `function`
+
+📍 [`src/infrastructure/providers/openai/OpenAIRequestValidator.ts:26`](src/infrastructure/providers/openai/OpenAIRequestValidator.ts)
+
+```typescript
+function hasInputType(input: unknown, type: string): boolean
+```
+
+---
+
 ### htmlToMarkdown `function`
 
 📍 [`src/tools/web/htmlToMarkdown.ts:44`](src/tools/web/htmlToMarkdown.ts)
@@ -88848,7 +92069,7 @@ function idToString(id: ObjectIdLike | string): string
 
 ### injectRoutineContext `function`
 
-📍 [`src/core/routineRunner.ts:573`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:581`](src/core/routineRunner.ts)
 
 Inject routine context (plan overview + dependency results) into ICM/WM
 before each task runs.
@@ -88866,6 +92087,16 @@ async function injectRoutineContext(
   definition: RoutineDefinition,
   currentTask: Task
 ): Promise&lt;void&gt;
+```
+
+---
+
+### inputItems `function`
+
+📍 [`src/infrastructure/providers/openai/OpenAIRequestValidator.ts:31`](src/infrastructure/providers/openai/OpenAIRequestValidator.ts)
+
+```typescript
+function inputItems(input: unknown): Array&lt;Record&lt;string, unknown&gt;&gt;
 ```
 
 ---
@@ -88902,6 +92133,16 @@ export function isBlockedCommand(
   command: string,
   config: ShellToolConfig = {}
 ): { blocked: boolean; reason?: string }
+```
+
+---
+
+### isEUBaseURL `function`
+
+📍 [`src/infrastructure/providers/openai/OpenAIRequestValidator.ts:14`](src/infrastructure/providers/openai/OpenAIRequestValidator.ts)
+
+```typescript
+function isEUBaseURL(baseURL?: string): boolean
 ```
 
 ---
@@ -89225,6 +92466,26 @@ export async function llmExtractArray(agent: Agent, rawValue: unknown): Promise&
 
 ---
 
+### loadPortableWebSocketModule `function`
+
+📍 [`src/infrastructure/websocket/loadWebSocket.ts:22`](src/infrastructure/websocket/loadWebSocket.ts)
+
+```typescript
+async function loadPortableWebSocketModule(): Promise&lt;typeof import('ws')&gt;
+```
+
+---
+
+### loadWebSocketModule `function`
+
+📍 [`src/infrastructure/websocket/loadWebSocket.ts:12`](src/infrastructure/websocket/loadWebSocket.ts)
+
+```typescript
+export function loadWebSocketModule(): Promise&lt;typeof import('ws')&gt;
+```
+
+---
+
 ### logDelegationExchange `function`
 
 📍 [`src/core/orchestrator/createOrchestrator.ts:503`](src/core/orchestrator/createOrchestrator.ts)
@@ -89361,7 +92622,7 @@ function mapFinishStatus(
 
 ### mapGoogleStatus `function`
 
-📍 [`src/infrastructure/providers/shared/ResponseBuilder.ts:248`](src/infrastructure/providers/shared/ResponseBuilder.ts)
+📍 [`src/infrastructure/providers/shared/ResponseBuilder.ts:249`](src/infrastructure/providers/shared/ResponseBuilder.ts)
 
 Map Google finish_reason to ResponseStatus
 
@@ -89734,7 +92995,7 @@ export function normalizeIdentifierValue(kind: string, value: string): string
 
 ### normalizeInteractionStatus `function`
 
-📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:18`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
+📍 [`src/infrastructure/providers/google/GoogleInteractionsConverter.ts:19`](src/infrastructure/providers/google/GoogleInteractionsConverter.ts)
 
 ```typescript
 function normalizeInteractionStatus(status: unknown): NormalizedInteractionStatus
@@ -89952,7 +93213,7 @@ export function parseAutoDescribeResponse(
 
 ### parseCallId `function`
 
-📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:158`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts)
+📍 [`src/capabilities/voice/openai/OpenAIRealtimeAPI.ts:176`](src/capabilities/voice/openai/OpenAIRealtimeAPI.ts)
 
 ```typescript
 function parseCallId(location: string | null): string | null
@@ -91986,9 +95247,19 @@ export function sttToTwilio(pcm: Buffer, sourceRate: number = 24000): Buffer
 
 ---
 
+### supportedThinkingModes `function`
+
+📍 [`src/infrastructure/providers/anthropic/AnthropicConverter.ts:46`](src/infrastructure/providers/anthropic/AnthropicConverter.ts)
+
+```typescript
+function supportedThinkingModes(model: string): ReadonlySet&lt;AnthropicThinkingMode&gt;
+```
+
+---
+
 ### supportsAnthropicNativeStructuredOutput `function`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:58`](src/infrastructure/providers/anthropic/AnthropicTextProvider.ts)
+📍 [`src/infrastructure/providers/anthropic/AnthropicTextProvider.ts:59`](src/infrastructure/providers/anthropic/AnthropicTextProvider.ts)
 
 ```typescript
 export function supportsAnthropicNativeStructuredOutput(model: string): boolean
@@ -92048,7 +95319,7 @@ export async function telegramFetch&lt;T = unknown&gt;(
 
 ### throwIfAborted `function`
 
-📍 [`src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts:419`](src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts)
+📍 [`src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts:421`](src/realtime-browser/OpenAIRealtimeWebRTCPeer.ts)
 
 ```typescript
 function throwIfAborted(signal?: AbortSignal): void
@@ -92249,7 +95520,7 @@ async function treeBasedSearch(
 
 ### trimInputItems `function`
 
-📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:82`](src/infrastructure/providers/shared/enforceContextLimit.ts)
+📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:85`](src/infrastructure/providers/shared/enforceContextLimit.ts)
 
 Trim an InputItem[] by removing items from the middle (oldest first),
 keeping the first item (system/developer message) and the last item (current turn).
@@ -92267,7 +95538,7 @@ function trimInputItems(
 
 ### trimSingleItem `function`
 
-📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:119`](src/infrastructure/providers/shared/enforceContextLimit.ts)
+📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:122`](src/infrastructure/providers/shared/enforceContextLimit.ts)
 
 Truncate text content within a single InputItem to fit within maxTokens.
 
@@ -92279,7 +95550,7 @@ function trimSingleItem(item: InputItem, maxTokens: number): InputItem
 
 ### trimStringFromBeginning `function`
 
-📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:70`](src/infrastructure/providers/shared/enforceContextLimit.ts)
+📍 [`src/infrastructure/providers/shared/enforceContextLimit.ts:73`](src/infrastructure/providers/shared/enforceContextLimit.ts)
 
 Truncate a string from the beginning, keeping the tail that fits.
 
@@ -92413,7 +95684,7 @@ export function updateAgentStatus(state: AgentState, status: AgentStatus): Agent
 
 ### usesAdaptiveThinking `function`
 
-📍 [`src/infrastructure/providers/anthropic/AnthropicConverter.ts:39`](src/infrastructure/providers/anthropic/AnthropicConverter.ts)
+📍 [`src/infrastructure/providers/anthropic/AnthropicConverter.ts:40`](src/infrastructure/providers/anthropic/AnthropicConverter.ts)
 
 ```typescript
 function usesAdaptiveThinking(model: string): boolean
@@ -92495,6 +95766,22 @@ Validate key format
 
 ```typescript
 function validateKey(key: unknown): string | null
+```
+
+---
+
+### validateOpenAIResponsesRequest `function`
+
+📍 [`src/infrastructure/providers/openai/OpenAIRequestValidator.ts:38`](src/infrastructure/providers/openai/OpenAIRequestValidator.ts)
+
+Validate OpenAI Responses constraints that cannot be represented by shared types.
+
+```typescript
+export function validateOpenAIResponsesRequest(
+  options: Pick&lt;TextGenerateOptions, 'model' | 'temperature'&gt;,
+  params: Record&lt;string, unknown&gt;,
+  baseURL?: string,
+): void
 ```
 
 ---
@@ -92594,7 +95881,12 @@ Shared validation for thinking/reasoning configuration across all providers.
 
 ```typescript
 export function validateThinkingConfig(
-  thinking: { enabled: boolean; budgetTokens?: number; effort?: string }
+  thinking: {
+    enabled: boolean;
+    mode?: 'adaptive' | 'enabled' | 'between_tools' | 'disabled';
+    budgetTokens?: number;
+    effort?: string;
+  }
 ): void
 ```
 
@@ -93330,7 +96622,7 @@ Returns `''` only when:
 
 ### DEP_CLEANUP_CONFIG `const`
 
-📍 [`src/core/routineRunner.ts:545`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:553`](src/core/routineRunner.ts)
 
 Prefixes for dependency-only cleanup (between tasks).
 
@@ -93518,7 +96810,7 @@ Map of common file types to extensions
 
 ### FULL_CLEANUP_CONFIG `const`
 
-📍 [`src/core/routineRunner.ts:552`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:560`](src/core/routineRunner.ts)
 
 Prefixes for full routine cleanup (after execution).
 
