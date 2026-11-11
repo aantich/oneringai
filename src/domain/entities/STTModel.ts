@@ -190,7 +190,7 @@ export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-4o-mini-transcribe',
       pricing: 'https://developers.openai.com/api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -278,7 +278,7 @@ export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/speech-to-text',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -304,7 +304,7 @@ export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/speech-to-text',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -340,7 +340,7 @@ export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
     sources: {
       documentation: 'https://platform.openai.com/docs/guides/speech-to-text',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -462,7 +462,7 @@ export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
     preferred: true,
     endpoints: ['audio_transcription', 'realtime'],
     releaseDate: '2026-09-17',
-    sources: { documentation: 'https://docs.x.ai/developers/model-capabilities/audio/speech-to-text', pricing: 'https://docs.x.ai/developers/models/speech-to-text', lastVerified: '2026-10-07' },
+    sources: { documentation: 'https://docs.x.ai/developers/model-capabilities/audio/speech-to-text', pricing: 'https://docs.x.ai/developers/models/speech-to-text', lastVerified: '2026-11-11' },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
       outputFormats: ['json', 'text', 'verbose_json'],
@@ -527,7 +527,7 @@ export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
     sources: {
       documentation: 'https://console.groq.com/docs/speech-to-text',
       pricing: 'https://console.groq.com/docs/speech-to-text',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,
@@ -558,7 +558,7 @@ export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
     sources: {
       documentation: 'https://console.groq.com/docs/speech-to-text',
       pricing: 'https://console.groq.com/docs/speech-to-text',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       ...WHISPER_BASE_CAPABILITIES,

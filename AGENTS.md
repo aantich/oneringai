@@ -25,7 +25,7 @@ snapshot, website commit and successful deployment in the release handoff.
 Do not call a v2 release handoff complete while the matching website is stale.
 This standing requirement does not itself authorize another npm publication.
 
-The current API baseline is **`oneringai@2.0.0-beta.3`**. v2 uses the unscoped
+The current API baseline is **`oneringai@2.0.0-beta.4`**. v2 uses the unscoped
 package `oneringai`; `@everworker/oneringai` belongs to the legacy v1 line.
 Read [package migration](docs/PACKAGE_MIGRATION.md) before upgrading a consumer.
 Historical plans, local agent memories, old branch names and dated test counts
@@ -33,7 +33,7 @@ are not current API or release instructions. Verify against the checked-out or
 installed package, its public exports, and the current usage recipes below.
 Implementation availability, npm publication, and live-provider verification
 are separate claims; see the [Version 2 Guide](docs/VERSION_2_GUIDE.md) and
-[beta.3 release evidence](docs/evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.json).
+[beta.4 release evidence](docs/evaluations/BETA4_RELEASE_VALIDATION_2026_11_11.json).
 
 ## Fast facts and operating mode
 
@@ -303,14 +303,14 @@ const getWeather: ToolFunction = {
   source receipts. Reuse the same evidence storage handle and shared ToolManager.
   See [Remote Tool Outcomes](docs/REMOTE_TOOL_OUTCOMES.md).
 
-### ChatGPT plan access (unreleased)
+### ChatGPT plan access (beta.4)
 
 This checkout adds `options.openaiAuthMode: 'chatgpt-plan'` and secret-free
 `openaiAccountId` to the existing OpenAI connector. Use a runtime-only
 `api_key_provider` callback bound to a validated SIWC registration. `Agent.create`,
 `run` and `stream` retain the same browser/Node API. The host owns OAuth, storage,
 refresh and authorization; identity sign-in alone is insufficient. This feature
-is not part of the published beta.3 baseline.
+is available from beta.4; live OAuth/account admission remains unverified.
 
 Hosea applies one selected registration to every OpenAI agent. Other applications
 choose their own connector policy. Explicit unsupported request controls, hosted
@@ -759,5 +759,5 @@ npm run docs:check
 - Relevant documentation/examples/AMOS and checks updated, with actual limits recorded?
 - Branch, live-call, commit/push and publication authorization respected?
 
-Reviewed against the v2 beta.3 public API on 2026-11-09; Agent behavior is unchanged
-from beta.2.
+Reviewed against the v2 beta.4 public API on 2026-11-11; opt-in ChatGPT plan
+access retains the ordinary Agent API with its documented capability restrictions.

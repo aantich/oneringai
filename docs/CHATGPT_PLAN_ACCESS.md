@@ -1,14 +1,17 @@
 # ChatGPT plan access
 
-This checkout adds opt-in ChatGPT plan access to the existing OpenAI text provider.
-It is not part of the published beta.3 API baseline. Check the installed package
-before using this recipe. Agents keep the same API in Node and browser builds;
+Beta.4 adds opt-in ChatGPT plan access to the existing OpenAI text provider.
+Check the installed package before using this recipe. Production OAuth admission
+and account eligibility have not been live-verified; offline validation uses mocks.
+Agents keep the same API in Node and browser builds;
 OAuth authorization and credential storage belong to the trusted host.
 
 ## Hosea: authorize once for every OpenAI agent
 
-In **Connections → Manage models**, choose **Continue with ChatGPT**. Authorize
-Hosea and enable ChatGPT plan usage in the browser. This is one registration for
+Choose **Continue with ChatGPT** in first-run setup or in
+**Connections → Manage models**. Authorize Hosea and enable ChatGPT plan usage in
+the browser. First-run setup loads the selected account's model catalog before
+creating the default agent. This is one registration for
 Hosea's selected account/workspace, not a registration for every Agent instance.
 All OpenAI model agents use the selected account, including existing saved agent
 configurations, new conversations and orchestrated workers. Other vendors retain

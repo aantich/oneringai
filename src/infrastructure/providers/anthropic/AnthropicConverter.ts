@@ -36,6 +36,7 @@ const ANTHROPIC_ADAPTIVE_THINKING_MODELS = [
   /^claude-(?:opus-5|fable-5|mythos-5)(?:-|$)/,
   /^claude-opus-4-[678](?:-|$)/,
   /^claude-sonnet-(?:5|4-6)(?:-|$)/,
+  /^claude-haiku-5-5(?:-|$)/,
 ] as const;
 
 function usesAdaptiveThinking(model: string): boolean {
@@ -45,6 +46,7 @@ function usesAdaptiveThinking(model: string): boolean {
 type AnthropicThinkingMode = 'adaptive' | 'enabled' | 'between_tools' | 'disabled';
 
 function supportedThinkingModes(model: string): ReadonlySet<AnthropicThinkingMode> {
+  if (/^claude-haiku-5-5(?:-|$)/.test(model)) return new Set(['adaptive', 'disabled']);
   if (/^claude-opus-5-5(?:-|$)/.test(model)) return new Set(['adaptive']);
   if (/^claude-sonnet-5-5(?:-|$)/.test(model)) return new Set(['adaptive', 'between_tools']);
   if (/^claude-(?:fable|mythos)-5(?:-1)?(?:-|$)/.test(model)) return new Set(['adaptive']);
@@ -253,7 +255,7 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
     const requestedThinkingMode = options.thinking?.mode;
     const isOpus55 = /^claude-opus-5-5(?:-|$)/.test(options.model);
     const isSonnet55 = /^claude-sonnet-5-5(?:-|$)/.test(options.model);
-    const requiresAdaptiveThinking = isOpus55;
+    const requiresAdaptiveThinking = isOpus55 || /^claude-(?:fable|mythos)-5-2(?:-|$)/.test(options.model);
     if (options.thinking) validateThinkingConfig(options.thinking);
     if (requestedThinkingMode) {
       const supportedModes = supportedThinkingModes(options.model);
@@ -328,19 +330,19 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
       );
     }
     if (
-      /^claude-opus-5(?:-|$)/.test(options.model)
+      /^claude-(?:opus-5|haiku-5-5)(?:-|$)/.test(options.model)
       && requestedThinkingMode === 'disabled'
       && (requestedEffort === 'xhigh' || requestedEffort === 'max')
     ) {
       throw new Error(
-        'Claude Opus 5 disabled thinking supports effort high or below',
+        `${options.model} disabled thinking supports effort high or below`,
       );
     }
     if (requestedEffort && requestedEffort !== 'none') {
       const effort = requestedEffort === 'minimal' ? 'low' : requestedEffort;
       params.output_config = { ...(params.output_config ?? {}), effort } as Anthropic.OutputConfig;
     } else if (requiresAdaptiveThinking) {
-      params.output_config = { ...(params.output_config ?? {}), effort: 'medium' } as Anthropic.OutputConfig;
+      params.output_config = { ...(params.output_config ?? {}), effort: isOpus55 ? 'medium' : 'high' } as Anthropic.OutputConfig;
     }
 
     if (options.tool_choice && !onDemandCompaction) {

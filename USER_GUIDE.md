@@ -1,6 +1,6 @@
 # OneRingAI v2 User Guide
 
-**Documented version:** `oneringai@2.0.0-beta.3` · **Reviewed:** 2026-11-09
+**Documented version:** `oneringai@2.0.0-beta.4` · **Reviewed:** 2026-11-11
 
 **Published beta:** [npm package](https://www.npmjs.com/package/oneringai).
 Both `latest` and `next` currently select this beta; `npm install oneringai` works.
@@ -161,7 +161,7 @@ Install the published unscoped v2 beta:
 npm install oneringai
 ```
 
-The documented package is `oneringai@2.0.0-beta.3`; both `latest` and `next`
+The documented package is `oneringai@2.0.0-beta.4`; both `latest` and `next`
 select this beta. For source development, follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
 ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
 native desktop dependencies are needed only for their respective integrations.
@@ -19080,9 +19080,9 @@ See [LICENSE](LICENSE) and [Licensing](LICENSING.md) for scope and third-party t
 
 ## ChatGPT plan authentication
 
-The unreleased ChatGPT plan profile keeps the same Agent API in Node and browser
+The beta.4 ChatGPT plan profile keeps the same Agent API in Node and browser
 builds. A trusted host authorizes one account and supplies rotating credentials
 through an ordinary OpenAI connector; agents share that connection without
 per-agent OAuth. Hosea applies this as a global OpenAI-agent setting. Read the
-[complete setup and capability boundaries](docs/CHATGPT_PLAN_ACCESS.md). Published
-beta.3 consumers need a package version that includes this implementation.
+[complete setup and capability boundaries](docs/CHATGPT_PLAN_ACCESS.md). This integration is available from beta.4; production eligibility and live
+OAuth/model behavior require an authorized account smoke test.

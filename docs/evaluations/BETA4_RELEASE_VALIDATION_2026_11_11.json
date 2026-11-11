@@ -1,0 +1,464 @@
+{
+  "package": "oneringai@2.0.0-beta.4",
+  "date": "2026-11-11",
+  "branch": "main",
+  "authorization": "commit everything in both branches, push both, and npm release both v1 and new beta v2",
+  "status": "candidate-validation",
+  "publicationPerformed": false,
+  "liveModelCalls": 0,
+  "scope": [
+    "November model registry refresh across LLM, image, video, TTS, STT and embeddings",
+    "Opt-in ChatGPT plan access and shared Hosea account/onboarding flow"
+  ],
+  "checks": {
+    "releaseCheck": {
+      "status": "pass",
+      "phase": "before version bump; publication lifecycle repeats the complete gate",
+      "completedAt": "2026-11-11T10:48:47.006Z",
+      "components": [
+        "build/exports",
+        "bundled provenance/audit",
+        "types/lint",
+        "9513 units",
+        "example types/public compatibility",
+        "30 offline examples",
+        "generated API docs",
+        "documentation",
+        "clean default/optional-SDK consumers"
+      ],
+      "consumer": {
+        "status": "pass",
+        "node": "v24.20.0",
+        "startedAt": "2026-11-11T10:48:01.449Z",
+        "work": "/var/folders/w4/0_95kdj51l35cqyg07_w5v5r0000gn/T/oneringai-release-LYQgV8",
+        "package": "oneringai@2.0.0-beta.3",
+        "integrity": "sha512-Kt5++AlcdcTSkzYUpMhK4rGar/EvYrP1PgrkqDyljmjQ6boZ3ueUMmAa3XBsW4WOAaJo+jU4RZ2VzCZ5l6bywQ==",
+        "files": 565,
+        "bundledDependencies": [
+          {
+            "name": "@anthropic-ai/sdk",
+            "version": "0.131.0"
+          },
+          {
+            "name": "@google/genai",
+            "version": "2.27.0"
+          },
+          {
+            "name": "@hono/node-server",
+            "version": "2.1.6"
+          },
+          {
+            "name": "@modelcontextprotocol/sdk",
+            "version": "1.32.2"
+          },
+          {
+            "name": "@noble/ciphers",
+            "version": "2.4.0"
+          },
+          {
+            "name": "@noble/hashes",
+            "version": "2.4.0"
+          },
+          {
+            "name": "@stablelib/base64",
+            "version": "1.0.1"
+          },
+          {
+            "name": "ajv",
+            "version": "8.20.0"
+          },
+          {
+            "name": "ajv-formats",
+            "version": "3.0.1"
+          },
+          {
+            "name": "assert",
+            "version": "2.1.0"
+          },
+          {
+            "name": "available-typed-arrays",
+            "version": "1.0.7"
+          },
+          {
+            "name": "call-bind",
+            "version": "1.0.9"
+          },
+          {
+            "name": "call-bind-apply-helpers",
+            "version": "1.0.2"
+          },
+          {
+            "name": "call-bound",
+            "version": "1.0.4"
+          },
+          {
+            "name": "content-type",
+            "version": "1.0.5"
+          },
+          {
+            "name": "define-data-property",
+            "version": "1.1.4"
+          },
+          {
+            "name": "define-properties",
+            "version": "1.2.1"
+          },
+          {
+            "name": "dunder-proto",
+            "version": "1.0.1"
+          },
+          {
+            "name": "es-define-property",
+            "version": "1.0.1"
+          },
+          {
+            "name": "es-errors",
+            "version": "1.3.0"
+          },
+          {
+            "name": "es-object-atoms",
+            "version": "1.1.2"
+          },
+          {
+            "name": "eventemitter3",
+            "version": "5.0.4"
+          },
+          {
+            "name": "eventsource-parser",
+            "version": "3.0.6"
+          },
+          {
+            "name": "fast-deep-equal",
+            "version": "3.1.3"
+          },
+          {
+            "name": "fast-sha256",
+            "version": "1.3.0"
+          },
+          {
+            "name": "fast-uri",
+            "version": "3.1.9"
+          },
+          {
+            "name": "for-each",
+            "version": "0.3.5"
+          },
+          {
+            "name": "function-bind",
+            "version": "1.1.2"
+          },
+          {
+            "name": "generator-function",
+            "version": "2.0.1"
+          },
+          {
+            "name": "get-intrinsic",
+            "version": "1.3.0"
+          },
+          {
+            "name": "get-proto",
+            "version": "1.0.1"
+          },
+          {
+            "name": "gopd",
+            "version": "1.2.0"
+          },
+          {
+            "name": "has-property-descriptors",
+            "version": "1.0.2"
+          },
+          {
+            "name": "has-symbols",
+            "version": "1.1.0"
+          },
+          {
+            "name": "has-tostringtag",
+            "version": "1.0.2"
+          },
+          {
+            "name": "hasown",
+            "version": "2.0.4"
+          },
+          {
+            "name": "hono",
+            "version": "4.13.17"
+          },
+          {
+            "name": "is-arguments",
+            "version": "1.2.0"
+          },
+          {
+            "name": "is-callable",
+            "version": "1.2.7"
+          },
+          {
+            "name": "is-generator-function",
+            "version": "1.1.2"
+          },
+          {
+            "name": "is-nan",
+            "version": "1.3.2"
+          },
+          {
+            "name": "is-regex",
+            "version": "1.2.1"
+          },
+          {
+            "name": "is-typed-array",
+            "version": "1.1.15"
+          },
+          {
+            "name": "json-schema-traverse",
+            "version": "1.0.0"
+          },
+          {
+            "name": "jsonschema",
+            "version": "1.5.0"
+          },
+          {
+            "name": "math-intrinsics",
+            "version": "1.1.0"
+          },
+          {
+            "name": "object-is",
+            "version": "1.1.6"
+          },
+          {
+            "name": "object-keys",
+            "version": "1.1.1"
+          },
+          {
+            "name": "openai",
+            "version": "7.30.0"
+          },
+          {
+            "name": "p-retry",
+            "version": "4.6.2"
+          },
+          {
+            "name": "pkce-challenge",
+            "version": "5.0.1"
+          },
+          {
+            "name": "possible-typed-array-names",
+            "version": "1.1.0"
+          },
+          {
+            "name": "retry",
+            "version": "0.13.1"
+          },
+          {
+            "name": "safe-regex-test",
+            "version": "1.1.0"
+          },
+          {
+            "name": "set-function-length",
+            "version": "1.2.2"
+          },
+          {
+            "name": "simple-icons",
+            "version": "16.16.0"
+          },
+          {
+            "name": "standardwebhooks",
+            "version": "1.0.0"
+          },
+          {
+            "name": "util",
+            "version": "0.12.5"
+          },
+          {
+            "name": "which-typed-array",
+            "version": "1.1.24"
+          },
+          {
+            "name": "zod-to-json-schema",
+            "version": "3.25.2"
+          }
+        ],
+        "mcpRedirects": {
+          "esm": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          },
+          "cjs": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          }
+        },
+        "documentationMatchesSource": true,
+        "probe": {
+          "node": "v24.20.0",
+          "sdkModules": [],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+        "audit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "optionalSdkVersions": {
+          "@openai/codex-sdk": "0.149.1",
+          "@anthropic-ai/claude-agent-sdk": "0.3.322"
+        },
+        "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+        "optionalSdkProbe": {
+          "node": "v24.20.0",
+          "sdkModules": [
+            "@openai/codex-sdk",
+            "@anthropic-ai/claude-agent-sdk"
+          ],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        "optionalSdkAudit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "finishedAt": "2026-11-11T10:48:47.006Z"
+      }
+    },
+    "hosea": {
+      "status": "pass",
+      "designTests": 20,
+      "types": "pass",
+      "build": "pass",
+      "offlineElectron": {
+        "status": "pass",
+        "signIns": 2,
+        "syntheticModelRequests": 7,
+        "realProviderCalls": 0,
+        "checks": [
+          "first-run account model selection and empty-catalog handling",
+          "shared accounts across existing/new agents",
+          "plugin checkpoint restoration",
+          "namespaced tools",
+          "no automatic API-key billing fallback",
+          "explicit API-key switch"
+        ]
+      }
+    },
+    "browser": {
+      "status": "pass",
+      "types": "page and Worker",
+      "hosts": [
+        {
+          "engine": "chromium",
+          "version": "158.0.8127.18",
+          "page": "pass",
+          "worker": "pass",
+          "strictCSP": "pass",
+          "errors": [],
+          "violations": []
+        },
+        {
+          "engine": "firefox",
+          "version": "159.0",
+          "page": "pass",
+          "worker": "pass",
+          "strictCSP": "pass",
+          "errors": [],
+          "violations": []
+        },
+        {
+          "engine": "webkit",
+          "version": "27.2",
+          "page": "pass",
+          "worker": "pass",
+          "strictCSP": "pass",
+          "errors": [],
+          "violations": []
+        }
+      ]
+    },
+    "unit": {
+      "status": "pass",
+      "files": 437,
+      "passed": 9513,
+      "node": "24.20.0"
+    },
+    "amos": {
+      "typecheck": "pass",
+      "build": "pass"
+    }
+  },
+  "publication": {
+    "status": "pending"
+  },
+  "website": {
+    "status": "pending"
+  },
+  "limitations": [
+    "No billable/live model calls were made.",
+    "Production OAuth/account eligibility and live ChatGPT plan inference have not been verified.",
+    "Catalog entries describe vendor metadata; endpoint adapters and account entitlements retain documented limits.",
+    "Hosea installers and signing are not part of the npm library release."
+  ]
+}

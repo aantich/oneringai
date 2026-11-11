@@ -51,4 +51,13 @@ describe('GoogleVeoProvider Gemini Omni requests', () => {
       generation_config: { video_config: { task: 'image_to_video' } },
     });
   });
+  it('routes Omni 1.2 through Interactions with its 15-second duration', async () => {
+    await provider.generateVideo({ model: 'gemini-omni-1.2-flash', prompt: 'A continuous scene', duration: 15 });
+    expect(mockInteractionsCreate).toHaveBeenCalledWith(expect.objectContaining({
+      model: 'gemini-omni-1.2-flash',
+      response_format: expect.objectContaining({ duration: '15s' }),
+    }));
+    expect(await provider.listModels()).toContain('gemini-omni-1.2-flash');
+  });
+
 });

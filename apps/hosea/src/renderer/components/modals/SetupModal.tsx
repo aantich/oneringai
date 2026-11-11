@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert, Spinner } from 'react-bootstrap';
-import { Key, Cpu } from 'lucide-react';
-import { OllamaSetupPanel } from '../ollama/OllamaSetupPanel';
+import { Key, Cpu, MessageCircle } from 'lucide-react';
+import { OllamaSetupPanel } from '../ollama/OllamaSetupPanel.js';
+import { ChatGPTConnection } from '../connectors/ChatGPTConnection.js';
 
 interface SetupModalProps {
   show: boolean;
@@ -12,6 +13,8 @@ interface SetupModalProps {
 interface ConnectorConfig {
   name: string;
   vendor: string;
+  authMode?: 'api-key' | 'chatgpt-plan';
+  connected?: boolean;
   source?: 'local' | 'backend' | 'built-in';
   createdAt: number;
 }
@@ -37,13 +40,14 @@ export function SetupModal({
   onHide,
   onComplete,
 }: SetupModalProps): React.ReactElement {
-  const [step, setStep] = useState<'choice' | 'connector' | 'model' | 'new-connector' | 'local-ai'>('connector');
+  const [step, setStep] = useState<'choice' | 'connector' | 'model' | 'new-connector' | 'local-ai' | 'chatgpt'>('connector');
   const [connectors, setConnectors] = useState<ConnectorConfig[]>([]);
   const [models, setModels] = useState<ModelGroup[]>([]);
   const [selectedConnector, setSelectedConnector] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [planModels, setPlanModels] = useState<ModelGroup['models']>([]);
 
   // New connector form
   const [newConnectorName, setNewConnectorName] = useState('');
@@ -59,6 +63,7 @@ export function SetupModal({
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [connectorList, modelList] = await Promise.all([
         window.hosea.connector.list(),
@@ -68,7 +73,7 @@ export function SetupModal({
       setModels(modelList);
 
       if (connectorList.length === 0) {
-        // No connectors — show choice between cloud and local
+        // No connectors — offer ChatGPT, API keys and local models.
         setStep('choice');
       } else {
         setStep('connector');
@@ -80,18 +85,42 @@ export function SetupModal({
     }
   };
 
-  const handleConnectorSelect = () => {
-    if (selectedConnector) {
-      // Auto-select a default model for convenience
-      const connector = connectors.find((c) => c.name === selectedConnector);
-      if (connector) {
+  const selectModels = async (connector: ConnectorConfig) => {
+    setLoading(true);
+    setError(null);
+    setSelectedModel('');
+    setPlanModels([]);
+    try {
+      if (connector.authMode === 'chatgpt-plan') {
+        const result = await window.hosea.connector.fetchModels('openai', undefined, undefined, connector.name);
+        if (!result.success || !result.models?.length) throw new Error(result.error || 'No models are available for this ChatGPT account.');
+        // The account catalog determines access; the registry supplies model metadata.
+        const registered = new Map(
+          (models.find(group => group.vendor === connector.vendor)?.models ?? []).map(model => [model.id, model])
+        );
+        setPlanModels(result.models.map(id => registered.get(id) ?? { id, name: id, contextWindow: 0 }));
+        setSelectedModel(result.models[0]);
+      } else {
         const defaultModel = DEFAULT_MODELS[connector.vendor];
-        if (defaultModel) {
-          setSelectedModel(defaultModel);
-        }
+        setSelectedModel(defaultModel ?? '');
       }
       setStep('model');
-    }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
+    finally { setLoading(false); }
+  };
+
+  const handleConnectorSelect = async () => {
+    const connector = connectors.find(c => c.name === selectedConnector);
+    if (connector) await selectModels(connector);
+  };
+
+  const refreshChatGPT = async () => {
+    try {
+      const list = await window.hosea.connector.list();
+      setConnectors(list);
+      setSelectedConnector(list.find(c => c.authMode === 'chatgpt-plan' && c.connected)?.name ?? '');
+      setError(null);
+    } catch { setError('The ChatGPT connection could not be loaded. Please try again.'); }
   };
 
   const handleAddConnector = async () => {
@@ -115,13 +144,12 @@ export function SetupModal({
 
       if (result.success) {
         setSelectedConnector(newConnectorName);
-        // Auto-select default model
-        const defaultModel = DEFAULT_MODELS[newConnectorVendor];
-        if (defaultModel) {
-          setSelectedModel(defaultModel);
-        }
         await loadData();
-        setStep('model');
+        // OpenAI connections still use the selected ChatGPT plan until billing is explicitly changed.
+        const list = await window.hosea.connector.list();
+        const connector = list.find(c => c.name === newConnectorName);
+        if (!connector) throw new Error('The new connector could not be loaded.');
+        await selectModels(connector);
       } else {
         setError(result.error || 'Failed to add connector');
       }
@@ -186,6 +214,7 @@ export function SetupModal({
   const getModelsForVendor = () => {
     const connector = connectors.find((c) => c.name === selectedConnector);
     if (!connector) return [];
+    if (connector.authMode === 'chatgpt-plan') return planModels;
     const vendorModels = models.find(
       (m) => m.vendor.toLowerCase() === connector.vendor.toLowerCase()
     );
@@ -199,6 +228,12 @@ export function SetupModal({
         <p className="text-muted mb-4">Choose how you'd like to use AI with hosea:</p>
 
         <div className="d-grid gap-3">
+          <Button variant="outline-primary" className="text-start p-3" onClick={() => { setStep('chatgpt'); void refreshChatGPT(); }}>
+            <div className="d-flex align-items-center gap-3">
+              <MessageCircle size={24} />
+              <div><strong>Continue with ChatGPT</strong><div className="text-muted small">Sign in with your eligible ChatGPT plan. No API key needed.</div></div>
+            </div>
+          </Button>
           <Button
             variant="outline-primary"
             className="text-start p-3"
@@ -235,6 +270,17 @@ export function SetupModal({
     </>
   );
 
+  const renderChatGPTStep = () => <>
+    <Modal.Body>
+      <ChatGPTConnection showWelcome={false} onChanged={() => void refreshChatGPT()} />
+      {error && <Alert variant="danger">{error}</Alert>}
+    </Modal.Body>
+    <Modal.Footer>
+      <Button variant="outline-secondary" disabled={loading} onClick={() => setStep(connectors.length ? 'connector' : 'choice')}>Back</Button>
+      <Button disabled={!selectedConnector || loading} onClick={() => void handleConnectorSelect()}>{loading ? <Spinner size="sm" /> : 'Choose model'}</Button>
+    </Modal.Footer>
+  </>;
+
   // ============ Local AI Setup ============
   const renderLocalAIStep = () => (
     <>
@@ -257,7 +303,7 @@ export function SetupModal({
           <Form.Label>Select a connector</Form.Label>
           <Form.Select
             value={selectedConnector}
-            onChange={(e) => setSelectedConnector(e.target.value)}
+            onChange={(e) => { setSelectedConnector(e.target.value); setError(null); }}
           >
             <option value="">Choose...</option>
             {connectors.map((c) => (
@@ -277,12 +323,14 @@ export function SetupModal({
         >
           Add New Connector
         </Button>
+        <Button variant="outline-secondary" className="w-100 mt-2" onClick={() => { setStep('chatgpt'); void refreshChatGPT(); }}>Continue with ChatGPT</Button>
+        {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
       </Modal.Body>
       <Modal.Footer>
         <Button
           variant="primary"
-          onClick={handleConnectorSelect}
-          disabled={!selectedConnector}
+          onClick={() => void handleConnectorSelect()}
+          disabled={!selectedConnector || loading}
         >
           Next
         </Button>
@@ -403,11 +451,12 @@ export function SetupModal({
       case 'new-connector': return 'Add Connector';
       case 'model': return 'Select Model';
       case 'local-ai': return 'Set Up Local AI';
+      case 'chatgpt': return 'Connect ChatGPT';
     }
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered backdrop="static" size={step === 'local-ai' ? 'lg' : undefined}>
+    <Modal show={show} onHide={onHide} centered backdrop="static" size={step === 'local-ai' || step === 'chatgpt' ? 'lg' : undefined}>
       <Modal.Header closeButton>
         <Modal.Title>{getTitle()}</Modal.Title>
       </Modal.Header>
@@ -420,6 +469,7 @@ export function SetupModal({
       ) : (
         <>
           {step === 'choice' && renderChoiceStep()}
+          {step === 'chatgpt' && renderChatGPTStep()}
           {step === 'local-ai' && renderLocalAIStep()}
           {step === 'connector' && renderConnectorStep()}
           {step === 'new-connector' && renderNewConnectorStep()}

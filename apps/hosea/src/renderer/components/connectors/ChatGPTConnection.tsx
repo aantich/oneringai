@@ -3,7 +3,7 @@ import { Alert, Badge, Button, Form, Modal, Spinner } from 'react-bootstrap';
 import { useChatGPTStatus } from '../../hooks/useChatGPTStatus.js';
 import type { ChatGPTResult } from '../../../shared/chatgpt.js';
 
-export function ChatGPTConnection({ onChanged }: { onChanged: () => void }): React.ReactElement {
+export function ChatGPTConnection({ onChanged, showWelcome = true }: { onChanged: () => void; showWelcome?: boolean }): React.ReactElement {
   const { status, setStatus } = useChatGPTStatus();
   const [selectedId, setSelectedId] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -19,7 +19,7 @@ export function ChatGPTConnection({ onChanged }: { onChanged: () => void }): Rea
       if (result.status) { setStatus(result.status); if (result.success) setSelectedId(result.status.activeId ?? undefined); }
       if (!result.success) setError(result.error ?? 'ChatGPT connection failed');
       if (result.warning) setWarning(result.warning);
-      if (result.success && result.status?.usePlan && !localStorage.getItem('hosea.chatgpt.welcome')) {
+      if (showWelcome && result.success && result.status?.usePlan && !localStorage.getItem('hosea.chatgpt.welcome')) {
         localStorage.setItem('hosea.chatgpt.welcome', '1'); setWelcome(true);
       }
       onChanged();

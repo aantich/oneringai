@@ -116,6 +116,8 @@ export interface IImageModelDescription extends IBaseModelDescription {
 
 export const IMAGE_MODELS = {
   [Vendor.OpenAI]: {
+    GPT_IMAGE_2_6_SUNBURST: 'gpt-image-2.6-sunburst',
+    GPT_IMAGE_2_6_FLARE: 'gpt-image-2.6-flare',
     /** GPT Image 2.5 Sunburst: highest-quality generation and precision editing. */
     GPT_IMAGE_2_5_SUNBURST: 'gpt-image-2.5-sunburst',
     /** GPT Image 2.5 Flare: fast, high-quality generation and editing. */
@@ -171,10 +173,70 @@ export const IMAGE_MODELS = {
 
 /**
  * Complete image model registry
- * Last full audit: October 2026
+ * Last catalog audit: November 2026
  */
 export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
   // ======================== OpenAI ========================
+
+  'gpt-image-2.6-sunburst': {
+    name: 'gpt-image-2.6-sunburst',
+    displayName: 'GPT Image 2.6 Sunburst',
+    provider: Vendor.OpenAI,
+    description: 'OpenAI\'s most capable image model for high-quality generation and precision editing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['image_generation', 'image_edit'],
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2.6-sunburst', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-11' },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg', 'svg', 'gif'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: true, promptRevision: false },
+      limits: { maxPromptLength: 32_000 },
+      vendorOptions: {
+        complexity: { type: 'enum', description: 'Planning complexity before rendering', enum: ['low', 'medium', 'high'], default: 'high' },
+        quality: { type: 'enum', description: 'Rendering quality tier', enum: ['auto', 'low', 'medium', 'high', 'xhigh', 'max'], default: 'auto' },
+        background: { type: 'enum', description: 'Background handling', enum: ['auto', 'transparent', 'opaque'], default: 'auto' },
+        output_format: { type: 'enum', description: 'Encoded output image format', enum: ['png', 'jpeg', 'webp', 'svg', 'gif'], default: 'png' },
+        output_compression: { type: 'number', description: 'JPEG/WebP compression quality', min: 0, max: 100, default: 100 },
+        moderation: { type: 'enum', description: 'Moderation strictness', enum: ['auto', 'low'], default: 'auto' },
+        input_fidelity: { type: 'enum', description: 'Fidelity applied to editing input images', enum: ['low', 'high'], default: 'low' },
+      },
+    },
+    pricing: { tokenPricing: { textInput: 5, cachedTextInput: 1.25, imageInput: 8, cachedImageInput: 2, imageOutput: 30 }, currency: 'USD' },
+  },
+
+  'gpt-image-2.6-flare': {
+    name: 'gpt-image-2.6-flare',
+    displayName: 'GPT Image 2.6 Flare',
+    provider: Vendor.OpenAI,
+    description: 'Fast GPT Image 2.6 model for high-quality generation and editing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['image_generation', 'image_edit'],
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2.6-flare', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-11' },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg', 'svg', 'gif'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: true, promptRevision: false },
+      limits: { maxPromptLength: 32_000 },
+      vendorOptions: {
+        complexity: { type: 'enum', description: 'Planning complexity before rendering', enum: ['low', 'medium', 'high'], default: 'high' },
+        quality: { type: 'enum', description: 'Rendering quality tier', enum: ['auto', 'low', 'medium', 'high', 'xhigh', 'max'], default: 'auto' },
+        background: { type: 'enum', description: 'Background handling', enum: ['auto', 'transparent', 'opaque'], default: 'auto' },
+        output_format: { type: 'enum', description: 'Encoded output image format', enum: ['png', 'jpeg', 'webp', 'svg', 'gif'], default: 'png' },
+        output_compression: { type: 'number', description: 'JPEG/WebP compression quality', min: 0, max: 100, default: 100 },
+        moderation: { type: 'enum', description: 'Moderation strictness', enum: ['auto', 'low'], default: 'auto' },
+        input_fidelity: { type: 'enum', description: 'Fidelity applied to editing input images', enum: ['low', 'high'], default: 'low' },
+      },
+    },
+    pricing: { tokenPricing: { textInput: 5, cachedTextInput: 1.25, imageInput: 8, cachedImageInput: 2, imageOutput: 30 }, currency: 'USD' },
+  },
 
   'gpt-image-2.5-sunburst': {
     name: 'gpt-image-2.5-sunburst',
@@ -244,7 +306,7 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     provider: Vendor.OpenAI,
     description: 'Current state-of-the-art OpenAI model for fast, high-quality image generation and editing',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'deprecated',
     availability: 'public',
     preferred: false,
     snapshots: ['gpt-image-2-2026-04-21'],
@@ -253,8 +315,11 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2',
       pricing: 'https://developers.openai.com/api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    deprecationDate: '2026-11-10',
+    retirementDate: '2027-02-10',
+    replacementModel: 'gpt-image-2.6-sunburst',
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
       maxImagesPerRequest: 10,
@@ -294,12 +359,12 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     lifecycle: 'deprecated',
     deprecationDate: '2026-06-02',
     retirementDate: '2026-12-01',
-    replacementModel: 'gpt-image-2',
+    replacementModel: 'gpt-image-2.6-sunburst',
     releaseDate: '2025-12-16',
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-image-1.5',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
@@ -375,12 +440,12 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     lifecycle: 'deprecated',
     deprecationDate: '2026-06-02',
     retirementDate: '2026-12-01',
-    replacementModel: 'gpt-image-2',
+    replacementModel: 'gpt-image-2.6-sunburst',
     releaseDate: '2025-12-01',
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/chatgpt-image-latest',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
@@ -452,8 +517,8 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     displayName: 'GPT Image 1',
     provider: Vendor.OpenAI,
     description: 'Previous generation OpenAI image model. More expensive than GPT Image 1.5',
-    isActive: true,
-    lifecycle: 'deprecated',
+    isActive: false,
+    lifecycle: 'retired',
     deprecationDate: '2026-04-22',
     retirementDate: '2026-10-23',
     replacementModel: 'gpt-image-2',
@@ -461,8 +526,9 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-image-1',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
       maxImagesPerRequest: 10,
@@ -537,12 +603,12 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     lifecycle: 'deprecated',
     deprecationDate: '2026-06-02',
     retirementDate: '2026-12-01',
-    replacementModel: 'gpt-image-2',
+    replacementModel: 'gpt-image-2.6-sunburst',
     releaseDate: '2025-06-01',
     sources: {
       documentation: 'https://developers.openai.com/api/docs/models/gpt-image-1-mini',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
@@ -1066,7 +1132,7 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     preferred: true,
     endpoints: ['image_generation', 'image_edit', 'interactions', 'generate_content', 'batch'],
     releaseDate: '2026-10-06',
-    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-nano-banana-2.1', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-nano-banana-2.1', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-11-11' },
     capabilities: {
       sizes: ['1024x1024', '2048x2048', '4096x4096', 'auto'],
       aspectRatios: ['1:1', '3:4', '4:3', '9:16', '16:9', '3:2', '2:3', '1:4', '4:1', '1:8', '8:1'],
@@ -1080,10 +1146,10 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
       },
     },
     pricing: {
-      perImageStandard: 0.067,
-      perImageHD: 0.151,
-      perImageByResolution: { '1024px': 0.067, '2048px': 0.101, '4096px': 0.151 },
-      tokenPricing: { textInput: 0.5, imageInput: 0.5, imageOutput: 60 },
+      perImageStandard: 0.0336,
+      perImageHD: 0.1134,
+      perImageByResolution: { '1024px': 0.0336, '2048px': 0.0504, '4096px': 0.1134 },
+      tokenPricing: { textInput: 1.5, imageInput: 1.5, imageOutput: 30 },
       currency: 'USD',
     },
   },
@@ -1094,18 +1160,17 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     provider: Vendor.Google,
     description: 'Current all-around Gemini image generation and editing model with up to 4K output',
     isActive: true,
-    lifecycle: 'deprecated',
+    lifecycle: 'active',
     availability: 'public',
-    deprecationDate: '2026-10-06',
-    retirementDate: '2026-10-29',
     replacementModel: 'gemini-nano-banana-2.1',
     endpoints: ['image_generation', 'image_edit', 'generate_content', 'batch'],
     releaseDate: '2026-06-25',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-image',
       pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
     capabilities: {
       sizes: ['512x512', '1024x1024', '2048x2048', '4096x4096', 'auto'],
       aspectRatios: ['1:1', '3:4', '4:3', '9:16', '16:9', '3:2', '2:3', '1:4', '4:1', '1:8', '8:1'],
@@ -1291,14 +1356,15 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     description: 'Native image generation and editing designed for fast, creative workflows',
     isActive: true,
     lifecycle: 'deprecated',
-    retirementDate: '2026-10-02',
-    replacementModel: 'gemini-3.1-flash-image',
+    retirementDate: '2027-03-15',
+    replacementModel: 'gemini-3.1-flash-lite-image',
     releaseDate: '2025-10-01',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-image',
       pricing: 'https://ai.google.dev/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
     capabilities: {
       sizes: ['1024x1024', 'auto'],
       aspectRatios: ['1:1', '3:4', '4:3', '9:16', '16:9'],
@@ -1364,9 +1430,9 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     name: 'grok-imagine-image-quality',
     displayName: 'Grok Imagine Image Quality',
     provider: Vendor.Grok,
-    description: 'Deprecated higher-fidelity xAI image model; migrate to Grok Imagine Image 2.0 low quality before retirement',
-    isActive: true,
-    lifecycle: 'deprecated',
+    description: 'Retired xAI image model; requests redirect to Grok Imagine Image 2.0 low quality',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     aliases: ['grok-imagine-image-quality-latest', 'grok-imagine-image-pro'],
     snapshots: ['grok-imagine-image-quality-20260403'],
@@ -1378,8 +1444,9 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     sources: {
       documentation: 'https://docs.x.ai/developers/models/grok-imagine-image-quality',
       pricing: 'https://docs.x.ai/developers/models/grok-imagine-image-quality',
-      lastVerified: '2026-09-04',
+      lastVerified: '2026-11-11',
     },
+    preferred: false,
     capabilities: {
       sizes: ['1024x1024', '2048x2048', 'auto'],
       aspectRatios: ['1:1', '3:2', '2:3', '3:4', '4:3', '9:16', '16:9'],
@@ -1461,12 +1528,12 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     description: 'xAI Grok 2 image generation (text-only input, no editing)',
     isActive: false,
     lifecycle: 'retired',
-    replacementModel: 'grok-imagine-image-quality',
+    replacementModel: 'grok-imagine-image-2.0',
     releaseDate: '2024-12-12',
     sources: {
       documentation: 'https://docs.x.ai/docs/guides/image-generation',
       pricing: 'https://docs.x.ai/docs/models',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       sizes: ['1024x1024'],

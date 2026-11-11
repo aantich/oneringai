@@ -35,12 +35,14 @@ restart after editing main/preload code. For a built normal launch, use
 
 ## One ChatGPT sign-in for all OpenAI agents
 
-Open **Connections → Manage models → Continue with ChatGPT** and authorize
+Choose **Continue with ChatGPT** in the first-run setup, or open
+**Connections → Manage models → Continue with ChatGPT**, and authorize
 Hosea to use your eligible ChatGPT plan. This one connection powers every OpenAI
 agent, including saved agent configurations and orchestrated workers. Choose the
 `hosea-chatgpt` provider if you have no API key. Idle open chats adopt the account
 on their next turn with their context restored. Active work must finish before
-switching accounts.
+switching accounts. First-run setup lists the models available to the selected
+ChatGPT account before creating your default agent.
 
 Use **Manage usage** to review your plan/app limits. Signing out or reaching a
 limit never silently enables API-key billing; switching back to saved API keys is

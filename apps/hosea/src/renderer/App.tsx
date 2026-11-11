@@ -240,7 +240,16 @@ function AppContent(): React.ReactElement {
         if (connectors.length > 0) {
           // Auto-create a default agent with the first connector
           const firstConnector = connectors[0];
-          const defaultModel = DEFAULT_MODELS[firstConnector.vendor] || 'gpt-4.1';
+          let defaultModel = DEFAULT_MODELS[firstConnector.vendor] || 'gpt-4.1';
+          if (firstConnector.authMode === 'chatgpt-plan') {
+            const available = await window.hosea.connector.fetchModels('openai', undefined, undefined, firstConnector.name);
+            if (!available.success || !available.models?.length) {
+              setShowSetup(true);
+              setIsInitializing(false);
+              return;
+            }
+            defaultModel = available.models[0];
+          }
 
           const result = await window.hosea.agentConfig.createDefault(
             firstConnector.name,

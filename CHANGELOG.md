@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0-beta.4] — 2026-11-11
+
+- Refresh all six model catalogs against November 11 vendor documentation: add
+  27 LLM/multimodal/realtime entries, GPT Image 2.6 and Gemini Omni 1.2; correct
+  lifecycle dates, floating voice aliases, cache rates, image/TTS/video estimates
+  and preview redirects. Extend the existing Claude/Gemini model-family mappings.
+  See [the audit](docs/MODEL_REGISTRY_REFRESH_2026_11_11.md) for sources, upcoming
+  promotional-price changes and endpoint/adapter support limits.
+
+- Add opt-in ChatGPT plan authentication to the OpenAI Responses provider with
+  host-owned OAuth registration and rotating credentials, explicit capability
+  restrictions, account-bound context and no automatic API-key billing fallback.
+  Add Hosea shared account management and first-run ChatGPT setup using the
+  selected account's model catalog. Production OAuth/account eligibility remains
+  subject to a live authorized smoke test; offline tests use signed fixtures.
+  See [ChatGPT plan access](docs/CHATGPT_PLAN_ACCESS.md).
+
 ## [2.0.0-beta.3] — 2026-11-09
 
 - Refresh the canonical coding-agent guide for the current v2 APIs, browser/Node

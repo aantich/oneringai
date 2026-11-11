@@ -8,16 +8,29 @@ import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
 const appRoot = fileURLToPath(new URL('..', import.meta.url));
 const require = createRequire(new URL('../package.json', import.meta.url));
+const currentPlanModels = ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6.1-terra', 'gpt-6-sol',
+  'gpt-6-luna', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'];
+const availableModels = ['gpt-4.1-mini', ...currentPlanModels, 'hosea-offline-unknown'];
 const scratch = await mkdtemp(join(tmpdir(), 'hosea-chatgpt-electron-'));
 const bootstrap = join(scratch, 'bootstrap.cjs');
 await writeFile(bootstrap, `
 const { app, shell, safeStorage } = require('electron');
+app.on('browser-window-created', (_event, window) => {
+ // Native construction/show must finish before hide() can take effect on macOS.
+ const hide = () => setImmediate(() => { if (!window.isDestroyed()) {
+   window.hide(); window.setTitle('Hosea — Offline test · Temporary data');
+ } });
+ window.on('show', hide);
+ hide();
+ window.on('page-title-updated', event => event.preventDefault());
+ window.webContents.setBackgroundThrottling(false);
+});
 const crypto = require('node:crypto');
 const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 const jwk = { ...publicKey.export({ format: 'jwk' }), kid: 'hosea-offline', alg: 'RS256', use: 'sig' };
 let nonce = ''; let clientId = 'oaiapp_hosea_offline'; let signIns = 0; let requests = [];
 let refreshCount = 0;
-globalThis.__hoseaChatGPTTest = { requests, get signIns() { return signIns; } };
+globalThis.__hoseaChatGPTTest = { requests, emptyModelCatalog: false, get signIns() { return signIns; } };
 safeStorage.isEncryptionAvailable = () => true;
 safeStorage.getSelectedStorageBackend = () => 'test';
 safeStorage.encryptString = text => Buffer.from(Buffer.from(text).map(b => b ^ 53));
@@ -47,7 +60,10 @@ globalThis.fetch = async (input, init) => {
    if (url.pathname.endsWith('/oauth/token')) return Response.json({ access_token: 'offline-chatgpt-access', refresh_token: 'offline-refresh',
      id_token: jwt(), expires_in: 3600, scope: 'openid profile email offline_access resource.invoke chatgpt.tokens.use.direct' });
  }
- if (url.origin === 'https://api.openai.com' && url.pathname === '/v1/models') return Response.json({ models: [{ slug: 'gpt-4.1', display_name: 'Offline model', visibility: 'list' }] });
+ if (url.origin === 'https://api.openai.com' && url.pathname === '/v1/models') {
+   if (globalThis.__hoseaChatGPTTest.emptyModelCatalog) { globalThis.__hoseaChatGPTTest.emptyModelCatalog = false; return Response.json({ models: [] }); }
+   return Response.json({ models: ${JSON.stringify(availableModels)}.map(slug => ({ slug, display_name: slug, visibility: 'list' })) });
+ }
  if (url.origin !== 'https://api.openai.com' || url.pathname !== '/v1/responses') throw new Error('Offline QA blocked network request');
  const body = JSON.parse(init?.body ?? await input.clone().text());
  const authorization = new Headers(init?.headers ?? input.headers).get('authorization');
@@ -82,6 +98,60 @@ try {
   await page.waitForFunction(() => !!window.hosea?.service, undefined, { timeout: 60_000 });
   // The readiness method is asynchronous; explicitly await the resolved service state.
   await page.waitForFunction(async () => await window.hosea.service.isReady(), undefined, { timeout: 60_000 });
+  assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()), false, 'offline QA must not present a window as the real workspace');
+  await page.evaluate(() => {
+    const marker = document.createElement('div');
+    marker.textContent = 'OFFLINE TEST · TEMPORARY DATA';
+    marker.setAttribute('aria-hidden', 'true');
+    Object.assign(marker.style, { position: 'fixed', top: '8px', left: '50%', transform: 'translateX(-50%)',
+      zIndex: '2147483647', padding: '4px 10px', borderRadius: '4px', background: '#fff3cd', color: '#664d03',
+      font: '12px system-ui', pointerEvents: 'none' });
+    document.body.append(marker);
+  });
+  const onboarding = page.getByRole('dialog').filter({ hasText: 'Make yourself at home.' });
+  await onboarding.getByRole('button', { name: /Continue with ChatGPT/ }).waitFor();
+  // Fresh data always shows release notes, whose IPC read can finish after service readiness.
+  const news = page.getByRole('dialog').filter({ hasText: "What's New in hosea" });
+  await news.getByRole('button', { name: 'Got it', exact: true }).click();
+  await news.waitFor({ state: 'hidden' });
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: join(scratch, 'onboarding-options.png'), animations: 'disabled' });
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(880, 600));
+  await page.screenshot({ path: join(scratch, 'onboarding-options-narrow.png'), animations: 'disabled' });
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1380, 900));
+  await onboarding.getByRole('button', { name: /Continue with ChatGPT/ }).click();
+  await page.screenshot({ path: join(scratch, 'onboarding-chatgpt.png'), animations: 'disabled' });
+  await page.getByRole('button', { name: 'Continue with ChatGPT', exact: true }).click();
+  await page.getByRole('button', { name: 'Reconnect ChatGPT', exact: true }).waitFor();
+  await app.evaluate(() => { globalThis.__hoseaChatGPTTest.emptyModelCatalog = true; });
+  await page.getByRole('button', { name: 'Choose model', exact: true }).click();
+  await page.getByRole('alert').filter({ hasText: 'No models are available for this ChatGPT account.' }).waitFor();
+  assert.equal(await page.evaluate(() => window.hosea.agentConfig.getActive()), null);
+  await page.getByRole('button', { name: 'Choose model', exact: true }).click();
+  await page.getByRole('dialog').getByText('Select Model', { exact: true }).waitFor();
+  const modelPicker = page.getByRole('dialog').locator('select');
+  const modelOptions = await modelPicker.locator('option').evaluateAll(options => options.map(o => ({ id: o.value, label: o.textContent })));
+  assert.deepEqual(modelOptions.map(o => o.id), ['', ...availableModels], 'only account-available models are offered, in account order');
+  for (const id of currentPlanModels) {
+    assert.equal(modelOptions.find(option => option.id === id)?.label, `${id} (1050K context)`, 'registered plan models retain their context limits');
+  }
+  assert.match(modelOptions.find(option => option.id === 'gpt-4.1-mini')?.label ?? '', /\(\d+K context\)$/);
+  assert.equal(modelOptions.find(option => option.id === 'hosea-offline-unknown')?.label, 'hosea-offline-unknown (context limit unknown)');
+  assert.equal(await modelPicker.inputValue(), 'gpt-4.1-mini');
+  await page.screenshot({ path: join(scratch, 'onboarding-models.png'), animations: 'disabled' });
+  await page.getByRole('button', { name: 'Get Started', exact: true }).click();
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  const onboarded = await page.evaluate(() => window.hosea.agentConfig.getActive());
+  assert.equal(onboarded?.connector, 'hosea-chatgpt');
+  assert.equal(onboarded?.model, 'gpt-4.1-mini');
+  const authConnector = await page.evaluate(() => window.hosea.connector.list().then(list => list.find(c => c.name === 'hosea-chatgpt')));
+  assert.equal(authConnector?.vendor, 'openai', 'first-run ChatGPT connector must use OpenAI');
+  assert.equal(authConnector?.source, 'built-in');
+  assert.equal(authConnector?.authMode, 'chatgpt-plan');
+  assert.equal((await page.evaluate(() => window.hosea.chatGPT.useAPIKeys())).success, true);
+  console.log('First-run ChatGPT onboarding verified');
+  // Remove only the fixture's generated connection so the existing collision test starts empty.
+  await page.evaluate(() => window.hosea.connector.delete('hosea-chatgpt'));
   const setup = await page.evaluate(async () => {
     const bridge = window.hosea;
     const added = await bridge.connector.add({ name: 'qa-api', vendor: 'openai', auth: { type: 'api_key', apiKey: 'offline-api-key' } });
@@ -113,16 +183,19 @@ try {
   for (const modal of await page.getByRole('dialog').all()) { const close = modal.getByRole('button', { name: 'Close', exact: true }); if (await close.count()) await close.click(); }
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
   await page.getByRole('button', { name: 'Manage models', exact: true }).click();
-  await page.getByRole('button', { name: 'Continue with ChatGPT', exact: true }).click();
+  await page.getByRole('button', { name: 'Reconnect ChatGPT', exact: true }).click();
   await page.getByText('You’re using your ChatGPT plan', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Got it', exact: true }).click();
   await page.getByRole('button', { name: 'Reconnect ChatGPT', exact: true }).waitFor();
   const connection = await page.evaluate(() => window.hosea.chatGPT.status());
   console.log('Authorization returned');
   assert.equal(connection.usePlan, true, JSON.stringify(connection));
+  const sharedCard = page.locator('.connector-card').filter({ hasText: 'Managed by shared ChatGPT connection' });
+  await sharedCard.getByText('OpenAI', { exact: true }).waitFor();
+  assert.equal(await sharedCard.locator('.connector-card__name').innerText(), 'hosea-chatgpt-2');
   await page.screenshot({ path: join(scratch, 'providers-connected.png') });
   const models = await page.evaluate(() => window.hosea.connector.fetchModels('openai', undefined, undefined, 'qa-api'));
-  assert.deepEqual(models.models, ['gpt-4.1']);
+  assert.deepEqual(models.models, availableModels);
   console.log('Models verified');
   const first = await turn(setup.first, 'Continue after shared sign-in');
   console.log('First existing chat rebound');
@@ -148,7 +221,7 @@ try {
   assert.equal(planTool.some(c => c.type === 'error'), false, JSON.stringify(planTool));
   assert.ok(planTool.some(c => c.type === 'tool:start' || c.type === 'tool_start'));
   const diagnostics = await app.evaluate(() => ({ signIns: globalThis.__hoseaChatGPTTest.signIns, requests: globalThis.__hoseaChatGPTTest.requests }));
-  assert.equal(diagnostics.signIns, 1);
+  assert.equal(diagnostics.signIns, 2);
   const planRequests = diagnostics.requests.filter(r => r.authorization === 'Bearer offline-chatgpt-access');
   assert.equal(planRequests.length, 5);
   assert.ok(planRequests.some(r => r.body.input.some(i => i.type === 'function_call' && i.namespace === 'oneringai')));
@@ -185,6 +258,11 @@ try {
   assert.equal(apiRequest.body.temperature, 0.7);
   console.log(JSON.stringify({ success: true, signIns: diagnostics.signIns, modelRequests: count,
     checks: ['existing and new agents share one authorization', 'plugin restoration', 'namespaced tools', 'no billing fallback', 'account-specific models', 'Agent.run stream collection', 'keyless first-time setup', 'preserved conflicting provider name', 'explicit API-key switch'], artifacts: scratch }));
+} catch (error) {
+  console.error('Offline Electron QA artifacts:', scratch);
+  const page = app?.windows()[0];
+  if (page) await page.screenshot({ path: join(scratch, 'failure.png') }).catch(() => {});
+  throw error;
 } finally {
   if (app) await app.close();
   // Screenshots/logs are kept for review, credentials contain fixture values only.

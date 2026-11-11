@@ -41,7 +41,7 @@ export function ConnectionsPage(): React.ReactElement {
       {loading ? <Spinner animation="border" aria-label="Loading connections" /> : <>
         <div className="h-connection-summary">
           <Surface><div className="d-flex align-items-center justify-content-between"><Brain size={24} strokeWidth={1.5} /><span className="h-connection-count">{counts.models} configured</span></div>
-            <h2>A model for every way you think.</h2><p>Connect OpenAI, Anthropic, and more with your own keys, or keep things local with Ollama.</p>
+            <h2>A model for every way you think.</h2><p>Use your ChatGPT plan, connect providers with your own API keys, or keep things local with Ollama.</p>
             <Button variant="primary" onClick={() => navigate('llm-connectors')}>Manage models <ArrowUpRight size={14} /></Button>
           </Surface>
           <Surface><div className="d-flex align-items-center justify-content-between"><Plug size={24} strokeWidth={1.5} /><span className="h-connection-count">{counts.services} configured</span></div>

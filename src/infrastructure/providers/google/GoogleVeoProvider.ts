@@ -76,7 +76,7 @@ export class GoogleVeoProvider extends BaseMediaProvider implements IVideoProvid
           });
 
           const model = options.model || 'veo-3.1-generate-preview';
-          if (model === 'gemini-omni-flash-preview' || model === 'gemini-omni-1.1-flash') {
+          if (model === 'gemini-omni-flash-preview' || model === 'gemini-omni-1.1-flash' || model === 'gemini-omni-1.2-flash') {
             return await this.generateOmniVideo(options);
           }
           const googleOptions = (options.vendorOptions || {}) as GoogleVeoOptions;
@@ -399,6 +399,7 @@ export class GoogleVeoProvider extends BaseMediaProvider implements IVideoProvid
       'veo-3.1-fast-generate-preview',
       'veo-3.1-generate-preview',
       'veo-3.1-lite-generate-preview',
+      'gemini-omni-1.2-flash',
       'gemini-omni-1.1-flash',
       'gemini-omni-flash-preview',
     ];

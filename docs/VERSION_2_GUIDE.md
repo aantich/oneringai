@@ -11,6 +11,17 @@ website commit and successful GitHub Pages deployment before completing the
 release handoff. This is a standing delivery requirement, not authorization to
 publish another package version.
 
+**Beta.4 — 2026-11-11:** `oneringai@2.0.0-beta.4` refreshes all six model
+registries and adds opt-in host-managed ChatGPT plan access plus Hosea first-run
+account setup. Ordinary API-key Agent defaults remain supported. The
+[registry audit](MODEL_REGISTRY_REFRESH_2026_11_11.md) records vendor sources,
+time-limited pricing and adapter limits; [ChatGPT plan access](CHATGPT_PLAN_ACCESS.md)
+records OAuth, account ownership and unsupported-request boundaries. Production
+OAuth/account eligibility is not live-verified. The
+[beta.4 release record](evaluations/BETA4_RELEASE_VALIDATION_2026_11_11.json)
+tracks release validation, npm publication and the matching website deployment.
+Earlier release receipts below are historical.
+
 **Beta.3 — 2026-11-09:** `oneringai@2.0.0-beta.3` refreshes the canonical coding-agent
 guide, Claude's shared entry point and typed browser/plugin examples. The package's
 documentation checker now covers these instructions and the browser guide. Agent
@@ -18,7 +29,7 @@ APIs, runtime behavior and support boundaries are unchanged from beta.2. The
 [beta.3 record](evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.json) tracks validation,
 npm publication and the required matching website deployment separately.
 
-**Verified beta.3 publication:** npm `latest` and `next` select beta.3 from
+**Verified beta.3 publication:** at publication npm `latest` and `next` selected beta.3 from
 `v2.0.0-beta.3` / `be8ccaa1`. Its registry integrity matches the validated tarball;
 fresh Node 22/24 consumers pass all public ESM/CJS entries and nine document formats.
 The matching website is deployed from `60d0ea4`, pinning documentation snapshot

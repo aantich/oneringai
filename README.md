@@ -23,11 +23,11 @@ AMOS is the complete terminal application: configure connectors, run agents,
 switch harnesses, inspect activity, and recover saved sessions. Its
 [application guide](apps/amos/README.md) also covers native OneRingAI mode.
 
-**v2 beta:** **[`oneringai@2.0.0-beta.3`](https://www.npmjs.com/package/oneringai/v/2.0.0-beta.3)**,
+**v2 beta:** **[`oneringai@2.0.0-beta.4`](https://www.npmjs.com/package/oneringai/v/2.0.0-beta.4)**,
 without a scope. Both `latest` and `next` currently select this beta. Use the
 matching package version and retain the preview boundaries below. Existing v1
 users must migrate explicitly from `@everworker/oneringai`.
-See the **[v2 changelog](CHANGELOG.md#200-beta3--2026-11-09)**,
+See the **[v2 changelog](CHANGELOG.md#200-beta4--2026-11-11)**,
 [migration](docs/PACKAGE_MIGRATION.md), and [release readiness](docs/RELEASE_READINESS_V2.md).
 
 ## What changes in v2
@@ -64,7 +64,7 @@ TypeScript declarations. Install the current v2 beta:
 npm install oneringai
 ```
 
-You can also select `npm install oneringai@next` or pin `oneringai@2.0.0-beta.3`.
+You can also select `npm install oneringai@next` or pin `oneringai@2.0.0-beta.4`.
 The [source checkout/local package workflow](docs/PACKAGE_MIGRATION.md#try-v2-before-publication)
 remains available for development.
 Load your own environment configuration before creating connectors; the library

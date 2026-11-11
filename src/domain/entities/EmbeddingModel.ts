@@ -105,6 +105,7 @@ export const EMBEDDING_MODELS = {
   },
   [Vendor.Google]: {
     /** Gemini Embedding 2: current multimodal embedding model */
+    GEMINI_EMBEDDING_2_PREVIEW: 'gemini-embedding-2-preview',
     GEMINI_EMBEDDING_2: 'gemini-embedding-2',
     /** Current text-only Gemini embedding model */
     GEMINI_EMBEDDING_001: 'gemini-embedding-001',
@@ -141,7 +142,7 @@ export const EMBEDDING_MODELS = {
 
 /**
  * Complete embedding model registry
- * Last full audit: August 2026
+ * Last catalog audit: November 2026
  */
 export const EMBEDDING_MODEL_REGISTRY: Record<string, IEmbeddingModelDescription> = {
   // ======================== OpenAI ========================
@@ -247,6 +248,44 @@ export const EMBEDDING_MODEL_REGISTRY: Record<string, IEmbeddingModelDescription
 
   // ======================== Google ========================
 
+  'gemini-embedding-2-preview': {
+    name: 'gemini-embedding-2-preview',
+    displayName: 'Gemini Embedding 2 Preview (redirected)',
+    provider: Vendor.Google,
+    description: 'Current multimodal embedding model mapping text, images, audio, video, and PDFs into one vector space',
+    isActive: false,
+    lifecycle: 'retired',
+    availability: 'public',
+    preferred: false,
+    endpoints: ['embeddings', 'batch'],
+    sources: {
+      documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-embedding-2',
+      pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
+      lastVerified: '2026-11-11',
+    },
+    retirementDate: '2026-11-06',
+    replacementModel: 'gemini-embedding-2',
+    capabilities: {
+      maxTokens: 8192,
+      defaultDimensions: 3072,
+      maxDimensions: 3072,
+      inputModalities: ['text', 'image', 'audio', 'video', 'document'],
+      features: { matryoshka: true, instructionAware: true, batchInput: true, multilingual: true },
+      limits: { maxBatchSize: 100 },
+    },
+    pricing: {
+      perMTokens: 0.20,
+      perMImageTokens: 0.45,
+      perMAudioTokens: 6.50,
+      perMVideoTokens: 12,
+      perImage: 0.00012,
+      perAudioSecond: 0.00016,
+      perVideoFrame: 0.00079,
+      batchMultiplier: 0.5,
+      currency: 'USD',
+    },
+  },
+
   'gemini-embedding-2': {
     name: 'gemini-embedding-2',
     displayName: 'Gemini Embedding 2',
@@ -257,11 +296,11 @@ export const EMBEDDING_MODEL_REGISTRY: Record<string, IEmbeddingModelDescription
     availability: 'public',
     preferred: true,
     endpoints: ['embeddings', 'batch'],
-    releaseDate: '2026-04-28',
+    releaseDate: '2026-04-22',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-embedding-2',
       pricing: 'https://ai.google.dev/gemini-api/docs/pricing',
-      lastVerified: '2026-08-30',
+      lastVerified: '2026-11-11',
     },
     capabilities: {
       maxTokens: 8192,
