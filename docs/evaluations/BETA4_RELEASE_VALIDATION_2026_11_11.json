@@ -3,7 +3,7 @@
   "date": "2026-11-11",
   "branch": "main",
   "authorization": "commit everything in both branches, push both, and npm release both v1 and new beta v2",
-  "status": "published-registry-verified-website-pending",
+  "status": "published-registry-verified-and-website-deployed",
   "publicationPerformed": true,
   "liveModelCalls": 0,
   "scope": [
@@ -513,7 +513,7 @@
     }
   },
   "website": {
-    "status": "local-validation-passed-deployment-pending",
+    "status": "deployed-and-publicly-verified",
     "checks": {
       "tests": 16,
       "pages": 830,
@@ -555,7 +555,61 @@
         "errors": []
       },
       "desktopAndMobileVisualInspection": "pass"
-    }
+    },
+    "npmVersion": "2.0.0-beta.4",
+    "librarySnapshot": "d699cea9dcddbc808fc9ec02766ef113d88ced44",
+    "websiteCommit": "6b0419446c16da8761e2c952822d191ebfe51e7a",
+    "deploymentURL": "https://oneringai.io",
+    "workflow": {
+      "id": 43008998061,
+      "url": "https://github.com/aantich/oneringaiio/actions/runs/43008998061",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "build",
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "publicVerification": {
+      "status": "pass",
+      "origin": "https://oneringai.io",
+      "label": "public",
+      "version": "2.0.0-beta.4",
+      "routes": [
+        "/",
+        "/docs/start/",
+        "/applications/",
+        "/docs/user-guide/",
+        "/docs/examples/",
+        "/docs/api-reference/",
+        "/docs/amos-cookbook/",
+        "/",
+        "/",
+        "/docs/start/",
+        "/",
+        "/docs/start/",
+        "/",
+        "/compare/"
+      ],
+      "checks": [
+        "desktop/mobile light/dark",
+        "320px/390px overflow",
+        "five harness choices",
+        "clipboard install/code",
+        "search keyboard",
+        "menu",
+        "guide contents",
+        "examples/API links",
+        "404"
+      ],
+      "errors": []
+    },
+    "verifiedAt": "2026-11-11T11:07:39.238473+00:00"
   },
   "limitations": [
     "No billable/live model calls were made.",

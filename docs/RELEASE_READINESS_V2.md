@@ -26,6 +26,12 @@ a fresh registry install passes all eleven ESM/CJS entries, the six model
 catalogs, nine document formats and strict public ChatGPT-plan declarations.
 The matching website handoff is recorded separately in the beta.4 release record.
 
+**Verified beta.4 website handoff:** [GitHub Pages deployment](https://github.com/aantich/oneringaiio/actions/runs/43008998061)
+succeeded from website `6b04194`, with library snapshot `d699cea9`. Public desktop/
+mobile checks confirm beta.4, the exact snapshot, the homepage, quickstart and four canonical
+guides, current model/plan-access search records and working navigation.
+The beta.4 release record retains the complete package-and-website receipt.
+
 **Beta.3 — 2026-11-09:** The `oneringai@2.0.0-beta.3` handoff includes current
 coding-agent instructions, Claude's canonical-guide import, typed browser/plugin
 example corrections and expanded documentation checks. There are no runtime/API
