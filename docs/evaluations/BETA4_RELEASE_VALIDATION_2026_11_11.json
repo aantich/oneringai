@@ -3,8 +3,8 @@
   "date": "2026-11-11",
   "branch": "main",
   "authorization": "commit everything in both branches, push both, and npm release both v1 and new beta v2",
-  "status": "candidate-validation",
-  "publicationPerformed": false,
+  "status": "published-registry-verified-website-pending",
+  "publicationPerformed": true,
   "liveModelCalls": 0,
   "scope": [
     "November model registry refresh across LLM, image, video, TTS, STT and embeddings",
@@ -13,8 +13,8 @@
   "checks": {
     "releaseCheck": {
       "status": "pass",
-      "phase": "before version bump; publication lifecycle repeats the complete gate",
-      "completedAt": "2026-11-11T10:48:47.006Z",
+      "phase": "complete prepublish gate on the exact beta.4 tag",
+      "completedAt": "2026-11-11T10:54:00.023Z",
       "components": [
         "build/exports",
         "bundled provenance/audit",
@@ -29,10 +29,10 @@
       "consumer": {
         "status": "pass",
         "node": "v24.20.0",
-        "startedAt": "2026-11-11T10:48:01.449Z",
-        "work": "/var/folders/w4/0_95kdj51l35cqyg07_w5v5r0000gn/T/oneringai-release-LYQgV8",
-        "package": "oneringai@2.0.0-beta.3",
-        "integrity": "sha512-Kt5++AlcdcTSkzYUpMhK4rGar/EvYrP1PgrkqDyljmjQ6boZ3ueUMmAa3XBsW4WOAaJo+jU4RZ2VzCZ5l6bywQ==",
+        "startedAt": "2026-11-11T10:53:25.683Z",
+        "work": "/var/folders/w4/0_95kdj51l35cqyg07_w5v5r0000gn/T/oneringai-release-ZK0vNZ",
+        "package": "oneringai@2.0.0-beta.4",
+        "integrity": "sha512-vZbaVywW6qvnaWnyptt3JJ1fqUkk8BvKnqe7FVAg9XzYKxsHoI5ijSG0N65xeS8dEdKfTQFxuiTdQqxNlt0DLA==",
         "files": 565,
         "bundledDependencies": [
           {
@@ -382,7 +382,7 @@
             "uuid@8.3.2"
           ]
         },
-        "finishedAt": "2026-11-11T10:48:47.006Z"
+        "finishedAt": "2026-11-11T10:54:00.023Z"
       }
     },
     "hosea": {
@@ -450,15 +450,186 @@
     }
   },
   "publication": {
-    "status": "pending"
+    "status": "published-and-registry-verified",
+    "distTags": {
+      "latest": "2.0.0-beta.4",
+      "next": "2.0.0-beta.4"
+    },
+    "registry": {
+      "metadata": {
+        "version": "2.0.0-beta.4",
+        "dist.integrity": "sha512-vZbaVywW6qvnaWnyptt3JJ1fqUkk8BvKnqe7FVAg9XzYKxsHoI5ijSG0N65xeS8dEdKfTQFxuiTdQqxNlt0DLA==",
+        "dist.shasum": "0c859832f587a5b5f30b1e45e95cb984df697248",
+        "gitHead": "7611d906e4e544859fc8d72a5d04e0be7cffa271"
+      },
+      "probe": {
+        "status": "pass",
+        "package": "oneringai@2.0.0-beta.4",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "models": 137,
+        "images": 25,
+        "videos": 11,
+        "tts": 9,
+        "stt": 15,
+        "embeddings": 16,
+        "providerCalls": 0
+      },
+      "verifiedAt": "2026-11-11T11:03:24.972Z"
+    },
+    "integrityMatchesValidatedTarball": true,
+    "freshRegistryConsumer": {
+      "node": "v24.20.0",
+      "sdkModules": [],
+      "documents": [
+        "csv",
+        "xlsx",
+        "docx",
+        "pptx",
+        "odt",
+        "odp",
+        "ods",
+        "rtf",
+        "pdf"
+      ],
+      "status": "pass",
+      "entries": 11,
+      "formats": [
+        "esm",
+        "cjs"
+      ],
+      "documentsBothFormats": true,
+      "publicSymbols": true,
+      "connectorIdentity": true,
+      "documentation": true,
+      "MITLicenses": true,
+      "legacyPackageAbsent": true,
+      "providerCalls": 0,
+      "publishedDocumentationMatchesSource": true,
+      "strictPublicChatGPTPlanTypes": "pass"
+    }
   },
   "website": {
-    "status": "pending"
+    "status": "local-validation-passed-deployment-pending",
+    "checks": {
+      "tests": 16,
+      "pages": 830,
+      "sourceDocuments": 75,
+      "searchRecords": 3241,
+      "referenceWarnings": 0,
+      "browser": {
+        "status": "pass",
+        "origin": "http://127.0.0.1:3014",
+        "label": "local",
+        "version": "2.0.0-beta.4",
+        "routes": [
+          "/",
+          "/docs/start/",
+          "/applications/",
+          "/docs/user-guide/",
+          "/docs/examples/",
+          "/docs/api-reference/",
+          "/docs/amos-cookbook/",
+          "/",
+          "/",
+          "/docs/start/",
+          "/",
+          "/docs/start/",
+          "/",
+          "/compare/"
+        ],
+        "checks": [
+          "desktop/mobile light/dark",
+          "320px/390px overflow",
+          "five harness choices",
+          "clipboard install/code",
+          "search keyboard",
+          "menu",
+          "guide contents",
+          "examples/API links",
+          "404"
+        ],
+        "errors": []
+      },
+      "desktopAndMobileVisualInspection": "pass"
+    }
   },
   "limitations": [
     "No billable/live model calls were made.",
     "Production OAuth/account eligibility and live ChatGPT plan inference have not been verified.",
     "Catalog entries describe vendor metadata; endpoint adapters and account entitlements retain documented limits.",
     "Hosea installers and signing are not part of the npm library release."
-  ]
+  ],
+  "sourceTag": "v2.0.0-beta.4",
+  "sourceCommit": "7611d906e4e544859fc8d72a5d04e0be7cffa271",
+  "legacyV1": {
+    "package": "@everworker/oneringai@1.2.3",
+    "date": "2026-11-11",
+    "branch": "version1",
+    "status": "published-and-registry-verified",
+    "publicationPerformed": true,
+    "sourceTag": "v1.2.3",
+    "sourceCommit": "10ce86ddedaa67f1339e33c03f87ddc0f9bfc345",
+    "distTags": {
+      "latest": "1.2.3"
+    },
+    "registry": {
+      "metadata": {
+        "version": "1.2.3",
+        "dist.integrity": "sha512-7Pu76TfixyUi0tkNUENU/Oc8b865kaySYV+DYbTHqwzlJQIDJ+JTufc9iinUyiAWHDF/FQUfuy3vTZKx/vrU3w==",
+        "dist.shasum": "9df20b406e3d566941064180281fe5acc3b531bb"
+      },
+      "probe": {
+        "status": "pass",
+        "package": "@everworker/oneringai@1.2.3",
+        "entries": 8,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "models": 137,
+        "images": 25,
+        "videos": 11,
+        "tts": 9,
+        "stt": 15,
+        "embeddings": 16,
+        "providerCalls": 0
+      },
+      "verifiedAt": "2026-11-11T10:55:32.548Z"
+    },
+    "checks": {
+      "releaseBranchSafeguard": "pass",
+      "releaseSafeguardTests": "pass",
+      "buildAndExportIdentity": "pass",
+      "types": "pass",
+      "lint": "pass",
+      "exampleTypes": "pass",
+      "generatedDocs": "pass",
+      "exactTagAndCleanWorktree": "pass",
+      "unit": {
+        "status": "pass",
+        "files": 318,
+        "passed": 6741,
+        "node": "24.20.0",
+        "concurrency": 4
+      },
+      "initialUnitAttempt": "One wall-clock-sensitive Realtime context test crossed a clock boundary; its isolated rerun and the complete publication gate both passed."
+    },
+    "catalogs": {
+      "llm": 137,
+      "image": 25,
+      "video": 11,
+      "tts": 9,
+      "stt": 15,
+      "embedding": 16
+    },
+    "liveProviderCalls": 0,
+    "limits": [
+      "Registry metadata does not establish endpoint adapter support or account entitlement.",
+      "Upcoming promotional pricing changes are documented in the November registry audit."
+    ]
+  }
 }

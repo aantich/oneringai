@@ -22,6 +22,12 @@ OAuth/account eligibility is not live-verified. The
 tracks release validation, npm publication and the matching website deployment.
 Earlier release receipts below are historical.
 
+**Verified beta.4 npm publication:** `latest` and `next` select beta.4 from
+`v2.0.0-beta.4` / `7611d906`. Registry integrity matches the validated tarball;
+a fresh registry install passes all eleven ESM/CJS entries, the six model
+catalogs, nine document formats and strict public ChatGPT-plan declarations.
+The matching website handoff is recorded separately in the beta.4 release record.
+
 **Beta.3 — 2026-11-09:** `oneringai@2.0.0-beta.3` refreshes the canonical coding-agent
 guide, Claude's shared entry point and typed browser/plugin examples. The package's
 documentation checker now covers these instructions and the browser guide. Agent
