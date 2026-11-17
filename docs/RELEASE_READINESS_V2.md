@@ -26,6 +26,12 @@ model catalogs, nine document formats, strict declarations, optional SDKs and
 consumer audits. The matching website deployment is tracked separately in the
 beta.5 release record.
 
+**Verified beta.5 website handoff:** [GitHub Pages deployment](https://github.com/aantich/oneringaiio/actions/runs/44068983758)
+succeeded from website `8c3fc3eb`, with library snapshot `4e5ff590`.
+Public desktop/mobile checks confirm beta.5, the exact snapshot, the homepage,
+quickstart, canonical guides and model search records, themes and navigation.
+The beta.5 release record retains the complete package-and-website receipt.
+
 **Beta.4 — 2026-11-11:** `oneringai@2.0.0-beta.4` refreshes all six model
 registries and adds opt-in host-managed ChatGPT plan access plus Hosea first-run
 account setup. Ordinary API-key Agent defaults remain supported. The

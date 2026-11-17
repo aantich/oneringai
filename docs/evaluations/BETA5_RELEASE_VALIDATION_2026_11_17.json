@@ -3,7 +3,7 @@
   "date": "2026-11-17",
   "branch": "main",
   "authorization": "release patch updates for both versions on npm",
-  "status": "published-registry-verified-awaiting-website-deployment",
+  "status": "published-registry-verified-and-website-deployed",
   "publicationPerformed": true,
   "liveModelCalls": 0,
   "scope": [
@@ -799,7 +799,7 @@
     }
   },
   "website": {
-    "status": "required deployment pending",
+    "status": "deployed-and-publicly-verified",
     "localValidation": {
       "status": "pass",
       "base": "http://127.0.0.1:3014/",
@@ -819,6 +819,201 @@
       "finishedAt": "2026-11-17T10:37:48.407Z"
     },
     "checks": "16 website checks pass; 832 pages, 76 source documents, 3242 search records; zero reference warnings",
-    "next": "Pin this clean publication documentation revision, regenerate, check, deploy through existing GitHub Pages and verify public routes."
-  }
+    "version": "2.0.0-beta.5",
+    "librarySnapshot": "4e5ff59033d8f10033c58951b1251a8b79fcd185",
+    "snapshotManifest": {
+      "repository": "https://github.com/aantich/oneringai",
+      "commit": "4e5ff59033d8f10033c58951b1251a8b79fcd185",
+      "version": "2.0.0-beta.5",
+      "syncedAt": "2026-11-17",
+      "files": 1410
+    },
+    "commit": "8c3fc3ebec139b940edc03cb6fe62acbaee4c71b",
+    "finalLocalChecks": {
+      "status": "pass",
+      "websiteTests": 16,
+      "pages": 832,
+      "sourceDocuments": 76,
+      "searchRecords": 3242,
+      "referenceWarnings": 0
+    },
+    "deployment": {
+      "conclusion": "success",
+      "databaseId": 44068983758,
+      "headSha": "8c3fc3ebec139b940edc03cb6fe62acbaee4c71b",
+      "jobs": [
+        {
+          "completedAt": "2026-11-17T10:54:42Z",
+          "conclusion": "success",
+          "databaseId": 133990006242,
+          "name": "build",
+          "startedAt": "2026-11-17T10:53:36Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-17T10:53:40Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-17T10:53:37Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:53:44Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-17T10:53:40Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:53:52Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-node@v4",
+              "number": 3,
+              "startedAt": "2026-11-17T10:53:44Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:53:53Z",
+              "conclusion": "success",
+              "name": "Run npm ci",
+              "number": 4,
+              "startedAt": "2026-11-17T10:53:52Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:53:53Z",
+              "conclusion": "success",
+              "name": "Read the pinned documentation revision",
+              "number": 5,
+              "startedAt": "2026-11-17T10:53:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:53:56Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 6,
+              "startedAt": "2026-11-17T10:53:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:53:56Z",
+              "conclusion": "success",
+              "name": "Run npm run docs:sync -- .library-source --frozen",
+              "number": 7,
+              "startedAt": "2026-11-17T10:53:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:54:33Z",
+              "conclusion": "success",
+              "name": "Run npm run check",
+              "number": 8,
+              "startedAt": "2026-11-17T10:53:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:54:38Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-pages-artifact@v3",
+              "number": 9,
+              "startedAt": "2026-11-17T10:54:33Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:54:38Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 16,
+              "startedAt": "2026-11-17T10:54:38Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:54:38Z",
+              "conclusion": "success",
+              "name": "Post Run actions/setup-node@v4",
+              "number": 17,
+              "startedAt": "2026-11-17T10:54:38Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:54:38Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 18,
+              "startedAt": "2026-11-17T10:54:38Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:54:38Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 19,
+              "startedAt": "2026-11-17T10:54:38Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/aantich/oneringaiio/actions/runs/44068983758/job/133990006242"
+        },
+        {
+          "completedAt": "2026-11-17T10:54:58Z",
+          "conclusion": "success",
+          "databaseId": 133990597732,
+          "name": "deploy",
+          "startedAt": "2026-11-17T10:54:46Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-17T10:54:48Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-17T10:54:47Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:54:56Z",
+              "conclusion": "success",
+              "name": "Run actions/deploy-pages@v4",
+              "number": 2,
+              "startedAt": "2026-11-17T10:54:48Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-17T10:54:56Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 3,
+              "startedAt": "2026-11-17T10:54:56Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/aantich/oneringaiio/actions/runs/44068983758/job/133990597732"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/aantich/oneringaiio/actions/runs/44068983758"
+    },
+    "publicVerification": {
+      "status": "pass",
+      "base": "https://oneringai.io/",
+      "snapshot": "4e5ff59033d8f10033c58951b1251a8b79fcd185",
+      "version": "2.0.0-beta.5",
+      "checks": [
+        "five harness examples",
+        "installation copy",
+        "desktop and persistent light/dark themes",
+        "new-model search index and keyboard navigation",
+        "quickstart and canonical guide routes; code copy",
+        "guide contents navigation",
+        "390px/320px themes, navigation and contents",
+        "comparison and custom 404"
+      ],
+      "providerCalls": 0,
+      "finishedAt": "2026-11-17T10:55:23.468Z"
+    }
+  },
+  "completedAt": "2026-11-17T10:55:45.502422+00:00"
 }
