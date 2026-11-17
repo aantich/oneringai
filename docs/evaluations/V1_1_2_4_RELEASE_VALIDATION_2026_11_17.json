@@ -1,0 +1,40 @@
+{
+  "package": "@everworker/oneringai@1.2.4",
+  "date": "2026-11-17",
+  "branch": "version1",
+  "authorization": "release patch updates for both versions on npm",
+  "status": "published-registry-verified",
+  "publicationPerformed": true,
+  "releaseTag": "v1.2.4",
+  "releaseCommit": "6293a9bd7b4fb7b012697b08ac7f514edd3a5b2e",
+  "integrity": "sha512-mNqtgRfl4jOHS65vLOByMUlX9X09chhEtwfYnSsam/UBIwVqEjECqQM+T69FjryeU8/L/Cs0H+Ruu2b9lCG1Jw==",
+  "shasum": "752d0b4d3bd519a265e63089a2ac819a646e114d",
+  "distTags": {
+    "latest": "1.2.4"
+  },
+  "checks": {
+    "prepublish": "pass: branch/package guards, release script tests, build/export identity, types, 6759 units and regenerated API docs",
+    "tagGuard": "exact tagged HEAD and clean working tree",
+    "review": "lint, example types, public/internal docs pass",
+    "registryConsumer": {
+      "status": "pass",
+      "package": "@everworker/oneringai@1.2.4",
+      "entries": 8,
+      "formats": [
+        "ESM",
+        "CJS"
+      ],
+      "catalogs": {
+        "llm": 144,
+        "image": 25,
+        "video": 12,
+        "tts": 9,
+        "stt": 15,
+        "embedding": 16
+      },
+      "providerCalls": 0
+    }
+  },
+  "liveModelCalls": 0,
+  "verifiedAt": "2026-11-17T10:44:31.933857+00:00"
+}
