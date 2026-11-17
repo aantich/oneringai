@@ -3,8 +3,8 @@
   "date": "2026-11-17",
   "branch": "main",
   "authorization": "release patch updates for both versions on npm",
-  "status": "release-candidate-validation",
-  "publicationPerformed": false,
+  "status": "published-registry-verified-awaiting-website-deployment",
+  "publicationPerformed": true,
   "liveModelCalls": 0,
   "scope": [
     "November 17 vendor review across LLM, image, video, TTS, STT and embedding catalogs",
@@ -17,7 +17,368 @@
       "status": "pass"
     },
     "browser": "Chromium, Firefox and WebKit strict-CSP pages/Workers; declarations and offline shared example pass",
-    "releaseCheck": "pending exact release gate",
+    "releaseCheck": {
+      "status": "pass",
+      "phase": "complete prepublish gate on the exact beta.5 tag",
+      "consumer": {
+        "status": "pass",
+        "node": "v24.20.0",
+        "startedAt": "2026-11-17T10:39:46.764Z",
+        "work": "/var/folders/w4/0_95kdj51l35cqyg07_w5v5r0000gn/T/oneringai-release-AlB74n",
+        "package": "oneringai@2.0.0-beta.5",
+        "integrity": "sha512-g8uEJE3ogaO1cq07wtU+2y5hmbuRWUvl+2VGHqI9x13OCxE9vDRmJmisE8hf9jUkmjg6VIVLNhl08EiBCK7IPA==",
+        "files": 567,
+        "bundledDependencies": [
+          {
+            "name": "@anthropic-ai/sdk",
+            "version": "0.131.0"
+          },
+          {
+            "name": "@google/genai",
+            "version": "2.27.0"
+          },
+          {
+            "name": "@hono/node-server",
+            "version": "2.1.6"
+          },
+          {
+            "name": "@modelcontextprotocol/sdk",
+            "version": "1.32.2"
+          },
+          {
+            "name": "@noble/ciphers",
+            "version": "2.4.0"
+          },
+          {
+            "name": "@noble/hashes",
+            "version": "2.4.0"
+          },
+          {
+            "name": "@stablelib/base64",
+            "version": "1.0.1"
+          },
+          {
+            "name": "ajv",
+            "version": "8.20.0"
+          },
+          {
+            "name": "ajv-formats",
+            "version": "3.0.1"
+          },
+          {
+            "name": "assert",
+            "version": "2.1.0"
+          },
+          {
+            "name": "available-typed-arrays",
+            "version": "1.0.7"
+          },
+          {
+            "name": "call-bind",
+            "version": "1.0.9"
+          },
+          {
+            "name": "call-bind-apply-helpers",
+            "version": "1.0.2"
+          },
+          {
+            "name": "call-bound",
+            "version": "1.0.4"
+          },
+          {
+            "name": "content-type",
+            "version": "1.0.5"
+          },
+          {
+            "name": "define-data-property",
+            "version": "1.1.4"
+          },
+          {
+            "name": "define-properties",
+            "version": "1.2.1"
+          },
+          {
+            "name": "dunder-proto",
+            "version": "1.0.1"
+          },
+          {
+            "name": "es-define-property",
+            "version": "1.0.1"
+          },
+          {
+            "name": "es-errors",
+            "version": "1.3.0"
+          },
+          {
+            "name": "es-object-atoms",
+            "version": "1.1.2"
+          },
+          {
+            "name": "eventemitter3",
+            "version": "5.0.4"
+          },
+          {
+            "name": "eventsource-parser",
+            "version": "3.0.6"
+          },
+          {
+            "name": "fast-deep-equal",
+            "version": "3.1.3"
+          },
+          {
+            "name": "fast-sha256",
+            "version": "1.3.0"
+          },
+          {
+            "name": "fast-uri",
+            "version": "3.1.9"
+          },
+          {
+            "name": "for-each",
+            "version": "0.3.5"
+          },
+          {
+            "name": "function-bind",
+            "version": "1.1.2"
+          },
+          {
+            "name": "generator-function",
+            "version": "2.0.1"
+          },
+          {
+            "name": "get-intrinsic",
+            "version": "1.3.0"
+          },
+          {
+            "name": "get-proto",
+            "version": "1.0.1"
+          },
+          {
+            "name": "gopd",
+            "version": "1.2.0"
+          },
+          {
+            "name": "has-property-descriptors",
+            "version": "1.0.2"
+          },
+          {
+            "name": "has-symbols",
+            "version": "1.1.0"
+          },
+          {
+            "name": "has-tostringtag",
+            "version": "1.0.2"
+          },
+          {
+            "name": "hasown",
+            "version": "2.0.4"
+          },
+          {
+            "name": "hono",
+            "version": "4.13.17"
+          },
+          {
+            "name": "is-arguments",
+            "version": "1.2.0"
+          },
+          {
+            "name": "is-callable",
+            "version": "1.2.7"
+          },
+          {
+            "name": "is-generator-function",
+            "version": "1.1.2"
+          },
+          {
+            "name": "is-nan",
+            "version": "1.3.2"
+          },
+          {
+            "name": "is-regex",
+            "version": "1.2.1"
+          },
+          {
+            "name": "is-typed-array",
+            "version": "1.1.15"
+          },
+          {
+            "name": "json-schema-traverse",
+            "version": "1.0.0"
+          },
+          {
+            "name": "jsonschema",
+            "version": "1.5.0"
+          },
+          {
+            "name": "math-intrinsics",
+            "version": "1.1.0"
+          },
+          {
+            "name": "object-is",
+            "version": "1.1.6"
+          },
+          {
+            "name": "object-keys",
+            "version": "1.1.1"
+          },
+          {
+            "name": "openai",
+            "version": "7.30.0"
+          },
+          {
+            "name": "p-retry",
+            "version": "4.6.2"
+          },
+          {
+            "name": "pkce-challenge",
+            "version": "5.0.1"
+          },
+          {
+            "name": "possible-typed-array-names",
+            "version": "1.1.0"
+          },
+          {
+            "name": "retry",
+            "version": "0.13.1"
+          },
+          {
+            "name": "safe-regex-test",
+            "version": "1.1.0"
+          },
+          {
+            "name": "set-function-length",
+            "version": "1.2.2"
+          },
+          {
+            "name": "simple-icons",
+            "version": "16.16.0"
+          },
+          {
+            "name": "standardwebhooks",
+            "version": "1.0.0"
+          },
+          {
+            "name": "util",
+            "version": "0.12.5"
+          },
+          {
+            "name": "which-typed-array",
+            "version": "1.1.24"
+          },
+          {
+            "name": "zod-to-json-schema",
+            "version": "3.25.2"
+          }
+        ],
+        "mcpRedirects": {
+          "esm": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          },
+          "cjs": {
+            "sameOrigin": "connected",
+            "crossOrigin": "blocked",
+            "forwardedRequests": 0
+          }
+        },
+        "documentationMatchesSource": true,
+        "probe": {
+          "node": "v24.20.0",
+          "sdkModules": [],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+        "audit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "optionalSdkVersions": {
+          "@openai/codex-sdk": "0.149.1",
+          "@anthropic-ai/claude-agent-sdk": "0.3.326"
+        },
+        "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+        "optionalSdkProbe": {
+          "node": "v24.20.0",
+          "sdkModules": [
+            "@openai/codex-sdk",
+            "@anthropic-ai/claude-agent-sdk"
+          ],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 11,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        "optionalSdkAudit": {
+          "counts": {
+            "info": 0,
+            "low": 0,
+            "moderate": 3,
+            "high": 0,
+            "critical": 0,
+            "total": 3
+          },
+          "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+          "checked": [
+            "uuid@8.3.2"
+          ]
+        },
+        "finishedAt": "2026-11-17T10:40:17.993Z"
+      }
+    },
     "applications": {
       "status": "pass",
       "amos": [
@@ -49,9 +410,415 @@
     }
   },
   "publication": {
-    "status": "pending"
+    "status": "published-registry-verified",
+    "releaseTag": "v2.0.0-beta.5",
+    "releaseCommit": "0d8bcadfc671763dbdb3d7afbabbe947ff0442af",
+    "acceptedAt": "2026-11-17T10:40:48.225864+00:00",
+    "integrity": "sha512-g8uEJE3ogaO1cq07wtU+2y5hmbuRWUvl+2VGHqI9x13OCxE9vDRmJmisE8hf9jUkmjg6VIVLNhl08EiBCK7IPA==",
+    "shasum": "b0f1d11d7e04ed4c3ecc043b151e65095fddfff4",
+    "distTags": {
+      "latest": "2.0.0-beta.5",
+      "next": "2.0.0-beta.5"
+    },
+    "registryVerifiedAt": "2026-11-17T10:52:48.869416+00:00",
+    "freshRegistryConsumer": {
+      "status": "pass",
+      "node": "v24.20.0",
+      "startedAt": "2026-11-17T10:51:12.742Z",
+      "work": "/var/folders/w4/0_95kdj51l35cqyg07_w5v5r0000gn/T/oneringai-release-l9LlpU",
+      "package": "oneringai@2.0.0-beta.5",
+      "integrity": "sha512-g8uEJE3ogaO1cq07wtU+2y5hmbuRWUvl+2VGHqI9x13OCxE9vDRmJmisE8hf9jUkmjg6VIVLNhl08EiBCK7IPA==",
+      "files": 567,
+      "bundledDependencies": [
+        {
+          "name": "@anthropic-ai/sdk",
+          "version": "0.131.0"
+        },
+        {
+          "name": "@google/genai",
+          "version": "2.27.0"
+        },
+        {
+          "name": "@hono/node-server",
+          "version": "2.1.6"
+        },
+        {
+          "name": "@modelcontextprotocol/sdk",
+          "version": "1.32.2"
+        },
+        {
+          "name": "@noble/ciphers",
+          "version": "2.4.0"
+        },
+        {
+          "name": "@noble/hashes",
+          "version": "2.4.0"
+        },
+        {
+          "name": "@stablelib/base64",
+          "version": "1.0.1"
+        },
+        {
+          "name": "ajv",
+          "version": "8.20.0"
+        },
+        {
+          "name": "ajv-formats",
+          "version": "3.0.1"
+        },
+        {
+          "name": "assert",
+          "version": "2.1.0"
+        },
+        {
+          "name": "available-typed-arrays",
+          "version": "1.0.7"
+        },
+        {
+          "name": "call-bind",
+          "version": "1.0.9"
+        },
+        {
+          "name": "call-bind-apply-helpers",
+          "version": "1.0.2"
+        },
+        {
+          "name": "call-bound",
+          "version": "1.0.4"
+        },
+        {
+          "name": "content-type",
+          "version": "1.0.5"
+        },
+        {
+          "name": "define-data-property",
+          "version": "1.1.4"
+        },
+        {
+          "name": "define-properties",
+          "version": "1.2.1"
+        },
+        {
+          "name": "dunder-proto",
+          "version": "1.0.1"
+        },
+        {
+          "name": "es-define-property",
+          "version": "1.0.1"
+        },
+        {
+          "name": "es-errors",
+          "version": "1.3.0"
+        },
+        {
+          "name": "es-object-atoms",
+          "version": "1.1.2"
+        },
+        {
+          "name": "eventemitter3",
+          "version": "5.0.4"
+        },
+        {
+          "name": "eventsource-parser",
+          "version": "3.0.6"
+        },
+        {
+          "name": "fast-deep-equal",
+          "version": "3.1.3"
+        },
+        {
+          "name": "fast-sha256",
+          "version": "1.3.0"
+        },
+        {
+          "name": "fast-uri",
+          "version": "3.1.9"
+        },
+        {
+          "name": "for-each",
+          "version": "0.3.5"
+        },
+        {
+          "name": "function-bind",
+          "version": "1.1.2"
+        },
+        {
+          "name": "generator-function",
+          "version": "2.0.1"
+        },
+        {
+          "name": "get-intrinsic",
+          "version": "1.3.0"
+        },
+        {
+          "name": "get-proto",
+          "version": "1.0.1"
+        },
+        {
+          "name": "gopd",
+          "version": "1.2.0"
+        },
+        {
+          "name": "has-property-descriptors",
+          "version": "1.0.2"
+        },
+        {
+          "name": "has-symbols",
+          "version": "1.1.0"
+        },
+        {
+          "name": "has-tostringtag",
+          "version": "1.0.2"
+        },
+        {
+          "name": "hasown",
+          "version": "2.0.4"
+        },
+        {
+          "name": "hono",
+          "version": "4.13.17"
+        },
+        {
+          "name": "is-arguments",
+          "version": "1.2.0"
+        },
+        {
+          "name": "is-callable",
+          "version": "1.2.7"
+        },
+        {
+          "name": "is-generator-function",
+          "version": "1.1.2"
+        },
+        {
+          "name": "is-nan",
+          "version": "1.3.2"
+        },
+        {
+          "name": "is-regex",
+          "version": "1.2.1"
+        },
+        {
+          "name": "is-typed-array",
+          "version": "1.1.15"
+        },
+        {
+          "name": "json-schema-traverse",
+          "version": "1.0.0"
+        },
+        {
+          "name": "jsonschema",
+          "version": "1.5.0"
+        },
+        {
+          "name": "math-intrinsics",
+          "version": "1.1.0"
+        },
+        {
+          "name": "object-is",
+          "version": "1.1.6"
+        },
+        {
+          "name": "object-keys",
+          "version": "1.1.1"
+        },
+        {
+          "name": "openai",
+          "version": "7.30.0"
+        },
+        {
+          "name": "p-retry",
+          "version": "4.6.2"
+        },
+        {
+          "name": "pkce-challenge",
+          "version": "5.0.1"
+        },
+        {
+          "name": "possible-typed-array-names",
+          "version": "1.1.0"
+        },
+        {
+          "name": "retry",
+          "version": "0.13.1"
+        },
+        {
+          "name": "safe-regex-test",
+          "version": "1.1.0"
+        },
+        {
+          "name": "set-function-length",
+          "version": "1.2.2"
+        },
+        {
+          "name": "simple-icons",
+          "version": "16.16.0"
+        },
+        {
+          "name": "standardwebhooks",
+          "version": "1.0.0"
+        },
+        {
+          "name": "util",
+          "version": "0.12.5"
+        },
+        {
+          "name": "which-typed-array",
+          "version": "1.1.24"
+        },
+        {
+          "name": "zod-to-json-schema",
+          "version": "3.25.2"
+        }
+      ],
+      "mcpRedirects": {
+        "esm": {
+          "sameOrigin": "connected",
+          "crossOrigin": "blocked",
+          "forwardedRequests": 0
+        },
+        "cjs": {
+          "sameOrigin": "connected",
+          "crossOrigin": "blocked",
+          "forwardedRequests": 0
+        }
+      },
+      "documentationMatchesSource": true,
+      "probe": {
+        "node": "v24.20.0",
+        "sdkModules": [],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+      "audit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      },
+      "optionalSdkVersions": {
+        "@openai/codex-sdk": "0.149.1",
+        "@anthropic-ai/claude-agent-sdk": "0.3.326"
+      },
+      "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+      "optionalSdkProbe": {
+        "node": "v24.20.0",
+        "sdkModules": [
+          "@openai/codex-sdk",
+          "@anthropic-ai/claude-agent-sdk"
+        ],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "optionalSdkAudit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      },
+      "finishedAt": "2026-11-17T10:52:09.496Z"
+    },
+    "registryCatalogProbe": {
+      "status": "pass",
+      "package": "oneringai@2.0.0-beta.5",
+      "entries": 11,
+      "formats": [
+        "ESM",
+        "CJS"
+      ],
+      "catalogs": {
+        "llm": 144,
+        "image": 25,
+        "video": 12,
+        "tts": 9,
+        "stt": 15,
+        "embedding": 16
+      },
+      "providerCalls": 0
+    }
   },
   "website": {
-    "status": "pending required matching snapshot, authored content, checks, deployment and public verification"
+    "status": "required deployment pending",
+    "localValidation": {
+      "status": "pass",
+      "base": "http://127.0.0.1:3014/",
+      "snapshot": "0d8bcadfc671763dbdb3d7afbabbe947ff0442af",
+      "version": "2.0.0-beta.5",
+      "checks": [
+        "five harness examples",
+        "installation copy",
+        "desktop and persistent light/dark themes",
+        "new-model search index and keyboard navigation",
+        "quickstart and canonical guide routes; code copy",
+        "guide contents navigation",
+        "390px/320px themes, navigation and contents",
+        "comparison and custom 404"
+      ],
+      "providerCalls": 0,
+      "finishedAt": "2026-11-17T10:37:48.407Z"
+    },
+    "checks": "16 website checks pass; 832 pages, 76 source documents, 3242 search records; zero reference warnings",
+    "next": "Pin this clean publication documentation revision, regenerate, check, deploy through existing GitHub Pages and verify public routes."
   }
 }

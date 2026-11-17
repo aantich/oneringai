@@ -21,6 +21,13 @@ The [beta.5 release record](evaluations/BETA5_RELEASE_VALIDATION_2026_11_17.json
 tracks publication and the required matching website deployment independently.
 No live-provider or production OAuth verification is claimed.
 
+**Verified beta.5 npm publication:** `latest` and `next` select beta.5 from
+`v2.0.0-beta.5` / `0d8bcadf`. Registry integrity matches the exact-tag validated
+tarball. A fresh registry consumer passes all eleven ESM/CJS entries, all six
+model catalogs, nine document formats, strict declarations, optional SDKs and
+consumer audits. The matching website deployment is tracked separately in the
+beta.5 release record.
+
 **Beta.4 — 2026-11-11:** `oneringai@2.0.0-beta.4` refreshes all six model
 registries and adds opt-in host-managed ChatGPT plan access plus Hosea first-run
 account setup. Ordinary API-key Agent defaults remain supported. The
