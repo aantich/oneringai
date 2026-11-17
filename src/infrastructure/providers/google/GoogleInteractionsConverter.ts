@@ -10,6 +10,7 @@ import type { StreamEvent } from '../../../domain/entities/StreamEvent.js';
 import { StreamEventType } from '../../../domain/entities/StreamEvent.js';
 import { buildLLMResponse } from '../shared/ResponseBuilder.js';
 import { fetchImageAsBase64 } from '../../../utils/imageUtils.js';
+import { getModelInfo } from '../../../domain/entities/Model.js';
 import { InvalidToolArgumentsError } from '../../../domain/errors/AIErrors.js';
 
 type InteractionStep = Record<string, any>;
@@ -61,7 +62,9 @@ export class GoogleInteractionsConverter {
     if (options.max_output_tokens !== undefined) {
       generationConfig.max_output_tokens = options.max_output_tokens;
     }
-    if (options.temperature !== undefined) generationConfig.temperature = options.temperature;
+    if (options.temperature !== undefined && getModelInfo(options.model)?.features.parameters?.temperature !== false) {
+      generationConfig.temperature = options.temperature;
+    }
     if (options.tool_choice) {
       generationConfig.tool_choice = typeof options.tool_choice === 'object'
         ? {
@@ -390,13 +393,15 @@ export class GoogleInteractionsConverter {
     };
   }
 
-  private resolveThinkingLevel(options: TextGenerateOptions): 'minimal' | 'low' | 'medium' | 'high' | undefined {
+  private resolveThinkingLevel(options: TextGenerateOptions): 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | undefined {
     const explicit = options.vendorOptions?.thinkingLevel as ReasoningEffort | undefined;
     const effort = explicit ?? options.thinking?.effort;
     if (!options.thinking?.enabled && !explicit) return undefined;
-    const minimum = /^gemini-4-(?:carbon|argon)(?:-|$)/.test(options.model) ? 'low' : 'minimal';
+    const minimum = /^gemini-4-(?:carbon|argon|hydrogen)(?:-|$)/.test(options.model) ? 'low' : 'minimal';
     if (effort === 'none' || effort === 'minimal') return minimum;
-    if (effort === 'xhigh' || effort === 'max') return 'high';
+    if (effort === 'xhigh' || effort === 'max') {
+      return /^gemini-4-hydrogen(?:-|$)/.test(options.model) ? 'xhigh' : 'high';
+    }
     if (effort) return effort;
     const budget = options.thinking?.budgetTokens;
     if (budget !== undefined) {
@@ -405,7 +410,7 @@ export class GoogleInteractionsConverter {
       if (budget < 24576) return 'medium';
       return 'high';
     }
-    return 'medium';
+    return /^gemini-4-hydrogen(?:-|$)/.test(options.model) ? 'high' : 'medium';
   }
 
   private convertTools(options: TextGenerateOptions): Array<Record<string, unknown>> {

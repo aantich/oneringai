@@ -97,12 +97,6 @@ export class GrokImagineProvider extends BaseMediaProvider implements IVideoProv
     return this.executeWithCircuitBreaker(
       async () => {
         try {
-          if (options.model === 'grok-imagine-video-1.5' && !options.image) {
-            throw new ProviderError(
-              'grok',
-              'grok-imagine-video-1.5 requires an input image; use grok-imagine-video for text-to-video',
-            );
-          }
           this.logOperationStart('video.generate', {
             model: options.model,
             duration: options.duration,
@@ -240,7 +234,7 @@ export class GrokImagineProvider extends BaseMediaProvider implements IVideoProv
    * List available video models
    */
   async listModels(): Promise<string[]> {
-    return ['grok-imagine-video-1.5', 'grok-imagine-video'];
+    return ['grok-imagine-video-1.5', 'grok-imagine-video-1.5-lite', 'grok-imagine-video'];
   }
 
   /**

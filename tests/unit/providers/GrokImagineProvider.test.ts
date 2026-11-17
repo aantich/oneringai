@@ -83,6 +83,15 @@ describe('GrokImagineProvider', () => {
       });
     });
 
+    it.each(['grok-imagine-video-1.5', 'grok-imagine-video-1.5-lite'])(
+      'submits text-to-video without a fabricated reference image for %s', async model => {
+        await provider.generateVideo({ model, prompt: 'A paper boat sailing', duration: 6, resolution: '1080p' });
+        const body = JSON.parse(mockFetch.mock.calls[0]![1].body);
+        expect(body).toMatchObject({ model, prompt: 'A paper boat sailing', duration: 6, resolution: '1080p' });
+        expect(body.image).toBeUndefined();
+      },
+    );
+
     it('should call API with correct parameters', async () => {
       await provider.generateVideo({
         model: 'grok-imagine-video',
@@ -331,7 +340,7 @@ describe('GrokImagineProvider', () => {
     it('should return list of available models', async () => {
       const models = await provider.listModels();
 
-      expect(models).toEqual(['grok-imagine-video-1.5', 'grok-imagine-video']);
+      expect(models).toEqual(['grok-imagine-video-1.5', 'grok-imagine-video-1.5-lite', 'grok-imagine-video']);
     });
   });
 

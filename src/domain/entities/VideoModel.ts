@@ -19,7 +19,7 @@ export interface VideoModelCapabilities {
   resolutions: string[];
   /** Supported aspect ratios (e.g., '16:9', '9:16') - for vendors that use this instead of resolution */
   aspectRatios?: string[];
-  /** Maximum frames per second */
+  /** Maximum frames per second; 0 means the vendor has not published a limit. */
   maxFps: number;
   /** Whether the model supports audio generation */
   audio: boolean;
@@ -97,6 +97,7 @@ export const VIDEO_MODELS = {
     // xAI Grok Imagine video generation
     GROK_IMAGINE_VIDEO: 'grok-imagine-video',
     GROK_IMAGINE_VIDEO_1_5: 'grok-imagine-video-1.5',
+    GROK_IMAGINE_VIDEO_1_5_LITE: 'grok-imagine-video-1.5-lite',
   },
 } as const;
 
@@ -485,18 +486,18 @@ export const VIDEO_MODEL_REGISTRY: VideoModelRegistry = {
     sources: {
       documentation: 'https://docs.x.ai/developers/models/grok-imagine-video-1.5',
       pricing: 'https://docs.x.ai/developers/models/grok-imagine-video-1.5',
-      lastVerified: '2026-11-11',
+      lastVerified: '2026-11-17',
     },
     capabilities: {
-      durations: [1, 5, 8, 10, 15],
+      durations: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
       resolutions: ['480p', '720p', '1080p'],
-      aspectRatios: ['16:9', '4:3', '1:1', '9:16', '3:4', '3:2', '2:3'],
+      aspectRatios: ['16:9', '4:3', '1:1', '9:16', '3:4', '3:2', '2:3', '21:9', '5:2'],
       maxFps: 24,
       audio: true,
       textToVideo: true,
       imageToVideo: true,
       videoExtension: false,
-      frameControl: false,
+      frameControl: true,
       features: { upscaling: true, styleControl: true, negativePrompt: false, seed: true },
     },
     pricing: {
@@ -505,6 +506,31 @@ export const VIDEO_MODEL_REGISTRY: VideoModelRegistry = {
       inputImage: 0.01,
       currency: 'USD',
     },
+  },
+
+  'grok-imagine-video-1.5-lite': {
+    name: 'grok-imagine-video-1.5-lite',
+    displayName: 'Grok Imagine Video 1.5 Lite',
+    provider: Vendor.Grok,
+    description: 'Text/image-to-video with lip-synced audio, 1–15 seconds and 480p/720p output; 1080p is upscaled from 720p. Reference/voice collections, pinned frames, editing and extension are unsupported. The vendor does not publish an FPS limit (maxFps 0 means unknown).',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['video_generation'],
+    sources: { documentation: 'https://docs.x.ai/developers/model-capabilities/video/overview', pricing: 'https://docs.x.ai/developers/models/grok-imagine-video-1.5-lite', lastVerified: '2026-11-17' },
+    capabilities: {
+      durations: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      resolutions: ['480p', '720p', '1080p'],
+      aspectRatios: ['16:9', '4:3', '1:1', '9:16', '3:4', '3:2', '2:3', '21:9', '5:2'],
+      maxFps: 0,
+      audio: true,
+      textToVideo: true,
+      imageToVideo: true,
+      videoExtension: false,
+      frameControl: false,
+      features: { upscaling: true, styleControl: false, negativePrompt: false, seed: false },
+    },
+    pricing: { perSecond: 0.02, perSecondByResolution: { '480p': 0.02, '720p': 0.03, '1080p': 0.14 }, inputImage: 0.01, currency: 'USD' },
   },
 };
 
