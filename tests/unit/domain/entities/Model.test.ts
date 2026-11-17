@@ -600,7 +600,7 @@ describe('Model Registry', () => {
         },
       });
       expect(grok46).toMatchObject({
-        endpoints: ['responses', 'chat_completions'],
+        endpoints: ['responses', 'chat_completions', 'batch'],
         features: { reasoningEfforts: ['low', 'medium', 'high', 'xhigh'] },
       });
       expect(getModelInfo('gemini-3.5-flash')?.aliases).toEqual(['gemini-flash-latest']);
@@ -613,7 +613,7 @@ describe('Model Registry', () => {
         lifecycle: 'active',
         preferred: true,
         releaseDate: '2026-09-21',
-        endpoints: ['responses'],
+        endpoints: ['responses', 'batch'],
         features: {
           nativeTools: ['web_search', 'x_search', 'code_execution'],
         },

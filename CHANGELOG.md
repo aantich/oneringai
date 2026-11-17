@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0-beta.5] — 2026-11-17
+
+- Review all supported vendors on November 17: add Gemini 4 Hydrogen,
+  trusted-access GPT-6 Rosalind, Together Inkling 2 Small/Glimpse 1.0,
+  Ollama Inkling cloud, Perplexity-hosted Hydrogen and Groq GPT-OSS 20B.
+  Add Grok Video 1.5 Lite with resolution prices, restore current 1.5
+  text-to-video dispatch, preserve Hydrogen xhigh/default thinking on both
+  Google endpoints, and correct Together endpoint and Grok batch metadata.
+  See [the vendor review](docs/MODEL_REGISTRY_REVIEW_2026_11_17.md) for sources,
+  unsupported specialized APIs and unknown-limit handling.
+
 ## [2.0.0-beta.4] — 2026-11-11
 
 - Refresh all six model catalogs against November 11 vendor documentation: add

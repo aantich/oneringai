@@ -1,0 +1,57 @@
+{
+  "package": "oneringai@2.0.0-beta.5",
+  "date": "2026-11-17",
+  "branch": "main",
+  "authorization": "release patch updates for both versions on npm",
+  "status": "release-candidate-validation",
+  "publicationPerformed": false,
+  "liveModelCalls": 0,
+  "scope": [
+    "November 17 vendor review across LLM, image, video, TTS, STT and embedding catalogs",
+    "Seven LLM additions, Grok Video 1.5 Lite and related metadata/provider corrections"
+  ],
+  "checks": {
+    "reviewUnits": {
+      "main": 9531,
+      "version1": 6759,
+      "status": "pass"
+    },
+    "browser": "Chromium, Firefox and WebKit strict-CSP pages/Workers; declarations and offline shared example pass",
+    "releaseCheck": "pending exact release gate",
+    "applications": {
+      "status": "pass",
+      "amos": [
+        "typecheck",
+        "build"
+      ],
+      "hosea": [
+        "typecheck",
+        "renderer build",
+        "Electron-main build",
+        "20 design/storage tests"
+      ],
+      "providerCalls": 0
+    },
+    "prepareReleaseCheck": {
+      "status": "pass",
+      "finishedAt": "2026-11-17T10:36:01.394Z",
+      "components": [
+        "build/export identity",
+        "bundled provenance/audit",
+        "typecheck/lint",
+        "9531 unit tests",
+        "example types/public compatibility",
+        "30 offline examples",
+        "generated API docs",
+        "509 documentation blocks / 18 complete examples",
+        "fresh default/optional-SDK consumers"
+      ]
+    }
+  },
+  "publication": {
+    "status": "pending"
+  },
+  "website": {
+    "status": "pending required matching snapshot, authored content, checks, deployment and public verification"
+  }
+}

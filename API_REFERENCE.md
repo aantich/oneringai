@@ -1,6 +1,6 @@
 # oneringai - API Reference
 
-**Generated:** 2026-11-11
+**Generated:** 2026-11-17
 **Mode:** public
 
 This document provides a complete reference for the public API of `oneringai`.
@@ -6576,7 +6576,7 @@ Video model capabilities
 | `durations` | `durations: number[];` | Supported durations in seconds |
 | `resolutions` | `resolutions: string[];` | Supported resolutions (e.g., '720p', '1080p', '720x1280') |
 | `aspectRatios?` | `aspectRatios?: string[];` | Supported aspect ratios (e.g., '16:9', '9:16') - for vendors that use this instead of resolution |
-| `maxFps` | `maxFps: number;` | Maximum frames per second |
+| `maxFps` | `maxFps: number;` | Maximum frames per second; 0 means the vendor has not published a limit. |
 | `audio` | `audio: boolean;` | Whether the model supports audio generation |
 | `textToVideo?` | `textToVideo?: boolean;` | Supports generation from only a text prompt. Defaults to true for legacy entries. |
 | `imageToVideo` | `imageToVideo: boolean;` | Whether the model supports image-to-video |
@@ -6701,7 +6701,7 @@ type VideoStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
 ### calculateVideoCost `function`
 
-📍 [`src/domain/entities/VideoModel.ts:551`](src/domain/entities/VideoModel.ts#L551)
+📍 [`src/domain/entities/VideoModel.ts:577`](src/domain/entities/VideoModel.ts#L577)
 
 Calculate video generation cost
 
@@ -6743,7 +6743,7 @@ export function createVideoTools(
 
 ### getVideoModelsWithAudio `function`
 
-📍 [`src/domain/entities/VideoModel.ts:544`](src/domain/entities/VideoModel.ts#L544)
+📍 [`src/domain/entities/VideoModel.ts:570`](src/domain/entities/VideoModel.ts#L570)
 
 Get models that support audio
 
@@ -6755,7 +6755,7 @@ export function getVideoModelsWithAudio(): IVideoModelDescription[]
 
 ### getVideoModelsWithFeature `function`
 
-📍 [`src/domain/entities/VideoModel.ts:535`](src/domain/entities/VideoModel.ts#L535)
+📍 [`src/domain/entities/VideoModel.ts:561`](src/domain/entities/VideoModel.ts#L561)
 
 Get models with a specific feature
 
@@ -6767,7 +6767,7 @@ export function getVideoModelsWithFeature(feature: keyof VideoModelCapabilities[
 
 ### VIDEO_MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/VideoModel.ts:128`](src/domain/entities/VideoModel.ts#L128)
+📍 [`src/domain/entities/VideoModel.ts:129`](src/domain/entities/VideoModel.ts#L129)
 
 Video Model Registry
 
@@ -7113,18 +7113,18 @@ Video Model Registry
     sources: {
       documentation: 'https://docs.x.ai/developers/models/grok-imagine-video-1.5',
       pricing: 'https://docs.x.ai/developers/models/grok-imagine-video-1.5',
-      lastVerified: '2026-11-11',
+      lastVerified: '2026-11-17',
     },
     capabilities: {
-      durations: [1, 5, 8, 10, 15],
+      durations: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
       resolutions: ['480p', '720p', '1080p'],
-      aspectRatios: ['16:9', '4:3', '1:1', '9:16', '3:4', '3:2', '2:3'],
+      aspectRatios: ['16:9', '4:3', '1:1', '9:16', '3:4', '3:2', '2:3', '21:9', '5:2'],
       maxFps: 24,
       audio: true,
       textToVideo: true,
       imageToVideo: true,
       videoExtension: false,
-      frameControl: false,
+      frameControl: true,
       features: { upscaling: true, styleControl: true, negativePrompt: false, seed: true },
     },
     pricing: {
@@ -7133,6 +7133,30 @@ Video Model Registry
       inputImage: 0.01,
       currency: 'USD',
     },
+  }` | - |
+| `'grok-imagine-video-1.5-lite'` | `{
+    name: 'grok-imagine-video-1.5-lite',
+    displayName: 'Grok Imagine Video 1.5 Lite',
+    provider: Vendor.Grok,
+    description: 'Text/image-to-video with lip-synced audio, 1–15 seconds and 480p/720p output; 1080p is upscaled from 720p. Reference/voice collections, pinned frames, editing and extension are unsupported. The vendor does not publish an FPS limit (maxFps 0 means unknown).',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['video_generation'],
+    sources: { documentation: 'https://docs.x.ai/developers/model-capabilities/video/overview', pricing: 'https://docs.x.ai/developers/models/grok-imagine-video-1.5-lite', lastVerified: '2026-11-17' },
+    capabilities: {
+      durations: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      resolutions: ['480p', '720p', '1080p'],
+      aspectRatios: ['16:9', '4:3', '1:1', '9:16', '3:4', '3:2', '2:3', '21:9', '5:2'],
+      maxFps: 0,
+      audio: true,
+      textToVideo: true,
+      imageToVideo: true,
+      videoExtension: false,
+      frameControl: false,
+      features: { upscaling: true, styleControl: false, negativePrompt: false, seed: false },
+    },
+    pricing: { perSecond: 0.02, perSecondByResolution: { '480p': 0.02, '720p': 0.03, '1080p': 0.14 }, inputImage: 0.01, currency: 'USD' },
   }` | - |
 
 </details>
@@ -32993,7 +33017,7 @@ export function assessModelParameters(query: ModelParameterQuery): ModelParamete
 
 ### calculateCost `function`
 
-📍 [`src/domain/entities/Model.ts:5110`](src/domain/entities/Model.ts#L5110)
+📍 [`src/domain/entities/Model.ts:5251`](src/domain/entities/Model.ts#L5251)
 
 Calculate the cost for a given model and token usage
 
@@ -33044,7 +33068,7 @@ export function calculateEmbeddingCost(
 
 ### getActiveModels `function`
 
-📍 [`src/domain/entities/Model.ts:5091`](src/domain/entities/Model.ts#L5091)
+📍 [`src/domain/entities/Model.ts:5232`](src/domain/entities/Model.ts#L5232)
 
 Get all currently active models
 
@@ -33056,7 +33080,7 @@ export function getActiveModels(): ILLMDescription[]
 
 ### getDeprecatedModels `function`
 
-📍 [`src/domain/entities/Model.ts:5096`](src/domain/entities/Model.ts#L5096)
+📍 [`src/domain/entities/Model.ts:5237`](src/domain/entities/Model.ts#L5237)
 
 Get callable models carrying an explicit vendor deprecation notice.
 
@@ -33082,7 +33106,7 @@ export function getEmbeddingModelsWithFeature(
 
 ### getModelInfo `function`
 
-📍 [`src/domain/entities/Model.ts:5068`](src/domain/entities/Model.ts#L5068)
+📍 [`src/domain/entities/Model.ts:5209`](src/domain/entities/Model.ts#L5209)
 
 Get model information by name
 
@@ -33094,7 +33118,7 @@ export function getModelInfo(modelName: string): ILLMDescription | undefined
 
 ### getModelsByVendor `function`
 
-📍 [`src/domain/entities/Model.ts:5083`](src/domain/entities/Model.ts#L5083)
+📍 [`src/domain/entities/Model.ts:5224`](src/domain/entities/Model.ts#L5224)
 
 Get all models for a specific vendor
 
@@ -33146,7 +33170,7 @@ export function resolveModelCapabilities(
 
 ### resolveModelName `function`
 
-📍 [`src/domain/entities/Model.ts:5074`](src/domain/entities/Model.ts#L5074)
+📍 [`src/domain/entities/Model.ts:5215`](src/domain/entities/Model.ts#L5215)
 
 Resolve a direct model ID or floating alias to the registry's canonical ID.
 
@@ -33662,10 +33686,10 @@ Last catalog audit: November 2026
 
 ### MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/Model.ts:430`](src/domain/entities/Model.ts#L430)
+📍 [`src/domain/entities/Model.ts:437`](src/domain/entities/Model.ts#L437)
 
 Complete model registry with all model metadata
-Registry schema v2. Last vendor model update: 2026-11-11.
+Registry schema v2. Last vendor model update: 2026-11-17.
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -37144,20 +37168,21 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
+    endpoints: ['responses', 'batch'],
     releaseDate: '2026-09-21',
     knowledgeCutoff: '2026-05-01',
-    sources: { documentation: 'https://docs.x.ai/developers/grok-4-7', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-10-07' },
+    sources: { documentation: 'https://docs.x.ai/developers/grok-4-7', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-11-17' },
     features: {
       reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
       streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
-      audio: false, video: false, batchAPI: false, promptCaching: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
       nativeTools: ['web_search', 'x_search', 'code_execution'],
       parameters: { temperature: true, topP: true, frequencyPenalty: true, presencePenalty: true },
       input: { tokens: 500_000, text: true, image: true, cpm: 2, cpmCached: 0.5 },
       output: { tokens: null, text: true, cpm: 6 },
       pricing: {
+        processingMultipliers: { batch: 0.8, priority: 2 },
         text: {
           input: 2, cachedInput: 0.5, output: 6,
           longContext: { thresholdTokens: 200_000, input: 4, cachedInput: 1, output: 12 },
@@ -37172,19 +37197,20 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
-    endpoints: ['responses', 'chat_completions'],
+    endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-08-12',
     knowledgeCutoff: '2026-02-01',
-    sources: { documentation: 'https://docs.x.ai/developers/grok-4-6', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-09-04' },
+    sources: { documentation: 'https://docs.x.ai/developers/grok-4-6', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-11-17' },
     features: {
       reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
       streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
-      audio: false, video: false, batchAPI: false, promptCaching: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
       parameters: { temperature: true, topP: true, frequencyPenalty: true, presencePenalty: true },
       input: { tokens: 500_000, text: true, image: true, cpm: 2, cpmCached: 0.5 },
       output: { tokens: null, text: true, cpm: 6 },
       pricing: {
+        processingMultipliers: { batch: 0.8, priority: 2 },
         text: {
           input: 2, cachedInput: 0.5, output: 6,
           longContext: { thresholdTokens: 200_000, input: 4, cachedInput: 1, output: 12 },
@@ -37868,9 +37894,10 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     availability: 'public',
     preferred: true,
     endpoints: ['chat_completions', 'batch'],
-    sources: { documentation: 'https://docs.mistral.ai/models/mistral-large-4-0', pricing: 'https://docs.mistral.ai/models/mistral-large-4-0', lastVerified: '2026-11-11' },
+    sources: { documentation: 'https://docs.mistral.ai/models/mistral-large-4-0', pricing: 'https://docs.mistral.ai/models/mistral-large-4-0', lastVerified: '2026-11-17' },
     features: {
       streaming: true, structuredOutput: true, functionCalling: true, vision: true, promptCaching: true,
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high'],
       input: { tokens: 1048576, text: true, image: true, cpm: 0.7, cpmCached: 0.07 },
       output: { tokens: null, text: true, cpm: 2.1 },
       pricing: { text: { input: 0.7, cachedInput: 0.07, output: 2.1 } },
@@ -37952,11 +37979,11 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['responses', 'messages', 'chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
-      streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
-      input: { tokens: 1000000, text: true, cpm: 0.3, cpmCached: 0.006 },
+      streaming: true, structuredOutput: true, functionCalling: true, vision: true, promptCaching: true,
+      input: { tokens: 1000000, text: true, image: true, cpm: 0.3, cpmCached: 0.006 },
       output: { tokens: null, text: true, cpm: 1.2 },
       pricing: { text: { input: 0.3, cachedInput: 0.006, output: 1.2 } },
     },
@@ -37969,8 +37996,8 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
       streaming: true, structuredOutput: true, functionCalling: true, vision: false, promptCaching: true,
       input: { tokens: 1048576, text: true, image: false, cpm: 1.32, cpmCached: 0.13 },
@@ -37986,8 +38013,8 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
       streaming: true, structuredOutput: true, functionCalling: true, vision: true, promptCaching: true,
       input: { tokens: 1048576, text: true, image: true, cpm: 2, cpmCached: 0.2 },
@@ -38003,8 +38030,8 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
       streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
       input: { tokens: 1048576, text: true, cpm: 0.15, cpmCached: 0.015 },
@@ -38020,8 +38047,8 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
       streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
       input: { tokens: 1048576, text: true, cpm: 1.25, cpmCached: 0.15 },
@@ -38037,8 +38064,8 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
       streaming: true, structuredOutput: true, functionCalling: true, vision: true, promptCaching: true,
       input: { tokens: 262144, text: true, image: true, cpm: 0.15, cpmCached: 0.02 },
@@ -38054,8 +38081,8 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
       streaming: true, structuredOutput: true, functionCalling: true,
       input: { tokens: 1000000, text: true, cpm: 0.15 },
@@ -38071,8 +38098,8 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['responses', 'messages', 'chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
       streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
       input: { tokens: 1048575, text: true, cpm: 1.4, cpmCached: 0.26 },
@@ -38088,11 +38115,11 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['responses', 'messages', 'chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
-      streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
-      input: { tokens: 1048575, text: true, cpm: 0.15, cpmCached: 0.03 },
+      streaming: true, structuredOutput: true, functionCalling: true, vision: true, promptCaching: true,
+      input: { tokens: 1048575, text: true, image: true, cpm: 0.15, cpmCached: 0.03 },
       output: { tokens: null, text: true, cpm: 0.5 },
       pricing: { text: { input: 0.15, cachedInput: 0.03, output: 0.5 } },
     },
@@ -38105,13 +38132,137 @@ Registry schema v2. Last vendor model update: 2026-11-11.
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    endpoints: ['responses'],
-    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-11' },
+    endpoints: ['chat_completions'],
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
     features: {
       streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
       input: { tokens: 1048576, text: true, cpm: 0.4, cpmCached: 0.04 },
       output: { tokens: null, text: true, cpm: 1.2 },
       pricing: { text: { input: 0.4, cachedInput: 0.04, output: 1.2 } },
+    },
+  }` | - |
+| `'gpt-6-rosalind'` | `{
+    name: 'gpt-6-rosalind',
+    provider: Vendor.OpenAI,
+    description: 'GPT-6 Rosalind Research for separately approved API organizations and internal life-sciences research. Context/output limits and model-specific endpoint/tool controls are unpublished. Cache-write estimates use the published 30-minute rate; 12-hour writes have separate prices.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'invite_only',
+    releaseDate: '2026-10-30',
+    sources: { documentation: 'https://help.openai.com/en/articles/20001193-gpt-rosalind-for-life-sciences-research', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-17' },
+    features: {
+      streaming: true, reasoning: true, promptCaching: true,
+      input: { tokens: null, text: true, cpm: 15, cpmCached: 1.5 },
+      output: { tokens: null, text: true, cpm: 75 },
+      pricing: { text: { input: 15, cachedInput: 1.5, output: 75, cacheWrite: 18.75,
+        longContext: { thresholdTokens: 272_001, input: 30, cachedInput: 3, output: 112.5, cacheWrite: 37.5 } } },
+    },
+  }` | - |
+| `'gemini-4-hydrogen'` | `{
+    name: 'gemini-4-hydrogen',
+    provider: Vendor.Google,
+    description: 'Gemini 4 Hydrogen with a unified 1M context, text/image/audio/video/PDF input and text output. Synchronous output is 65K; longer decode requires the separate background/continuation workflow. Thinking defaults to high and supports xhigh; prompt caching is implicit only.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['generate_content', 'interactions', 'batch'],
+    releaseDate: '2026-11-12',
+    sources: { documentation: 'https://aistudio.google.com/docs/models/gemini-4-hydrogen', pricing: 'https://aistudio.google.com/docs/pricing#gemini-4-hydrogen', lastVerified: '2026-11-17' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: true, video: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_048_576, text: true, image: true, audio: true, video: true, cpm: 1.5, cpmCached: 0.075 },
+      output: { tokens: 65_536, text: true, cpm: 7.5 },
+      pricing: { text: { input: 1.5, cachedInput: 0.075, output: 7.5 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, priority: 1.8 } },
+    },
+  }` | - |
+| `'google/gemini-4-hydrogen'` | `{
+    name: 'google/gemini-4-hydrogen',
+    provider: Vendor.Perplexity,
+    description: 'Gemini 4 Hydrogen through the Perplexity Agent API at https://api.perplexity.ai/v1. Token prices are host-specific; context/output limits and optional modality/tool support are not inferred from Google\'s endpoint.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['responses'],
+    sources: { documentation: 'https://docs.perplexity.ai/docs/agent-api/models', pricing: 'https://docs.perplexity.ai/docs/agent-api/models', lastVerified: '2026-11-17' },
+    features: {
+      streaming: true, reasoning: true, promptCaching: true,
+      input: { tokens: null, text: true, cpm: 1.5, cpmCached: 0.075 },
+      output: { tokens: null, text: true, cpm: 7.5 },
+      pricing: { text: { input: 1.5, cachedInput: 0.075, output: 7.5 } },
+    },
+  }` | - |
+| `'thinkingmachines/Inkling-2-Small'` | `{
+    name: 'thinkingmachines/Inkling-2-Small',
+    provider: Vendor.Together,
+    description: 'Inkling 2 Small on Together serverless, with text/image input and a 1M context. The current Responses/Messages allowlist does not include this model; Chat Completions metadata does not add a transport to the generic OneRingAI Responses adapter.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['chat_completions'],
+    releaseDate: '2026-11-12',
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, reasoning: true, vision: true, promptCaching: true,
+      input: { tokens: 1_048_576, text: true, image: true, cpm: 0.3, cpmCached: 0.03 },
+      output: { tokens: null, text: true, cpm: 1 },
+      pricing: { text: { input: 0.3, cachedInput: 0.03, output: 1 } },
+    },
+  }` | - |
+| `'elorian-labs/glimpse-1.0'` | `{
+    name: 'elorian-labs/glimpse-1.0',
+    provider: Vendor.Together,
+    description: 'Glimpse 1.0 on Together serverless; hosted Chat Completions model, absent from the Responses/Messages allowlist. Output ceiling and input modalities beyond text remain unpublished in the checked catalog.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['chat_completions'],
+    releaseDate: '2026-11-10',
+    sources: { documentation: 'https://docs.together.ai/docs/serverless/models', pricing: 'https://docs.together.ai/docs/serverless/models', lastVerified: '2026-11-17' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, promptCaching: true,
+      input: { tokens: 262_144, text: true, cpm: 0.6, cpmCached: 0.06 },
+      output: { tokens: null, text: true, cpm: 3 },
+      pricing: { text: { input: 0.6, cachedInput: 0.06, output: 3 } },
+    },
+  }` | - |
+| `'inkling-2-small'` | `{
+    name: 'inkling-2-small',
+    provider: Vendor.Ollama,
+    description: 'Cloud-hosted Inkling 2 Small via Ollama; use https://ollama.com/v1 with an API key, or the :cloud tag through an authenticated local proxy. This is a billed cloud model, not free local inference. Responses support is stateless only.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    aliases: ['inkling-2-small:cloud'],
+    endpoints: ['responses', 'chat_completions'],
+    sources: { documentation: 'https://ollama.com/library/inkling-2-small', pricing: 'https://ollama.com/library/inkling-2-small', lastVerified: '2026-11-17' },
+    features: {
+      streaming: true, reasoning: true, functionCalling: true, vision: true, promptCaching: true,
+      input: { tokens: 1_048_576, text: true, image: true, cpm: 0.3, cpmCached: 0.03 },
+      output: { tokens: null, text: true, cpm: 1 },
+      pricing: { text: { input: 0.3, cachedInput: 0.03, output: 1 } },
+    },
+  }` | - |
+| `'openai/gpt-oss-20b'` | `{
+    name: 'openai/gpt-oss-20b',
+    provider: Vendor.Groq,
+    description: 'Groq-hosted GPT-OSS 20B with 131K context and 65K maximum completion. Cached-input price follows the published rounded $0.037/MTok model-card rate.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['responses', 'chat_completions'],
+    sources: { documentation: 'https://console.groq.com/docs/model/openai/gpt-oss-20b', pricing: 'https://console.groq.com/docs/model/openai/gpt-oss-20b', lastVerified: '2026-11-17' },
+    features: {
+      streaming: true, structuredOutput: true, functionCalling: true, reasoning: true,
+      reasoningEfforts: ['low', 'medium', 'high'], promptCaching: true,
+      input: { tokens: 131_072, text: true, cpm: 0.075, cpmCached: 0.037 },
+      output: { tokens: 65_536, text: true, cpm: 0.3 },
+      pricing: { text: { input: 0.075, cachedInput: 0.037, output: 0.3 } },
     },
   }` | - |
 

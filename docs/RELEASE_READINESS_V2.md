@@ -9,6 +9,16 @@ GitHub Pages deployment. Record the package version, source snapshot, website
 commit and deployment result; npm publication alone does not complete the
 release handoff. Earlier publication records below retain their historical scope.
 
+**Beta.5 — 2026-11-17:** `oneringai@2.0.0-beta.5` adds Gemini 4 Hydrogen,
+trusted-access GPT-6 Rosalind, hosted Inkling/Glimpse/Hydrogen models, Groq
+GPT-OSS 20B and Grok Video 1.5 Lite. It preserves Hydrogen thinking controls,
+restores Grok 1.5 text-to-video dispatch and corrects endpoint/capability metadata.
+The [vendor review](MODEL_REGISTRY_REVIEW_2026_11_17.md) distinguishes catalog
+availability from implemented transports, unknown limits and account entitlement.
+The [beta.5 release record](evaluations/BETA5_RELEASE_VALIDATION_2026_11_17.json)
+tracks publication and the required matching website deployment independently.
+No live-provider or production OAuth verification is claimed.
+
 **Beta.4 — 2026-11-11:** `oneringai@2.0.0-beta.4` refreshes all six model
 registries and adds opt-in host-managed ChatGPT plan access plus Hosea first-run
 account setup. Ordinary API-key Agent defaults remain supported. The
@@ -20,7 +30,7 @@ OAuth/account eligibility is not live-verified. The
 tracks release validation, npm publication and the matching website deployment.
 Earlier release receipts below are historical.
 
-**Verified beta.4 npm publication:** `latest` and `next` select beta.4 from
+**Verified beta.4 npm publication:** at publication `latest` and `next` selected beta.4 from
 `v2.0.0-beta.4` / `7611d906`. Registry integrity matches the validated tarball;
 a fresh registry install passes all eleven ESM/CJS entries, the six model
 catalogs, nine document formats and strict public ChatGPT-plan declarations.

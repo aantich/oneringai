@@ -1,6 +1,6 @@
 # Model Registry Sources
 
-Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`ImageModel.ts`), Video (`VideoModel.ts`), TTS (`TTSModel.ts`), STT (`STTModel.ts`), and embeddings (`EmbeddingModel.ts`). Catalog discovery/lifecycle audited 2026-11-11; individual records retain their own verification dates. See [the November audit](../../../docs/MODEL_REGISTRY_REFRESH_2026_11_11.md) for additions, changed prices and adapter boundaries.
+Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`ImageModel.ts`), Video (`VideoModel.ts`), TTS (`TTSModel.ts`), STT (`STTModel.ts`), and embeddings (`EmbeddingModel.ts`). Catalog discovery/lifecycle audited 2026-11-17; individual records retain their own verification dates. See [the November 17 review](../../../docs/MODEL_REGISTRY_REVIEW_2026_11_17.md) for the latest changes and remaining endpoint boundaries; [the November 11 audit](../../../docs/MODEL_REGISTRY_REFRESH_2026_11_11.md) for additions, changed prices and adapter boundaries.
 
 ---
 
@@ -12,7 +12,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Deprecations**: https://developers.openai.com/api/docs/deprecations
 - **API reference**: https://developers.openai.com/api/reference
 - **Key fields**: context window, max output tokens, pricing (input/cached/output), knowledge cutoff, supported features (vision, audio, reasoning, structured output, function calling)
-- **Current additions**: GPT-6.1 Terra, GPT-6 Cyber, GPT-6 Astra/Sol/Luna, GPT-5.6 Cyber, and GPT-Rosalind Research. Verify access scope as well as ordinary capabilities.
+- **Current additions**: trusted-access GPT-6 Rosalind Research (`gpt-6-rosalind`), GPT-6.1 Terra, GPT-6 Cyber, GPT-6 Astra/Sol/Luna, GPT-5.6 Cyber, and GPT-Rosalind Research. Verify access scope as well as ordinary capabilities.
 - **Notes**: Cache discounts and cache-write rates are model-specific. GPT-6
   sampling controls depend on effective reasoning effort: Sol/Luna allow them
   only with `none`, while Astra and GPT-6.1 Sol do not support `none`.
@@ -67,6 +67,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Deprecations**: https://ai.google.dev/gemini-api/docs/deprecations
 
 ### LLM Model Detail Pages
+- **Gemini 4 Hydrogen**: https://aistudio.google.com/docs/models/gemini-4-hydrogen (GA 2026-11-12; `low`/`medium`/`high`/`xhigh`, high by default; implicit caching only).
 - **Gemini 4 Carbon / Argon**: https://aistudio.google.com/docs/models/gemini-4-carbon and https://aistudio.google.com/docs/models/gemini-4-argon
 - **Pricing dates**: Gemini 4 introductory prices end 2026-11-30; Gemini 3.8 TTS introductory prices end 2026-12-31.
 - **Gemini 3.8 Flash**: https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash
@@ -123,6 +124,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Release notes**: https://docs.x.ai/developers/release-notes
 - **Key fields**: context window (up to 2M), max output, pricing (input/cached/output), vision support, reasoning
 - **Current addition**: [Grok 4.7](https://docs.x.ai/developers/grok-4-7) with Responses, X/web search, hosted code execution, 500K context, and long-context pricing.
+- **Batch update**: Grok 4.6/4.7 now advertise vendor Batch API support, with 20% off token rates. OneRingAI's Grok normalized batch adapter remains unsupported.
 - **Notes**: Fast variants are available for selected models and Grok Code is specialized for coding. Prompt caching and batch availability are model-specific; current Grok 4.7/4.6 entries do not expose batch processing.
 
 ### Image Models (`ImageModel.ts`)
@@ -133,7 +135,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 
 ### Video Models (`VideoModel.ts`)
 - **Video generation guide**: https://docs.x.ai/docs/guides/video-generations
-- **Models**: `grok-imagine-video-1.5`, `grok-imagine-video`
+- **Models**: `grok-imagine-video-1.5-lite`, `grok-imagine-video-1.5`, `grok-imagine-video`
 - **Key fields**: durations (1-15s), resolutions through native 1080p on Video 1.5, aspect ratios, audio support, and per-second pricing
 
 ### Speech Models (`TTSModel.ts`, `STTModel.ts`)
@@ -181,7 +183,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - Ollama: https://ollama.com/library?sort=newest and https://docs.ollama.com/api/openai-compatibility
 - Google Cloud deployment catalog: https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/google-models
 
-Metadata discovery is separate from implemented endpoint/adapter support; see the November audit.
+Together Responses/Messages only list GLM 5.2/5.3/5.3 Flash and DeepSeek V4.1 Flash 1017; the other curated Together models declare Chat Completions only. The November 17 review adds Together Inkling 2 Small and Glimpse 1.0, the billed Ollama Inkling cloud model, Perplexity-hosted Hydrogen and Groq GPT-OSS 20B. Metadata discovery is separate from implemented endpoint/adapter support.
 
 ---
 

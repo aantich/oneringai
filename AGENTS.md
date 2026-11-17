@@ -25,7 +25,7 @@ snapshot, website commit and successful deployment in the release handoff.
 Do not call a v2 release handoff complete while the matching website is stale.
 This standing requirement does not itself authorize another npm publication.
 
-The current API baseline is **`oneringai@2.0.0-beta.4`**. v2 uses the unscoped
+The current API baseline is **`oneringai@2.0.0-beta.5`**. v2 uses the unscoped
 package `oneringai`; `@everworker/oneringai` belongs to the legacy v1 line.
 Read [package migration](docs/PACKAGE_MIGRATION.md) before upgrading a consumer.
 Historical plans, local agent memories, old branch names and dated test counts
@@ -33,7 +33,7 @@ are not current API or release instructions. Verify against the checked-out or
 installed package, its public exports, and the current usage recipes below.
 Implementation availability, npm publication, and live-provider verification
 are separate claims; see the [Version 2 Guide](docs/VERSION_2_GUIDE.md) and
-[beta.4 release evidence](docs/evaluations/BETA4_RELEASE_VALIDATION_2026_11_11.json).
+[beta.5 release evidence](docs/evaluations/BETA5_RELEASE_VALIDATION_2026_11_17.json).
 
 ## Fast facts and operating mode
 
@@ -759,5 +759,5 @@ npm run docs:check
 - Relevant documentation/examples/AMOS and checks updated, with actual limits recorded?
 - Branch, live-call, commit/push and publication authorization respected?
 
-Reviewed against the v2 beta.4 public API on 2026-11-11; opt-in ChatGPT plan
+Reviewed against the v2 beta.5 public API on 2026-11-17; opt-in ChatGPT plan
 access retains the ordinary Agent API with its documented capability restrictions.

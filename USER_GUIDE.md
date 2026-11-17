@@ -1,6 +1,6 @@
 # OneRingAI v2 User Guide
 
-**Documented version:** `oneringai@2.0.0-beta.4` · **Reviewed:** 2026-11-11
+**Documented version:** `oneringai@2.0.0-beta.5` · **Reviewed:** 2026-11-17
 
 **Published beta:** [npm package](https://www.npmjs.com/package/oneringai).
 Both `latest` and `next` currently select this beta; `npm install oneringai` works.
@@ -161,7 +161,7 @@ Install the published unscoped v2 beta:
 npm install oneringai
 ```
 
-The documented package is `oneringai@2.0.0-beta.4`; both `latest` and `next`
+The documented package is `oneringai@2.0.0-beta.5`; both `latest` and `next`
 select this beta. For source development, follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
 ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
 native desktop dependencies are needed only for their respective integrations.

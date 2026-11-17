@@ -6,16 +6,17 @@ The maintainer is Anton Antic, `anton.antich@gmail.com`.
 
 ## Current availability
 
-The current release target is **`oneringai@2.0.0-beta.4`**, which refreshes the LLM/media
-registries and adds opt-in host-managed ChatGPT plan access. It retains beta.2's same Agent API in browser
-pages/Workers and Node.js. Use `oneringai@next` or pin `oneringai@2.0.0-beta.4`.
+The current release target is **`oneringai@2.0.0-beta.5`**, which refreshes the LLM/media
+registries with the November 17 vendor review and retains opt-in host-managed
+ChatGPT plan access. It retains beta.2's same Agent API in browser
+pages/Workers and Node.js. Use `oneringai@next` or pin `oneringai@2.0.0-beta.5`.
 See [browser setup](BROWSER_AGENTS.md) and
-[beta.4 validation/publication](evaluations/BETA4_RELEASE_VALIDATION_2026_11_11.json).
+[beta.5 validation/publication](evaluations/BETA5_RELEASE_VALIDATION_2026_11_17.json).
 The following beta.1 publication details describe the first release.
 
 **Published — 2026-11-02:** [oneringai@2.0.0-beta.1](https://www.npmjs.com/package/oneringai)
 is owned by `aantich`. The registry assigns both `latest` and `next` to this first
-beta, so plain `npm i oneringai` currently installs a prerelease. You can explicitly
+beta, so plain `npm i oneringai` installed a prerelease at that publication. You can explicitly
 select `oneringai@next` or pin the version. Source tag `v2.0.0-beta.1` points to
 `318c84b`; registry integrity matches the validated artifact. All eleven public
 entries, both module formats and nine document formats pass in a fresh registry
@@ -44,7 +45,7 @@ npm run build
 npm pack --ignore-scripts --pack-destination /tmp
 ```
 
-Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.0-beta.4.tgz`).
+Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.0-beta.5.tgz`).
 For a source example, install development dependencies in the checkout and run the
 [documented examples](../examples/README.md). A local tarball is not a registry
 release, and `--ignore-scripts` here is not a publish-gate bypass: build/check the

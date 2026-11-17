@@ -428,7 +428,9 @@
     "examples/routine-store-bridge.ts",
     "docs/evaluations/V2_RELEASE_VALIDATION_2026_11_02.json",
     "docs/MODEL_REGISTRY_REFRESH_2026_11_11.md",
-    "docs/evaluations/BETA4_RELEASE_VALIDATION_2026_11_11.json"
+    "docs/evaluations/BETA4_RELEASE_VALIDATION_2026_11_11.json",
+    "docs/MODEL_REGISTRY_REVIEW_2026_11_17.md",
+    "docs/evaluations/BETA5_RELEASE_VALIDATION_2026_11_17.json"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
