@@ -6,7 +6,7 @@ The maintainer is Anton Antic, `anton.antich@gmail.com`.
 
 ## Current availability
 
-Use `oneringai@next` or pin **`oneringai@2.0.1-beta.0`**. This release adds
+Use `oneringai@next` or pin **`oneringai@2.0.1-beta.1`**. This release adds
 [Sign in with ChatGPT](CHATGPT_PLAN_ACCESS.md) for eligible local Node.js apps.
 Agents share the same API across Node.js, browser pages, and dedicated Workers.
 The scoped `@everworker/oneringai` package is the maintenance-only v1 line.
@@ -44,7 +44,7 @@ npm run build
 npm pack --ignore-scripts --pack-destination /tmp
 ```
 
-Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.1-beta.0.tgz`).
+Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.1-beta.1.tgz`).
 For a source example, install development dependencies in the checkout and run the
 [documented examples](../examples/README.md). A local tarball is not a registry
 release, and `--ignore-scripts` here is not a publish-gate bypass: build/check the

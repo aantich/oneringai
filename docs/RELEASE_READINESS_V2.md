@@ -9,9 +9,9 @@ GitHub Pages deployment. Record the package version, source snapshot, website
 commit and deployment result; npm publication alone does not complete the
 release handoff. Earlier publication records below retain their historical scope.
 
-**2.0.1-beta.0 — 2026-11-22:** the unscoped v2 patch beta adds the Node.js
+**2.0.1-beta.1 — 2026-11-22:** the unscoped v2 patch beta adds the Node.js
 Sign in with ChatGPT manager, migrates Hosea to the shared flow, and ships a
-standalone Node example. See [the changelog](../CHANGELOG.md#201-beta0--2026-11-22)
+standalone Node example. See [the changelog](../CHANGELOG.md#201-beta1--2026-11-22)
 and [the authentication guide](CHATGPT_PLAN_ACCESS.md). The targeted tests use
 offline OAuth and inference fixtures. Live OpenAI admission remains unverified.
 

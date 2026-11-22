@@ -1,7 +1,7 @@
 # ChatGPT plan access
 
 Beta.4 adds opt-in ChatGPT plan access to the existing OpenAI text provider.
-Version `2.0.1-beta.0` adds a Node.js sign-in module at `oneringai/auth/openai`.
+Version `2.0.1-beta.1` adds a Node.js sign-in module at `oneringai/auth/openai`.
 Production OAuth admission and
 account eligibility still require live verification with an eligible account.
 

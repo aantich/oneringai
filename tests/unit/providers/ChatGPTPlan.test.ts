@@ -29,6 +29,13 @@ describe('ChatGPT plan Responses contract', () => {
       input: [{ type: 'function_call', namespace: 'oneringai', name: 'lookup' }, { type: 'function_call_output', call_id: 'call_1' }] });
     expect(params.input[0]).not.toHaveProperty('namespace');
   });
+  it('replays encrypted reasoning with the required empty summary when a summary is unavailable', () => {
+    const hidden = { type: 'reasoning', id: 'rs_hidden', encrypted_content: 'opaque' };
+    const visible = { type: 'reasoning', id: 'rs_visible', summary: [{ type: 'summary_text', text: 'Check the dock.' }] };
+    const params = { input: [hidden, visible] };
+    expect(chatGPTPlanRequest(params).input).toEqual([{ ...hidden, summary: [] }, visible]);
+    expect(hidden).not.toHaveProperty('summary');
+  });
   it.each(['temperature', 'max_output_tokens', 'previous_response_id', 'metadata', 'background', 'top_p', 'prompt_cache_retention'])('rejects explicit %s rather than dropping it', key => {
     expect(() => chatGPTPlanRequest({ input: 'hello', [key]: 1 })).toThrow(key);
   });

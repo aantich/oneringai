@@ -23944,7 +23944,7 @@ export function addTierPrefix(key: string, tier: MemoryTier): string
 
 ### assertChatGPTPlanTool `function`
 
-📍 [`src/infrastructure/providers/openai/chatGPTPlan.ts:46`](../src/infrastructure/providers/openai/chatGPTPlan.ts#L46)
+📍 [`src/infrastructure/providers/openai/chatGPTPlan.ts:48`](../src/infrastructure/providers/openai/chatGPTPlan.ts#L48)
 
 Preserve leaf tool names in the shared ToolManager; reject foreign namespaces.
 
@@ -24005,7 +24005,7 @@ export function chatGPTPlanRequest(params: Record&lt;string, unknown&gt;): Recor
 
 ### checkedChatGPTPlanStream `function`
 
-📍 [`src/infrastructure/providers/openai/chatGPTPlan.ts:53`](../src/infrastructure/providers/openai/chatGPTPlan.ts#L53)
+📍 [`src/infrastructure/providers/openai/chatGPTPlan.ts:55`](../src/infrastructure/providers/openai/chatGPTPlan.ts#L55)
 
 Read through termination, including errors after deltas. Never treat a truncated stream as success.
 

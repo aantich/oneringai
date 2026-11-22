@@ -20,6 +20,8 @@ export function chatGPTPlanRequest(params: Record<string, unknown>): Record<stri
   for (const item of input) {
     if (item.role === 'system') throw new InvalidConfigError('Use developer messages or instructions with ChatGPT plan access');
     if (item.type === 'function_call' || item.type === 'custom_tool_call') item.namespace = CHATGPT_PLAN_NAMESPACE;
+    // Replayed encrypted reasoning requires a summary array even when the model withheld the summary.
+    if (item.type === 'reasoning' && item.summary === undefined) item.summary = [];
     if (Array.isArray(item.content) && item.content.some((c: Record<string, unknown>) =>
       ['input_audio', 'input_video'].includes(String(c.type)) || (c.type === 'input_file' && c.file_id))) {
       throw new InvalidConfigError('ChatGPT plan access requires inline text/image/file inputs; audio, video and uploaded file IDs are unsupported');

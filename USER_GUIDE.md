@@ -1,9 +1,9 @@
 # OneRingAI v2 User Guide
 
-**Documented version:** `oneringai@2.0.1-beta.0` · **Reviewed:** 2026-11-22
+**Documented version:** `oneringai@2.0.1-beta.1` · **Reviewed:** 2026-11-22
 
 **v2 beta:** Install from [npm](https://www.npmjs.com/package/oneringai) with
-`npm install oneringai@next`, or pin `oneringai@2.0.1-beta.0`.
+`npm install oneringai@next`, or pin `oneringai@2.0.1-beta.1`.
 External harness and experimental-policy boundaries still apply.
 
 This guide describes the v2 APIs; use documentation matching your installed
@@ -163,7 +163,7 @@ Install the published unscoped v2 beta:
 npm install oneringai@next
 ```
 
-Pin `oneringai@2.0.1-beta.0` for reproducible installs. For source development,
+Pin `oneringai@2.0.1-beta.1` for reproducible installs. For source development,
 follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
 ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
 native desktop dependencies are needed only for their respective integrations.
@@ -2107,7 +2107,7 @@ endpoint; choose a separate embedding connector for memory and RAG.
 
 ## ChatGPT plan authentication
 
-`oneringai@2.0.1-beta.0` adds **Sign in with ChatGPT** for eligible local Node.js
+`oneringai@2.0.1-beta.1` adds **Sign in with ChatGPT** for eligible local Node.js
 apps. A user authorizes the app in their browser and can then run eligible OpenAI
 Responses requests using their plan. Create one `ChatGPTPlanAuth` manager per
 protected store. The app supplies its name, a system-browser opener, and an

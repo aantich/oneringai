@@ -11,7 +11,7 @@ website commit and successful GitHub Pages deployment before completing the
 release handoff. This is a standing delivery requirement, not authorization to
 publish another package version.
 
-**2.0.1-beta.0 — 2026-11-22:** `oneringai/auth/openai` exposes a Node.js
+**2.0.1-beta.1 — 2026-11-22:** `oneringai/auth/openai` exposes a Node.js
 Sign in with ChatGPT manager and an account-bound connector factory. The
 application supplies protected storage and chooses an account. Hosea uses the
 same module with its existing encrypted state. See the [User Guide walkthrough](../USER_GUIDE.md#chatgpt-plan-authentication)

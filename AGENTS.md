@@ -25,7 +25,7 @@ snapshot, website commit and successful deployment in the release handoff.
 Do not call a v2 release handoff complete while the matching website is stale.
 This standing requirement does not itself authorize another npm publication.
 
-The current API baseline is **`oneringai@2.0.1-beta.0`**. v2 uses the unscoped
+The current API baseline is **`oneringai@2.0.1-beta.1`**. v2 uses the unscoped
 package `oneringai`; `@everworker/oneringai` is the legacy v1 maintenance line.
 Read [package migration](docs/PACKAGE_MIGRATION.md) before upgrading a consumer.
 Historical plans, local agent memories, old branch names and dated test counts
@@ -305,7 +305,7 @@ const getWeather: ToolFunction = {
 ### ChatGPT plan access
 
 Use `ChatGPTPlanAuth` from the Node-only `oneringai/auth/openai` entry available
-from `2.0.1-beta.0`. Provide the actual application name, system browser opener and an
+from `2.0.1-beta.1`. Provide the actual application name, system browser opener and an
 `OAuthSessionStorage` backed by protected atomic storage. Initialize, sign in,
 then create a named connector bound to the returned account ID. The app owns
 account and billing selection. The manager handles OpenAI's OAuth, refresh and
@@ -763,5 +763,5 @@ npm run docs:check
 - Relevant documentation/examples/AMOS and checks updated, with actual limits recorded?
 - Branch, live-call, commit/push and publication authorization respected?
 
-Reviewed against the v2.0.1-beta.0 public API on 2026-11-22. Opt-in ChatGPT plan
+Reviewed against the v2.0.1-beta.1 public API on 2026-11-22. Opt-in ChatGPT plan
 access retains the ordinary Agent API with its documented capability restrictions.

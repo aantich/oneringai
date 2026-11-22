@@ -23,7 +23,7 @@ AMOS is the complete terminal application: configure connectors, run agents,
 switch harnesses, inspect activity, and recover saved sessions. Its
 [application guide](apps/amos/README.md) also covers native OneRingAI mode.
 
-**v2 beta:** **[`oneringai@2.0.1-beta.0`](https://www.npmjs.com/package/oneringai/v/2.0.1-beta.0)**.
+**v2 beta:** **[`oneringai@2.0.1-beta.1`](https://www.npmjs.com/package/oneringai/v/2.0.1-beta.1)**.
 Install the unscoped `oneringai` package with `@next` or pin this version.
 The scoped `@everworker/oneringai` package is the legacy v1 maintenance line.
 See the [migration guide](docs/PACKAGE_MIGRATION.md) and [release readiness](docs/RELEASE_READINESS_V2.md).
@@ -36,7 +36,7 @@ agents using their ChatGPT plan. Import `ChatGPTPlanAuth` from
 the signed-in account to a named connector. OneRingAI handles registration,
 identity verification, token refresh, and sign-out. Hosea uses the same flow.
 [User Guide and code example](USER_GUIDE.md#chatgpt-plan-authentication) ·
-[Release notes](CHANGELOG.md#201-beta0--2026-11-22)
+[Release notes](CHANGELOG.md#201-beta1--2026-11-22)
 
 ## What changes in v2
 
@@ -73,7 +73,7 @@ TypeScript declarations. Install the current v2 beta:
 npm install oneringai@next
 ```
 
-For a reproducible install, pin `oneringai@2.0.1-beta.0`.
+For a reproducible install, pin `oneringai@2.0.1-beta.1`.
 The [source checkout/local package workflow](docs/PACKAGE_MIGRATION.md#try-v2-before-publication)
 remains available for development.
 Load your own environment configuration before creating connectors; the library

@@ -55,7 +55,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Manipulate JSON objects by deleting, adding, or replacing fields at any depth.",
     tool: jsonManipulator,
     safeByDefault: true,
-    implementationHash: 'sha256:e3d95a971b385f25d34b65b3fd2fe39e97353b8981c2ad3736ae7e6ee798bd79',
+    implementationHash: 'sha256:3d01c66b9b7393bf4272e0990df959af3dba5d3fd6451379502e410c0c1f7a6d',
   },
   {
     name: 'generate_routine',
@@ -65,7 +65,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Complete routine definition input",
     tool: generateRoutine,
     safeByDefault: false,
-    implementationHash: 'sha256:af3580b0d278823f3aa2288bfc4cccfbb0762ce988bc09c52f141158bff5ed34',
+    implementationHash: 'sha256:5ad3e0e799571ef61362e8b6ade440913346624b0e52df3f904ab5a7d56480f4',
   },
   {
     name: 'routine_delete',
@@ -75,7 +75,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Permanently delete a routine definition. Past execution records are preserved, but any schedules or systems still referencing this routine ID will fail at runtime. Confirm with the user before calling",
     tool: routineDelete,
     safeByDefault: false,
-    implementationHash: 'sha256:f53f009ff1db73ca0fec9b6ee9a4068321368f332642393ab105e71373459dc5',
+    implementationHash: 'sha256:7bac1e1782b763ba522929ddb7194a1e9dbda2caabeb43a7581ceec675664cfe',
   },
   {
     name: 'routine_get',
@@ -85,7 +85,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Retrieve a routine definition by ID or by name search. Returns the full routine structure including tasks, parameters, and metadata.",
     tool: routineGet,
     safeByDefault: false,
-    implementationHash: 'sha256:06df57bafa93b5f8c56c9126d971f44dfd126f1c33c42f2b4b5d8d60df41d2df',
+    implementationHash: 'sha256:9a1505e3553cdd17f0baf807b7e4bdaa68d08922d25928c5097aef083514073a',
   },
   {
     name: 'routine_get_task_steps',
@@ -95,7 +95,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Get step-level execution detail for a routine execution. Filter by task name, phase, or step types.\\n\\n",
     tool: routineGetTaskSteps,
     safeByDefault: false,
-    implementationHash: 'sha256:ec3dd4604d33c7fb0a05266eece01bb0092b67a395bdeaaaacc1a9288ec59f63',
+    implementationHash: 'sha256:be522a438c4aa72a2c20453e493804e9da7ce88a4ef5e0a29fa2b7ef72902e16',
   },
   {
     name: 'routine_list',
@@ -105,7 +105,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "List routine definitions accessible to the caller. Returns slim summary entries (id, name, description, version, author, tags, task count, parameter names) — fetch the full structure with routine_get.",
     tool: routineList,
     safeByDefault: false,
-    implementationHash: 'sha256:569284e40770944c450a0d8d32bccb139e581b6313636c0badf2bfdf91cbee3f',
+    implementationHash: 'sha256:6231c1b7b362c07023d61113d94486431d0e8094b11be4a42519b53a27762bb4',
   },
   {
     name: 'routine_list_executions',
@@ -115,7 +115,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "List execution records for a routine. Returns summaries of past and current executions including status, timing, and per-task results.",
     tool: routineListExecutions,
     safeByDefault: false,
-    implementationHash: 'sha256:b417ba056bfb3191e606504b0489a95efba712d1d50f7cd418eedfdd43849c38',
+    implementationHash: 'sha256:882011a454040e4fe6b217fea03b2654008a56075eaf7a3f037bc9e666adb21b',
   },
   {
     name: 'routine_update',
@@ -125,7 +125,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Update an existing routine definition.",
     tool: routineUpdate,
     safeByDefault: false,
-    implementationHash: 'sha256:03375b6946c69e7a2244da715a5158057a8754d272cda43157ead5ca97cf1aec',
+    implementationHash: 'sha256:8eacf7ae9af312ad6af552fe3f91ad64303e0a52ee9cbbaffca9367dfd74c9c8',
   },
   {
     name: 'routine_update_task',
@@ -135,7 +135,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Update a specific task within an existing routine definition. Validates the updated routine before saving.",
     tool: routineUpdateTask,
     safeByDefault: false,
-    implementationHash: 'sha256:0f55602386c0dd540a1f32c1547ea9adfa123741a914ec93b6bfc348a7e37737',
+    implementationHash: 'sha256:b0f33e459a9abd140ad3277dd4c6f2c642b67c41bd23f59abd79323c4f120cc6',
   }
 ];
 

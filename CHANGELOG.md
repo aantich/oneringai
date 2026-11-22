@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.0.1-beta.0] — 2026-11-22
+## [2.0.1-beta.1] — 2026-11-22
 
 - Add `oneringai/auth/openai` for eligible local Node apps to integrate Sign in
   with ChatGPT. It manages registration, signed identity, account-bound
   connectors, token rotation and revocation with host-supplied storage.
+- Preserve encrypted reasoning across turns when the OpenAI Responses API
+  omits its summary.
 - Migrate Hosea to the shared sign-in manager with its existing encrypted
   account records. Add a [standalone Node CLI](examples/chatgpt-plan-cli.ts)
   and a [User Guide walkthrough](USER_GUIDE.md#chatgpt-plan-authentication).
