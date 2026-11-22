@@ -6,11 +6,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ChatGPTAuthService, type ChatGPTAuthOptions } from '../src/main/ChatGPTAuthService.js';
 
-async function fixture(options: Partial<ChatGPTAuthOptions> = {}) {
+async function fixture(options: Partial<ChatGPTAuthOptions> & { beforeKeys?: () => Promise<void> } = {}) {
+  const { fetch: overrideFetch, beforeKeys, ...otherOptions } = options;
+  const { publicKey, privateKey } = await generateKeyPair('RS256');
+  const jwk = { ...await exportJWK(publicKey), kid: 'hosea-test-key', alg: 'RS256', use: 'sig' };
   const directory = await mkdtemp(join(tmpdir(), 'hosea-chatgpt-test-'));
   let now = Date.now(); let registrations = 0; let refreshes = 0; let requested: URL | undefined;
   let grantedScopes = 'openid email offline_access resource.invoke chatgpt.tokens.use.direct';
-  let refreshError = ''; let mismatch = false;
+  let refreshError = ''; let mismatch = false; let variant = 'valid';
   const exchanges: URLSearchParams[] = [];
   const config: ChatGPTAuthOptions = {
     directory, available: () => true, assertCanChange: () => {}, now: () => now,
@@ -27,27 +30,44 @@ async function fixture(options: Partial<ChatGPTAuthOptions> = {}) {
         client_id: requested.searchParams.get('client_id') === 'dynamic_agent_client' ? `oaiapp_${++registrations}` : requested.searchParams.get('client_id')! }).toString();
       assert.equal((await fetch(callback)).status, 200);
     },
-    verifyIdentity: async (_token, _client, nonce) => {
-      if (nonce !== undefined) assert.equal(nonce, requested!.searchParams.get('nonce'));
-      return { sub: mismatch ? 'different-user' : 'test-user', email: 'person@example.test' };
-    },
-    fetch: (async (url, init) => {
-      if (String(url).includes('openid-configuration')) return Response.json({ revocation_endpoint: 'https://auth.openai.com/revoke' });
-      if (String(url).endsWith('/revoke')) return new Response('', { status: 200 });
+    fetch: async (url, init) => {
+      if (String(url).includes('openid-configuration')) return Response.json({ issuer: 'https://auth.openai.com',
+        jwks_uri: 'https://auth.openai.com/jwks', revocation_endpoint: 'https://auth.openai.com/revoke' });
+      if (String(url).endsWith('/jwks')) { await beforeKeys?.(); return Response.json({ keys: [jwk] }); }
+      if (String(url).endsWith('/revoke')) return overrideFetch ? overrideFetch(url, init) : new Response('', { status: 200 });
+      assert.equal(String(url), 'https://auth.openai.com/api/accounts/oauth/token');
       const body = new URLSearchParams(init?.body as URLSearchParams); exchanges.push(body);
       if (body.get('grant_type') === 'refresh_token') {
         refreshes++;
         if (refreshError) return Response.json({ error: refreshError }, { status: 400 });
       }
-      return Response.json({ access_token: `access-${exchanges.length}`, refresh_token: `refresh-${exchanges.length}`,
-        id_token: 'test-id-token', expires_in: 3600, scope: grantedScopes });
-    }) as typeof fetch,
-    ...options,
+      const response = await overrideFetch?.(url, init);
+      if (response && !response.ok) return response;
+      const fields = response ? await response.json() : { access_token: `access-${exchanges.length}`, refresh_token: `refresh-${exchanges.length}`,
+        id_token: 'fixture', expires_in: 3600, scope: grantedScopes };
+      if (typeof fields.id_token === 'string') {
+        const clientId = body.get('client_id')!;
+        const token = new SignJWT({ nonce: variant === 'nonce' ? 'other-attempt' : requested?.searchParams.get('nonce'), email: 'person@example.test' })
+          .setProtectedHeader({ alg: 'RS256', kid: jwk.kid }).setIssuer('https://auth.openai.com')
+          .setAudience(variant === 'audience' ? 'different-client' : clientId).setSubject(mismatch ? 'different-user' : 'test-user')
+          .setExpirationTime(variant === 'expired' ? Math.floor(Date.now() / 1000) - 60 : '1h');
+        if (variant !== 'missing-iat') token.setIssuedAt();
+        fields.id_token = await token.sign(privateKey);
+        if (variant === 'signature') {
+          const parts = fields.id_token.split('.');
+          parts[2] = (parts[2].startsWith('A') ? 'B' : 'A') + parts[2].slice(1);
+          fields.id_token = parts.join('.');
+        }
+      }
+      return Response.json(fields);
+    },
+    ...otherOptions,
   };
   const service = new ChatGPTAuthService(config); await service.initialize();
   return { service, directory, config, exchanges, get requested() { return requested!; }, get refreshes() { return refreshes; },
     advance() { now += 3600_000; }, set scopes(value: string) { grantedScopes = value; },
     set refreshError(value: string) { refreshError = value; }, set mismatch(value: boolean) { mismatch = value; },
+    set variant(value: string) { variant = value; },
     cleanup: () => rm(directory, { recursive: true, force: true }) };
 }
 
@@ -204,17 +224,16 @@ test('cancellation during identity verification cannot activate the pending acco
   let verifyStarted!: () => void; let finishVerification!: () => void;
   const started = new Promise<void>(resolve => { verifyStarted = resolve; });
   const verification = new Promise<void>(resolve => { finishVerification = resolve; });
-  const f = await fixture({ verifyIdentity: async () => {
+  const f = await fixture({ beforeKeys: async () => {
     verifyStarted(); await verification;
-    return { sub: 'test-user', email: 'person@example.test' };
   } });
   try {
     const attempt = f.service.signIn();
-    await started; f.service.cancel(); finishVerification();
-    await assert.rejects(attempt);
+    await started; f.service.cancel();
+    await assert.rejects(attempt, /cancelled/);
     assert.equal(f.service.status().activeId, null);
     assert.equal(f.service.status().accounts[0].connected, false);
-  } finally { await f.cleanup(); }
+  } finally { finishVerification(); await f.cleanup(); }
 });
 
 for (const permanent of [false, true]) {
@@ -245,37 +264,15 @@ for (const permanent of [false, true]) {
 
 
 test('production OIDC validation accepts a signed identity and rejects invalid nonce, audience, expiry and required claims', async () => {
-  const { publicKey, privateKey } = await generateKeyPair('RS256');
-  const jwk = { ...await exportJWK(publicKey), kid: 'hosea-test-key', alg: 'RS256', use: 'sig' };
-  const originalFetch = globalThis.fetch;
-  let variant = 'valid';
-  globalThis.fetch = (async (input, init) => {
-    const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
-    if (url.href === 'https://auth.openai.com/jwks') return Response.json({ keys: [jwk] });
-    if (url.hostname === '127.0.0.1') return originalFetch(input, init);
-    throw new Error('Offline identity test blocked external network');
-  }) as typeof fetch;
-  let f: Awaited<ReturnType<typeof fixture>> | undefined;
+  const f = await fixture();
   try {
-    f = await fixture({ verifyIdentity: undefined, fetch: (async (url, init) => {
-      if (String(url).includes('openid-configuration')) return Response.json({ issuer: 'https://auth.openai.com', jwks_uri: 'https://auth.openai.com/jwks' });
-      const clientId = new URLSearchParams(init?.body as URLSearchParams).get('client_id')!;
-      const token = new SignJWT({ nonce: variant === 'nonce' ? 'other-attempt' : f!.requested.searchParams.get('nonce'), email: 'signed@example.test' })
-        .setProtectedHeader({ alg: 'RS256', kid: jwk.kid }).setIssuer('https://auth.openai.com')
-        .setAudience(variant === 'audience' ? 'different-client' : clientId).setSubject('signed-user')
-        .setExpirationTime(variant === 'expired' ? Math.floor(Date.now() / 1000) - 60 : '1h');
-      if (variant !== 'missing-iat') token.setIssuedAt();
-      let idToken = await token.sign(privateKey);
-      if (variant === 'signature') { const parts = idToken.split('.'); parts[2] = (parts[2].startsWith('A') ? 'B' : 'A') + parts[2].slice(1); idToken = parts.join('.'); }
-      return Response.json({ id_token: idToken, access_token: 'verified-access', refresh_token: 'verified-refresh',
-        expires_in: 3600, scope: 'openid offline_access resource.invoke chatgpt.tokens.use.direct' });
-    }) as typeof fetch });
     const id = (await f.service.signIn()).activeId!;
-    assert.equal(await f.service.accessToken(id), 'verified-access');
-    for (variant of ['nonce', 'audience', 'expired', 'missing-iat', 'signature']) {
+    assert.equal(await f.service.accessToken(id), 'access-1');
+    for (const variant of ['nonce', 'audience', 'expired', 'missing-iat', 'signature']) {
+      f.variant = variant;
       await assert.rejects(f.service.signIn(id));
-      assert.equal(await f.service.accessToken(id), 'verified-access');
+      assert.equal(await f.service.accessToken(id), 'access-1');
       assert.equal(f.service.status().activeId, id);
     }
-  } finally { globalThis.fetch = originalFetch; await f?.cleanup(); }
+  } finally { await f.cleanup(); }
 });

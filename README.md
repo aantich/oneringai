@@ -23,12 +23,20 @@ AMOS is the complete terminal application: configure connectors, run agents,
 switch harnesses, inspect activity, and recover saved sessions. Its
 [application guide](apps/amos/README.md) also covers native OneRingAI mode.
 
-**v2 beta:** **[`oneringai@2.0.0-beta.5`](https://www.npmjs.com/package/oneringai/v/2.0.0-beta.5)**,
-without a scope. Both `latest` and `next` currently select this beta. Use the
-matching package version and retain the preview boundaries below. Existing v1
-users must migrate explicitly from `@everworker/oneringai`.
-See the **[v2 changelog](CHANGELOG.md#200-beta5--2026-11-17)**,
-[migration](docs/PACKAGE_MIGRATION.md), and [release readiness](docs/RELEASE_READINESS_V2.md).
+**v2 beta:** **[`oneringai@2.0.1-beta.0`](https://www.npmjs.com/package/oneringai/v/2.0.1-beta.0)**.
+Install the unscoped `oneringai` package with `@next` or pin this version.
+The scoped `@everworker/oneringai` package is the legacy v1 maintenance line.
+See the [migration guide](docs/PACKAGE_MIGRATION.md) and [release readiness](docs/RELEASE_READINESS_V2.md).
+
+## What's new in this version
+
+**Sign in with ChatGPT.** Eligible users of local Node.js apps can run OpenAI
+agents using their ChatGPT plan. Import `ChatGPTPlanAuth` from
+`oneringai/auth/openai`, supply a browser opener and protected storage, and bind
+the signed-in account to a named connector. OneRingAI handles registration,
+identity verification, token refresh, and sign-out. Hosea uses the same flow.
+[User Guide and code example](USER_GUIDE.md#chatgpt-plan-authentication) ·
+[Release notes](CHANGELOG.md#201-beta0--2026-11-22)
 
 ## What changes in v2
 
@@ -39,6 +47,7 @@ context plugins, and media APIs already available in v1.
 | Capability | What it lets you do | Read more |
 | --- | --- | --- |
 | **Interchangeable agent harnesses** | Define instructions and selected application tools once; bind OneRingAI, local Codex/Claude SDKs, or managed OpenAI/Claude agents per session | [Agent Runtime](USER_GUIDE.md#agent-runtime-preview) |
+| **ChatGPT plan access** | Let eligible users sign in and run OpenAI agents using their plan | [ChatGPT plan access](docs/CHATGPT_PLAN_ACCESS.md) |
 | **Durable evidence** | Retain scoped source observations while sending bounded projections to the model; repair storage without repeating an action | [Evidence](docs/DURABLE_EVIDENCE.md) |
 | **Protected task state** | Keep host-confirmed constraints, corrections, questions, and action receipts through compaction | [Task state](docs/TASK_STATE.md) |
 | **Reliable context preparation** | Account for the final request, preserve connected tool groups, and stop explicitly when protected content cannot fit | [Preparation](docs/CONTEXT_PREPARATION.md) |
@@ -61,10 +70,10 @@ Node.js **22.13+ or 24+** is required. The package provides ESM, CommonJS, and
 TypeScript declarations. Install the current v2 beta:
 
 ```bash
-npm install oneringai
+npm install oneringai@next
 ```
 
-You can also select `npm install oneringai@next` or pin `oneringai@2.0.0-beta.5`.
+For a reproducible install, pin `oneringai@2.0.1-beta.0`.
 The [source checkout/local package workflow](docs/PACKAGE_MIGRATION.md#try-v2-before-publication)
 remains available for development.
 Load your own environment configuration before creating connectors; the library

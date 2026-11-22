@@ -9,6 +9,12 @@ GitHub Pages deployment. Record the package version, source snapshot, website
 commit and deployment result; npm publication alone does not complete the
 release handoff. Earlier publication records below retain their historical scope.
 
+**2.0.1-beta.0 — 2026-11-22:** the unscoped v2 patch beta adds the Node.js
+Sign in with ChatGPT manager, migrates Hosea to the shared flow, and ships a
+standalone Node example. See [the changelog](../CHANGELOG.md#201-beta0--2026-11-22)
+and [the authentication guide](CHATGPT_PLAN_ACCESS.md). The targeted tests use
+offline OAuth and inference fixtures. Live OpenAI admission remains unverified.
+
 **Beta.5 — 2026-11-17:** `oneringai@2.0.0-beta.5` adds Gemini 4 Hydrogen,
 trusted-access GPT-6 Rosalind, hosted Inkling/Glimpse/Hydrogen models, Groq
 GPT-OSS 20B and Grok Video 1.5 Lite. It preserves Hydrogen thinking controls,
@@ -19,7 +25,7 @@ The [beta.5 release record](evaluations/BETA5_RELEASE_VALIDATION_2026_11_17.json
 tracks publication and the required matching website deployment independently.
 No live-provider or production OAuth verification is claimed.
 
-**Verified beta.5 npm publication:** `latest` and `next` select beta.5 from
+**Verified beta.5 npm publication:** at publication `latest` and `next` selected beta.5 from
 `v2.0.0-beta.5` / `0d8bcadf`. Registry integrity matches the exact-tag validated
 tarball. A fresh registry consumer passes all eleven ESM/CJS entries, all six
 model catalogs, nine document formats, strict declarations, optional SDKs and

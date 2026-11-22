@@ -721,16 +721,18 @@ export class AgentService {
     const apiKey = config.auth.type === 'api_key' ? config.auth.apiKey : undefined;
     const profileId = openai ? this.chatGPT?.activeProfileId : null;
     if (Connector.has(config.name)) Connector.remove(config.name);
+    if (profileId) {
+      this.chatGPT.createConnector(config.name, profileId);
+      return;
+    }
     Connector.create({ name: config.name, vendor: config.vendor as Vendor,
       auth: openai ? { type: 'api_key_provider', getApiKey: async () => {
         if (this.chatGPT.busy) throw new Error('ChatGPT account change in progress');
-        if (profileId) return this.chatGPT.accessToken(profileId);
         this.chatGPT.assertAPIKeyAccess();
         if (!apiKey) throw new Error('Connect ChatGPT or configure an OpenAI API key in Model providers');
         return apiKey;
       } } : config.auth,
-      baseURL: profileId ? 'https://api.openai.com/v1' : config.baseURL,
-      ...(profileId ? { options: { openaiAuthMode: 'chatgpt-plan', openaiAccountId: profileId } } : {}),
+      baseURL: config.baseURL,
     });
   }
 

@@ -25,15 +25,14 @@ snapshot, website commit and successful deployment in the release handoff.
 Do not call a v2 release handoff complete while the matching website is stale.
 This standing requirement does not itself authorize another npm publication.
 
-The current API baseline is **`oneringai@2.0.0-beta.5`**. v2 uses the unscoped
-package `oneringai`; `@everworker/oneringai` belongs to the legacy v1 line.
+The current API baseline is **`oneringai@2.0.1-beta.0`**. v2 uses the unscoped
+package `oneringai`; `@everworker/oneringai` is the legacy v1 maintenance line.
 Read [package migration](docs/PACKAGE_MIGRATION.md) before upgrading a consumer.
 Historical plans, local agent memories, old branch names and dated test counts
 are not current API or release instructions. Verify against the checked-out or
 installed package, its public exports, and the current usage recipes below.
-Implementation availability, npm publication, and live-provider verification
-are separate claims; see the [Version 2 Guide](docs/VERSION_2_GUIDE.md) and
-[beta.5 release evidence](docs/evaluations/BETA5_RELEASE_VALIDATION_2026_11_17.json).
+The [Version 2 Guide](docs/VERSION_2_GUIDE.md) tracks implementation availability,
+npm publication, and live-provider verification.
 
 ## Fast facts and operating mode
 
@@ -303,14 +302,19 @@ const getWeather: ToolFunction = {
   source receipts. Reuse the same evidence storage handle and shared ToolManager.
   See [Remote Tool Outcomes](docs/REMOTE_TOOL_OUTCOMES.md).
 
-### ChatGPT plan access (beta.4)
+### ChatGPT plan access
 
-This checkout adds `options.openaiAuthMode: 'chatgpt-plan'` and secret-free
-`openaiAccountId` to the existing OpenAI connector. Use a runtime-only
-`api_key_provider` callback bound to a validated SIWC registration. `Agent.create`,
-`run` and `stream` retain the same browser/Node API. The host owns OAuth, storage,
-refresh and authorization; identity sign-in alone is insufficient. This feature
-is available from beta.4; live OAuth/account admission remains unverified.
+Use `ChatGPTPlanAuth` from the Node-only `oneringai/auth/openai` entry available
+from `2.0.1-beta.0`. Provide the actual application name, system browser opener and an
+`OAuthSessionStorage` backed by protected atomic storage. Initialize, sign in,
+then create a named connector bound to the returned account ID. The app owns
+account and billing selection. The manager handles OpenAI's OAuth, refresh and
+revocation. Live OAuth/account admission remains unverified.
+
+Beta.4 and later also accept host-managed credentials through
+`options.openaiAuthMode: 'chatgpt-plan'`, a secret-free `openaiAccountId` and a
+runtime-only `api_key_provider`. `Agent.create`, `run` and `stream` retain the
+same browser/Node API. Identity sign-in alone is insufficient for inference.
 
 Hosea applies one selected registration to every OpenAI agent. Other applications
 choose their own connector policy. Explicit unsupported request controls, hosted
@@ -759,5 +763,5 @@ npm run docs:check
 - Relevant documentation/examples/AMOS and checks updated, with actual limits recorded?
 - Branch, live-call, commit/push and publication authorization respected?
 
-Reviewed against the v2 beta.5 public API on 2026-11-17; opt-in ChatGPT plan
+Reviewed against the v2.0.1-beta.0 public API on 2026-11-22. Opt-in ChatGPT plan
 access retains the ordinary Agent API with its documented capability restrictions.

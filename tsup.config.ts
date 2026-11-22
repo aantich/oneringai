@@ -30,6 +30,7 @@ export default defineConfig([
       'shared/index': 'src/shared/index.ts',
       'capabilities/agents/index': 'src/capabilities/agents/index.ts',
       'capabilities/images/index': 'src/capabilities/images/index.ts',
+      'auth/openai': 'src/connectors/oauth/openai.ts',
       'agent-runtime/index': 'src/agent-runtime/index.ts',
       'agent-runtime/codex': 'src/agent-runtime/codex.ts',
       'agent-runtime/claude': 'src/agent-runtime/claude.ts',

@@ -1,6 +1,6 @@
 {
   "name": "oneringai",
-  "version": "2.0.0-beta.5",
+  "version": "2.0.1-beta.0",
   "description": "Unified TypeScript AI agent library with multi-vendor models, tools, memory, media, and pluggable OneRingAI/Codex agent runtimes",
   "type": "module",
   "main": "./dist/index.js",
@@ -52,6 +52,11 @@
       "import": "./dist/capabilities/images/index.js",
       "require": "./dist/capabilities/images/index.cjs"
     },
+    "./auth/openai": {
+      "types": "./dist/auth/openai.d.ts",
+      "import": "./dist/auth/openai.js",
+      "require": "./dist/auth/openai.cjs"
+    },
     "./agent-runtime": {
       "types": "./dist/agent-runtime/index.d.ts",
       "import": "./dist/agent-runtime/index.js",
@@ -97,6 +102,9 @@
       "images": [
         "./dist/capabilities/images/index.d.ts"
       ],
+      "auth/openai": [
+        "./dist/auth/openai.d.ts"
+      ],
       "agent-runtime": [
         "./dist/agent-runtime/index.d.ts"
       ],
@@ -134,6 +142,7 @@
     "docs/evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json",
     "docs/evaluations/BETA3_RELEASE_VALIDATION_2026_11_09.json",
     "examples/browser-node",
+    "examples/chatgpt-plan-cli.ts",
     "docs/CONTEXT_PREPARATION.md",
     "docs/evaluations/STAGE_01_LIVE_VALIDATION.json",
     "docs/evaluations/STAGE_01_CORRECTIONS_VALIDATION.json",
@@ -551,6 +560,7 @@
     "example:endpoint-capabilities": "node --import tsx examples/endpoint-capabilities.ts",
     "example:parameter-policy": "node --import tsx examples/parameter-policy.ts",
     "example:vendor-presentation": "node --import tsx examples/vendor-presentation.ts",
+    "example:chatgpt-plan": "node --import tsx examples/chatgpt-plan-cli.ts",
     "example:agent-runtime-swappable": "node --import tsx examples/agent-runtime-swappable.ts",
     "example:agent-runtime-claude": "node --import tsx examples/agent-runtime-claude.ts",
     "example:agent-runtime-recovery": "node --import tsx examples/agent-runtime-recovery.ts",

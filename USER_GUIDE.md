@@ -1,9 +1,9 @@
 # OneRingAI v2 User Guide
 
-**Documented version:** `oneringai@2.0.0-beta.5` · **Reviewed:** 2026-11-17
+**Documented version:** `oneringai@2.0.1-beta.0` · **Reviewed:** 2026-11-22
 
-**Published beta:** [npm package](https://www.npmjs.com/package/oneringai).
-Both `latest` and `next` currently select this beta; `npm install oneringai` works.
+**v2 beta:** Install from [npm](https://www.npmjs.com/package/oneringai) with
+`npm install oneringai@next`, or pin `oneringai@2.0.1-beta.0`.
 External harness and experimental-policy boundaries still apply.
 
 This guide describes the v2 APIs; use documentation matching your installed
@@ -15,6 +15,7 @@ local validation from publication and live-provider gates. For a running applica
 
 - **First integration:** [Getting started](#getting-started), [core concepts](#core-concepts),
   [tools](#tools--function-calling), then [persistence](#session-persistence).
+- **Using a ChatGPT plan:** [Sign in with ChatGPT and create an account-bound agent](#chatgpt-plan-authentication).
 - **Coming from v1:** [Package migration](docs/PACKAGE_MIGRATION.md), then the
   [v2 capability map](#version-2-capability-map). Historical release-specific
   upgrade notes are [archived separately](docs/MIGRATION_V1_HISTORY.md).
@@ -84,6 +85,7 @@ Offline demonstrations are explicitly identified in the examples index.
 - [Streaming](#streaming)
 - [Advanced Inference](#advanced-inference)
 - [Connectors & Authentication](#connectors--authentication)
+- [ChatGPT Plan Authentication](#chatgpt-plan-authentication)
 - [External API Integration](#external-api-integration)
 - [Vendor Templates](#vendor-templates)
 - [OAuth for External APIs](#oauth-for-external-apis)
@@ -158,11 +160,11 @@ tool boundaries and measured scale.
 Install the published unscoped v2 beta:
 
 ```bash
-npm install oneringai
+npm install oneringai@next
 ```
 
-The documented package is `oneringai@2.0.0-beta.5`; both `latest` and `next`
-select this beta. For source development, follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
+Pin `oneringai@2.0.1-beta.0` for reproducible installs. For source development,
+follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
 ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
 native desktop dependencies are needed only for their respective integrations.
 
@@ -2100,6 +2102,70 @@ api.destroy();
 FIM and balance are first-party account APIs and intentionally reject
 third-party host presets. DeepSeek does not expose a first-party embeddings
 endpoint; choose a separate embedding connector for memory and RAG.
+
+---
+
+## ChatGPT plan authentication
+
+`oneringai@2.0.1-beta.0` adds **Sign in with ChatGPT** for eligible local Node.js
+apps. A user authorizes the app in their browser and can then run eligible OpenAI
+Responses requests using their plan. Create one `ChatGPTPlanAuth` manager per
+protected store. The app supplies its name, a system-browser opener, and an
+`OAuthSessionStorage` implementation. The manager handles OAuth registration,
+identity verification, token renewal, and revocation. Check [OpenAI's app and
+account eligibility](https://developers.openai.com/siwc/quickstart).
+
+```typescript
+// Documentation check: complete example
+import { Agent } from 'oneringai';
+import { ChatGPTPlanAuth, type OAuthSessionStorage } from 'oneringai/auth/openai';
+
+export async function initializeChatGPT(
+  storage: OAuthSessionStorage,
+  openBrowser: (url: string) => Promise<void>,
+) {
+  const auth = new ChatGPTPlanAuth({ applicationName: 'My App', storage, openBrowser });
+  await auth.initialize();
+  return auth;
+}
+
+export async function signInAndCreateAgent(
+  auth: ChatGPTPlanAuth,
+  connectorName: string,
+  model: string,
+  savedAccountId?: string,
+) {
+  // Call this when the user chooses Continue with ChatGPT.
+  const account = await auth.signIn({ accountId: savedAccountId });
+  if (!account.planEnabled) return { account };
+  const connector = auth.createConnector(connectorName, account.id);
+  const agent = Agent.create({ connector: connector.name, model });
+  return { account, connector, agent };
+}
+```
+
+1. After `initialize()`, use `auth.status().accounts` to show saved registrations.
+   To reuse an authorized account, call `createConnector(name, account.id)`
+   directly. Pass its ID to `signIn()` when it needs reauthorization.
+2. If `planEnabled` is false, offer the user an explicit choice to request plan
+   consent with `signIn({ accountId: account.id, requestConsent: true })`.
+3. Choose a model available to the account and use `agent.run()` or `agent.stream()`.
+   Reuse the connector across agents. Destroy agents and remove owned connectors
+   during teardown. `auth.signOut(account.id)` revokes and clears credentials and
+   keeps the registration available for a later sign-in.
+
+Store the manager's opaque snapshot atomically in an OS keychain or another
+protected host store. Keep credentials in the trusted runtime. The optional
+`selectAccount()` and `requireSelected` options support a single app-wide choice,
+as used by Hosea. API-key billing is a separate choice owned by the app.
+
+This route covers eligible Responses inference. Use an API-key connector for
+media, realtime, or other OpenAI API surfaces. Browser Agents can still use the
+[host-managed plan connector](docs/CHATGPT_PLAN_ACCESS.md#host-managed-credentials).
+See [the full setup and capability limits](docs/CHATGPT_PLAN_ACCESS.md) and the
+[standalone CLI example](examples/chatgpt-plan-cli.ts). Sign-in and Responses
+behavior have been verified offline with fixtures. Live OpenAI admission remains
+unverified.
 
 ---
 
@@ -19076,13 +19142,3 @@ npm update cannot move an installation between package names.
 The library, AMOS, and Hosea source are MIT licensed, Copyright © 2025–2026
 Anton Antic ([anton.antich@gmail.com](mailto:anton.antich@gmail.com)).
 See [LICENSE](LICENSE) and [Licensing](LICENSING.md) for scope and third-party terms.
-
-
-## ChatGPT plan authentication
-
-The beta.4 ChatGPT plan profile keeps the same Agent API in Node and browser
-builds. A trusted host authorizes one account and supplies rotating credentials
-through an ordinary OpenAI connector; agents share that connection without
-per-agent OAuth. Hosea applies this as a global OpenAI-agent setting. Read the
-[complete setup and capability boundaries](docs/CHATGPT_PLAN_ACCESS.md). This integration is available from beta.4; production eligibility and live
-OAuth/model behavior require an authorized account smoke test.

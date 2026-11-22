@@ -1,10 +1,9 @@
 # ChatGPT plan access
 
 Beta.4 adds opt-in ChatGPT plan access to the existing OpenAI text provider.
-Check the installed package before using this recipe. Production OAuth admission
-and account eligibility have not been live-verified; offline validation uses mocks.
-Agents keep the same API in Node and browser builds;
-OAuth authorization and credential storage belong to the trusted host.
+Version `2.0.1-beta.0` adds a Node.js sign-in module at `oneringai/auth/openai`.
+Production OAuth admission and
+account eligibility still require live verification with an eligible account.
 
 ## Hosea: authorize once for every OpenAI agent
 
@@ -50,8 +49,78 @@ voice or embeddings credentials.
 
 ## Library integration
 
+`ChatGPTPlanAuth` runs OpenAI's public-client flow for eligible local open-source
+apps. Give it your app's name, a system-browser opener and an app-owned protected
+store. It starts a loopback listener, registers the client, verifies the signed
+identity and granted permissions, renews credentials, and creates an ordinary
+OpenAI connector bound to a specific registration. Check OpenAI's [eligibility
+and integration options](https://developers.openai.com/siwc/quickstart) for other
+app types.
+
+```typescript
+// Documentation check: complete example
+import { Agent } from 'oneringai';
+import { ChatGPTPlanAuth, type OAuthSessionStorage } from 'oneringai/auth/openai';
+
+export async function initializeChatGPT(
+  storage: OAuthSessionStorage,
+  openBrowser: (url: string) => Promise<void>,
+) {
+  const auth = new ChatGPTPlanAuth({ applicationName: 'My App', storage, openBrowser });
+  await auth.initialize();
+  return auth;
+}
+
+export async function connectChatGPT(
+  auth: ChatGPTPlanAuth,
+  connectorName: string,
+  model: string,
+  savedAccountId?: string,
+) {
+  // Call signIn in response to the user choosing Continue with ChatGPT.
+  const account = await auth.signIn({ accountId: savedAccountId });
+  if (!account.planEnabled) return { account };
+  const connector = auth.createConnector(connectorName, account.id);
+  const agent = Agent.create({ connector: connector.name, model });
+  return { account, connector, agent };
+}
+```
+
+On restart, read `auth.status().accounts` after `initialize()` and bind a
+known account directly with `createConnector`. Each connector captures its
+account ID, so multiple registrations can serve independent agents. To restrict
+your app to a single active account, call `selectAccount()` or pass `select: true`
+when signing in, then create connectors with `{ requireSelected: true }`. A
+change to that selection blocks credential use by stale guarded connectors.
+For app-wide billing changes, use `assertCanChange` to check that agents are idle
+and have the app hold new model work until the change settles.
+Destroy agents and remove owned connectors when finished. `cancel()` or a sign-in
+`signal` cancels pending authorization before the credential commit.
+
+Implement `OAuthSessionStorage.load()` and `save()` on the trusted host. Treat the
+snapshot as opaque secret material containing account and installation state.
+Use a protected store with atomic replacement and a single owner process and
+manager per snapshot. Return `null` for a fresh installation and report read or
+write errors to the manager. OneRingAI waits for storage acknowledgment before
+using rotated credentials. It serializes refreshes for each account and blocks
+credential dispatch after a persistence failure. The app owns its UI, account
+selection, storage backend and billing choice. `signOut(accountId)` revokes and
+clears that account's tokens, retains its registration for later sign-in, and
+returns a warning when remote revocation could not be confirmed.
+After a storage failure, repair the store and recreate the manager to reload it.
+
+Build from the repository and run `npm run example:chatgpt-plan -- --live` to
+authorize and run a single prompt in a [standalone Node CLI](../examples/chatgpt-plan-cli.ts).
+The example uses an ephemeral in-memory store and signs out on exit. Pass a model
+and prompt after `--live` to override the defaults. The live example uses the
+selected account's plan allowance or available credits.
+
+### Host-managed credentials
+
 An application supplies its own validated OAuth registration and rotating access
-token. Select the narrower request contract explicitly on the OpenAI connector:
+token when it already has an authorization implementation or runs its Agent in a
+browser build. Select the narrower request contract explicitly on the OpenAI
+connector.
 
 ```typescript
 // Documentation check: complete example
@@ -83,7 +152,7 @@ model. Recreate agents with compatible checkpoints after account changes. Destro
 agents during teardown. The library does not automatically apply this connection
 to unrelated applications or connectors; the global selection is Hosea's host policy.
 
-The host owns OIDC signature/issuer/audience/nonce verification, granted scopes,
+For this lower-level integration, the host owns OIDC signature/issuer/audience/nonce verification, granted scopes,
 protected storage, serialized rotating refreshes, logout and permission revocation.
 A valid identity alone does not grant `chatgpt.tokens.use.direct`. Never copy Codex
 CLI credentials or use a ChatGPT `backend-api` endpoint for this flow.
@@ -115,7 +184,8 @@ accepted; hosts can supply document contents through their local tools/readers.
 
 ## Storage and validation
 
-Hosea keeps the host ID, per-registration identity and tokens in an atomic,
+Hosea uses `ChatGPTPlanAuth` with its existing protected storage and applies the
+selection to all of its OpenAI agents. It keeps the host ID, per-registration identity and tokens in an atomic,
 OS-encrypted `chatgpt/accounts.enc` record under `HOSEA_DATA_DIR` (default
 `~/.hosea`). ChatGPT tokens never enter the renderer, connector JSON, session
 checkpoints, logs or analytics. Unavailable OS encryption, Linux's `basic_text`

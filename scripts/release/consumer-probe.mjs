@@ -19,6 +19,20 @@ for(const load of [entry=>import(entry),async entry=>require(entry)]){
  root.Connector.create({name:'offline-consumer',vendor:root.Vendor.OpenAI,auth:{type:'api_key',apiKey:'offline-only'}});
  const instance=new runtime.AgentRuntime({backend:new runtime.LocalExecutionBackend({drivers:[new runtime.OneRingAIDriver({trustAgentPolicy:true})]})});
  try{await instance.createAgent({id:'consumer',instructions:'offline'}).inspect({execution:{driver:'oneringai.agent',connector:'offline-consumer',model:'gpt-4.1'},context:{},policy:{filesystem:'denied',commands:'denied',sandboxNetwork:'denied',providerWebSearch:'denied',approvals:'deny'}});}finally{await instance.destroy();root.Connector.remove('offline-consumer');}
+ if (entries.includes('oneringai/auth/openai')) {
+  const { ChatGPTPlanAuth } = await load('oneringai/auth/openai');
+  const auth = new ChatGPTPlanAuth({ applicationName: 'Offline release probe', openBrowser() { throw Error('Unexpected browser launch'); }, storage: {
+   async load() { return JSON.stringify({ version: 1, hostId: 'urn:uuid:fixture', usePlan: false, activeId: null,
+    profiles: [{ id: 'offline-account', clientId: 'oaiapp_offline' }] }); },
+   async save() { throw Error('Unexpected credential write'); },
+  } });
+  await auth.initialize();
+  try {
+   const connector = auth.createConnector('offline-plan', 'offline-account');
+   assert.equal(root.Connector.get(connector.name), connector);
+   assert.equal(connector.getOptions().openaiAccountId, 'offline-account');
+  } finally { root.Connector.remove('offline-plan'); }
+ }
 }
 for(const file of ['README.md','USER_GUIDE.md','AGENTS.md','CLAUDE.md','API_REFERENCE.md','MCP_INTEGRATION.md','docs/MIGRATION_V1_HISTORY.md','docs/RELEASE_READINESS_V2.md','apps/amos/README.md','apps/amos/docs/AGENT_RUNTIME.md','apps/hosea/README.md','apps/hosea/docs/DESIGN_SYSTEM.md','apps/hosea/docs/BACKEND_INTEGRATION.md'])await access(path.join(packageRoot,file));
 const license=(await readFile(path.join(packageRoot,'LICENSE'),'utf8')).trim();for(const app of ['amos','hosea'])assert.equal((await readFile(path.join(packageRoot,`apps/${app}/LICENSE`),'utf8')).trim(),license);

@@ -1,17 +1,16 @@
 # v1 to the unscoped OneRingAI v2 package
 
-The v2 package name is **`oneringai`**. Install the published beta with
-`npm i oneringai`. The repository remains [aantich/oneringai](https://github.com/aantich/oneringai).
+The v2 package name is **`oneringai`**. Install the current beta with
+`npm i oneringai@next`. The repository remains [aantich/oneringai](https://github.com/aantich/oneringai).
 The maintainer is Anton Antic, `anton.antich@gmail.com`.
 
 ## Current availability
 
-The current release target is **`oneringai@2.0.0-beta.5`**, which refreshes the LLM/media
-registries with the November 17 vendor review and retains opt-in host-managed
-ChatGPT plan access. It retains beta.2's same Agent API in browser
-pages/Workers and Node.js. Use `oneringai@next` or pin `oneringai@2.0.0-beta.5`.
-See [browser setup](BROWSER_AGENTS.md) and
-[beta.5 validation/publication](evaluations/BETA5_RELEASE_VALIDATION_2026_11_17.json).
+Use `oneringai@next` or pin **`oneringai@2.0.1-beta.0`**. This release adds
+[Sign in with ChatGPT](CHATGPT_PLAN_ACCESS.md) for eligible local Node.js apps.
+Agents share the same API across Node.js, browser pages, and dedicated Workers.
+The scoped `@everworker/oneringai` package is the maintenance-only v1 line.
+See [browser setup](BROWSER_AGENTS.md) and [release readiness](RELEASE_READINESS_V2.md).
 The following beta.1 publication details describe the first release.
 
 **Published — 2026-11-02:** [oneringai@2.0.0-beta.1](https://www.npmjs.com/package/oneringai)
@@ -45,7 +44,7 @@ npm run build
 npm pack --ignore-scripts --pack-destination /tmp
 ```
 
-Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.0-beta.5.tgz`).
+Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.1-beta.0.tgz`).
 For a source example, install development dependencies in the checkout and run the
 [documented examples](../examples/README.md). A local tarball is not a registry
 release, and `--ignore-scripts` here is not a publish-gate bypass: build/check the

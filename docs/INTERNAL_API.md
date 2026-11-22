@@ -1,6 +1,6 @@
 # oneringai - Internal API Reference
 
-**Generated:** 2026-11-17
+**Generated:** 2026-11-22
 **Mode:** full
 
 This document provides a complete reference for ALL APIs in `oneringai`, including internal implementations.
@@ -15,9 +15,9 @@ This document provides a complete reference for ALL APIs in `oneringai`, includi
 - [Image Generation](#image-generation) (45 items)
 - [Video Generation](#video-generation) (34 items)
 - [Agent Runtime](#agent-runtime) (237 items)
-- [Task Agents](#task-agents) (197 items)
+- [Task Agents](#task-agents) (209 items)
 - [Context Management](#context-management) (25 items)
-- [Session Management](#session-management) (139 items)
+- [Session Management](#session-management) (140 items)
 - [Tools & Function Calling](#tools--function-calling) (388 items)
 - [Streaming](#streaming) (51 items)
 - [Model Registry](#model-registry) (58 items)
@@ -14613,6 +14613,139 @@ function workspaceRelativePath(file: string, workspaceRoot: string): string | un
 
 Autonomous agents with planning and memory
 
+### ChatGPTPlanAuth `class`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:134`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L134)
+
+Local Node.js Sign in with ChatGPT flow for eligible open-source hosts.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(options: ChatGPTPlanAuthOptions)
+```
+
+**Parameters:**
+- `options`: `ChatGPTPlanAuthOptions`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `initialize()`
+
+Load saved registrations before using the manager. Repeated calls share the same load.
+
+```typescript
+initialize(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `status()`
+
+```typescript
+status(): ChatGPTPlanAuthStatus
+```
+
+**Returns:** `ChatGPTPlanAuthStatus`
+
+#### `signIn()`
+
+Register or reauthorize an account. A successful identity may still lack the plan grant.
+
+```typescript
+async signIn(options: ChatGPTPlanSignInOptions = {}): Promise&lt;ChatGPTPlanAccount&gt;
+```
+
+**Parameters:**
+- `options`: `ChatGPTPlanSignInOptions` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;ChatGPTPlanAccount&gt;`
+
+#### `cancel()`
+
+Cancel a pending sign-in before its credential commit starts.
+
+```typescript
+cancel(): void
+```
+
+**Returns:** `void`
+
+#### `selectAccount()`
+
+Set a selection for hosts that want a single active plan account.
+
+```typescript
+async selectAccount(accountId: string): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `accountId`: `string`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `clearSelection()`
+
+Disable the optional selection without signing out any accounts.
+
+```typescript
+async clearSelection(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `signOut()`
+
+Revoke and clear this registration's credentials while retaining its client mapping.
+
+```typescript
+async signOut(accountId: string): Promise&lt;{ warning?: string }&gt;
+```
+
+**Parameters:**
+- `accountId`: `string`
+
+**Returns:** `Promise&lt;{ warning?: string | undefined; }&gt;`
+
+#### `createConnector()`
+
+Register a named OpenAI connector bound to an explicit account.
+
+```typescript
+createConnector(name: string, accountId: string, options: { requireSelected?: boolean } = {}): Connector
+```
+
+**Parameters:**
+- `name`: `string`
+- `accountId`: `string`
+- `options`: `{ requireSelected?: boolean | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `Connector`
+
+#### `getAccessToken()`
+
+Retrieve a current token in trusted host code for this account and the OpenAI plan route.
+
+```typescript
+async getAccessToken(accountId: string, options: { requireSelected?: boolean } = {}): Promise&lt;string&gt;
+```
+
+**Parameters:**
+- `accountId`: `string`
+- `options`: `{ requireSelected?: boolean | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;string&gt;`
+
+</details>
+
+---
+
 ### CheckpointManager `class`
 
 📍 [`src/capabilities/taskAgent/CheckpointManager.ts:36`](../src/capabilities/taskAgent/CheckpointManager.ts#L36)
@@ -20571,6 +20704,126 @@ async cleanupRaw(): Promise&lt;{ deleted: number; keys: string[] }&gt;
 
 ---
 
+### ChatGPTPlanAccount `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:47`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L47)
+
+Public account details suitable for application UI.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `label` | `label: string;` | - |
+| `email?` | `email?: string;` | - |
+| `connected` | `connected: boolean;` | - |
+| `planEnabled` | `planEnabled: boolean;` | - |
+
+</details>
+
+---
+
+### ChatGPTPlanAuthOptions `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:65`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L65)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `openBrowser()`
+
+Opens the provided URL in the system browser. Authorization URLs are private.
+
+```typescript
+openBrowser(url: string): Promise&lt;void&gt; | void;
+```
+
+**Parameters:**
+- `url`: `string`
+
+**Returns:** `void | Promise&lt;void&gt;`
+
+#### `assertCanChange()?`
+
+Optional host check for whether an account change can start.
+
+```typescript
+assertCanChange?(): void;
+```
+
+**Returns:** `void`
+
+#### `onChanged()?`
+
+Observes committed state without receiving credential material.
+
+```typescript
+onChanged?(status: ChatGPTPlanAuthStatus): void;
+```
+
+**Parameters:**
+- `status`: `ChatGPTPlanAuthStatus`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `applicationName` | `applicationName: string;` | The actual name of the host app, used for first-time OpenAI registration. |
+| `storage` | `storage: OAuthSessionStorage;` | Host-owned credential storage. Use a single manager and process per store. |
+| `fetch?` | `fetch?: typeof fetch;` | Optional host transport for OAuth and OIDC requests. |
+| `now?` | `now?: () =&gt; number;` | Optional clock for calculating token expiry. Defaults to Date.now. |
+
+</details>
+
+---
+
+### ChatGPTPlanAuthStatus `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:56`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L56)
+
+Credential-free account and optional selection state.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `accounts` | `accounts: ChatGPTPlanAccount[];` | - |
+| `activeId` | `activeId: string | null;` | - |
+| `usePlan` | `usePlan: boolean;` | - |
+| `signingIn` | `signingIn: boolean;` | - |
+| `available` | `available: boolean;` | - |
+| `message?` | `message?: string;` | - |
+
+</details>
+
+---
+
+### ChatGPTPlanSignInOptions `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:82`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L82)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `accountId?` | `accountId?: string;` | Reuse this registration, or omit it to register a new account. |
+| `requestConsent?` | `requestConsent?: boolean;` | Request consent again after the user explicitly asks to enable plan usage. |
+| `select?` | `select?: boolean;` | Set this host's optional selection when authorization commits. Defaults to false. |
+| `signal?` | `signal?: AbortSignal;` | - |
+
+</details>
+
+---
+
 ### CheckpointStrategy `interface`
 
 📍 [`src/capabilities/taskAgent/CheckpointManager.ts:8`](../src/capabilities/taskAgent/CheckpointManager.ts#L8)
@@ -20651,6 +20904,25 @@ quota without also raising the destructive `memory_forget` quota. |
 `MemoryToolDeps.forbiddenEntityTypes`). Threaded to the write tools so the
 host can forbid LLM-authored types it populates deterministically (e.g.
 `event`). Omit for no restriction. |
+
+</details>
+
+---
+
+### Credentials `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:21`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L21)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `accessToken` | `accessToken: string;` | - |
+| `refreshToken?` | `refreshToken?: string;` | - |
+| `idToken` | `idToken: string;` | - |
+| `expiresAt` | `expiresAt: number;` | - |
+| `scopes` | `scopes: string[];` | - |
 
 </details>
 
@@ -22289,6 +22561,25 @@ Context passed to priority calculator - varies by agent type
 
 ---
 
+### Profile `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:29`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L29)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `clientId` | `clientId: string;` | - |
+| `subject?` | `subject?: string;` | - |
+| `email?` | `email?: string;` | - |
+| `credentials?` | `credentials?: Credentials;` | - |
+
+</details>
+
+---
+
 ### RelatedTask `interface`
 
 📍 [`src/memory/types.ts:391`](../src/memory/types.ts#L391)
@@ -22583,6 +22874,25 @@ Information about a stale entry for LLM notification
 | `previousPriority` | `previousPriority: MemoryPriority;` | - |
 | `newPriority` | `newPriority: MemoryPriority;` | - |
 | `taskIds?` | `taskIds?: string[];` | - |
+
+</details>
+
+---
+
+### State `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:38`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L38)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `hostId` | `hostId: string;` | - |
+| `profiles` | `profiles: Profile[];` | - |
+| `activeId` | `activeId: string | null;` | - |
+| `usePlan` | `usePlan: boolean;` | - |
 
 </details>
 
@@ -23610,6 +23920,16 @@ type TaskStatusForMemory = 'pending' | 'in_progress' | 'completed' | 'failed' | 
 
 ---
 
+### accountInfo `function`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:96`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L96)
+
+```typescript
+function accountInfo(profile: Profile): ChatGPTPlanAccount
+```
+
+---
+
 ### addTierPrefix `function`
 
 📍 [`src/domain/entities/Memory.ts:191`](../src/domain/entities/Memory.ts#L191)
@@ -24119,6 +24439,16 @@ export function hasModelTransport(provider: object): boolean
 
 ---
 
+### hasPlan `function`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:92`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L92)
+
+```typescript
+function hasPlan(profile: Profile): boolean
+```
+
+---
+
 ### isSimpleScope `function`
 
 📍 [`src/domain/entities/Memory.ts:46`](../src/domain/entities/Memory.ts#L46)
@@ -24241,6 +24571,16 @@ Validate a `task_update` op (signal-reconciliation pass). Requires a string
 
 ```typescript
 function parseOneTaskOp(o: Record&lt;string, unknown&gt;): TaskReconciliationOp | null
+```
+
+---
+
+### parseState `function`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:120`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L120)
+
+```typescript
+function parseState(snapshot: string): State
 ```
 
 ---
@@ -24425,6 +24765,16 @@ async function validateTaskCompletion(
 
 ```typescript
 function validateTaskStates(cfg: TaskStatesConfig | undefined): TaskStatesConfig
+```
+
+---
+
+### validProfile `function`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:106`](../src/connectors/oauth/ChatGPTPlanAuth.ts#L106)
+
+```typescript
+function validProfile(profile: Profile): boolean
 ```
 
 ---
@@ -29280,6 +29630,52 @@ Unified agent storage interface
 | Property | Type | Description |
 |----------|------|-------------|
 | `connectors` | `connectors: Record&lt;string, string&gt;;` | Maps hash -> name for reverse lookup |
+
+</details>
+
+---
+
+### OAuthSessionStorage `interface`
+
+📍 [`src/connectors/oauth/domain/OAuthSessionStorage.ts:2`](../src/connectors/oauth/domain/OAuthSessionStorage.ts#L2)
+
+Storage for an OAuth integration's opaque installation and session snapshot.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `load()`
+
+Read the snapshot, or return null for a new installation.
+
+```typescript
+load(): Promise&lt;string | null&gt;;
+```
+
+**Returns:** `Promise&lt;string | null&gt;`
+
+#### `save()`
+
+Atomically replace the protected snapshot and resolve after it is committed.
+
+```typescript
+save(snapshot: string): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `snapshot`: `string`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `available()?`
+
+Optional synchronous check for an unlocked and usable credential store.
+
+```typescript
+available?(): boolean;
+```
+
+**Returns:** `boolean`
 
 </details>
 

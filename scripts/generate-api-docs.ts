@@ -785,6 +785,7 @@ async function generateApiDocs(config: GeneratorConfig): Promise<void> {
   const srcPath = path.join(projectRoot, 'src');
   const publicEntryPaths = [
     path.join(srcPath, 'index.ts'),
+    path.join(srcPath, 'connectors', 'oauth', 'openai.ts'),
     path.join(srcPath, 'agent-runtime', 'index.ts'),
     path.join(srcPath, 'agent-runtime', 'codex.ts'),
     path.join(srcPath, 'agent-runtime', 'claude.ts'),

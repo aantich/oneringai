@@ -68,14 +68,15 @@ try {
   };
   // The two local SDK adapters deliberately expose their optional SDK's types.
   // First prove the core needs neither peer, then check the supported opt-in install.
-  await writeEntries(entries.filter(entry => !['oneringai/agent-runtime/codex', 'oneringai/agent-runtime/claude'].includes(entry)));
+  const coreEntries = entries.filter(entry => !['oneringai/agent-runtime/codex', 'oneringai/agent-runtime/claude'].includes(entry));
+  await writeEntries(coreEntries);
   await writeFile(path.join(compatibility, 'tsconfig.json'), JSON.stringify({
     compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', strict: true,
       noEmit: true, skipLibCheck: false, esModuleInterop: true, types: ['node'], typeRoots: [path.join(consumer, 'node_modules/@types')] },
     include: ['*.ts', '*.mts', '*.cts'],
   }));
   await command(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc'), '-p', path.join(compatibility, 'tsconfig.json')], consumer);
-  report.coreConsumerTypes = 'ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false';
+  report.coreConsumerTypes = `ESM and CJS; public compatibility fixtures and ${coreEntries.length} entries; no optional SDKs; skipLibCheck=false`;
   const audit = JSON.parse(await command(npm, ['audit', '--omit=dev', '--json', '--cache', cache], consumer, true));
   await writeFile(path.join(work, 'audit.json'), JSON.stringify(audit, null, 2) + '\n');
   report.audit = await checkConsumerAudit(audit, consumer);
@@ -86,7 +87,7 @@ try {
   for (const peer of peers) report.optionalSdkVersions[peer] = JSON.parse(await readFile(path.join(consumer, 'node_modules', peer, 'package.json'), 'utf8')).version;
   await writeEntries(entries);
   await command(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc'), '-p', path.join(compatibility, 'tsconfig.json')], consumer);
-  report.optionalConsumerTypes = 'ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false';
+  report.optionalConsumerTypes = `ESM and CJS; all ${entries.length} entries with declared optional SDK peers installed; skipLibCheck=false`;
   const optionalOutput = await command(process.env.ONERINGAI_CONSUMER_NODE || process.execPath, ['probe.mjs'], consumer, false, {
     ONERINGAI_EXPECTED_VERSION: pkg.version, ONERINGAI_PPTX_FIXTURE: path.join(root, 'docs/architecture.pptx'), ONERINGAI_PROBE_OPTIONAL_SDKS: '1',
   });

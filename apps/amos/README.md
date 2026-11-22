@@ -48,6 +48,11 @@ npm run start
 
 On first run, you'll be prompted to configure an API key.
 
+From the repository root, `npm run example:chatgpt-plan -- --live` runs a
+standalone terminal example against an eligible ChatGPT plan. It opens the
+system browser, runs a single prompt through a plan-backed OneRingAI Agent, and
+signs out on exit. See [ChatGPT plan access](../../docs/CHATGPT_PLAN_ACCESS.md#library-integration).
+
 ## Commands
 
 | Command | Alias | Description |

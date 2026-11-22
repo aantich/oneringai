@@ -1,6 +1,6 @@
 # oneringai - API Reference
 
-**Generated:** 2026-11-17
+**Generated:** 2026-11-22
 **Mode:** public
 
 This document provides a complete reference for the public API of `oneringai`.
@@ -22,9 +22,9 @@ for TypeScript setup, custom plugins, storage and capability boundaries.
 - [Image Generation](#image-generation) (25 items)
 - [Video Generation](#video-generation) (23 items)
 - [Agent Runtime](#agent-runtime) (103 items)
-- [Task Agents](#task-agents) (134 items)
+- [Task Agents](#task-agents) (139 items)
 - [Context Management](#context-management) (14 items)
-- [Session Management](#session-management) (79 items)
+- [Session Management](#session-management) (80 items)
 - [Tools & Function Calling](#tools--function-calling) (233 items)
 - [Streaming](#streaming) (35 items)
 - [Model Registry](#model-registry) (52 items)
@@ -10160,6 +10160,139 @@ type WorkspaceRequest = | { type: 'local-directory'; path: string }
 
 Autonomous agents with planning and memory
 
+### ChatGPTPlanAuth `class`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:134`](src/connectors/oauth/ChatGPTPlanAuth.ts#L134)
+
+Local Node.js Sign in with ChatGPT flow for eligible open-source hosts.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(options: ChatGPTPlanAuthOptions)
+```
+
+**Parameters:**
+- `options`: `ChatGPTPlanAuthOptions`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `initialize()`
+
+Load saved registrations before using the manager. Repeated calls share the same load.
+
+```typescript
+initialize(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `status()`
+
+```typescript
+status(): ChatGPTPlanAuthStatus
+```
+
+**Returns:** `ChatGPTPlanAuthStatus`
+
+#### `signIn()`
+
+Register or reauthorize an account. A successful identity may still lack the plan grant.
+
+```typescript
+async signIn(options: ChatGPTPlanSignInOptions = {}): Promise&lt;ChatGPTPlanAccount&gt;
+```
+
+**Parameters:**
+- `options`: `ChatGPTPlanSignInOptions` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;ChatGPTPlanAccount&gt;`
+
+#### `cancel()`
+
+Cancel a pending sign-in before its credential commit starts.
+
+```typescript
+cancel(): void
+```
+
+**Returns:** `void`
+
+#### `selectAccount()`
+
+Set a selection for hosts that want a single active plan account.
+
+```typescript
+async selectAccount(accountId: string): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `accountId`: `string`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `clearSelection()`
+
+Disable the optional selection without signing out any accounts.
+
+```typescript
+async clearSelection(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `signOut()`
+
+Revoke and clear this registration's credentials while retaining its client mapping.
+
+```typescript
+async signOut(accountId: string): Promise&lt;{ warning?: string }&gt;
+```
+
+**Parameters:**
+- `accountId`: `string`
+
+**Returns:** `Promise&lt;{ warning?: string | undefined; }&gt;`
+
+#### `createConnector()`
+
+Register a named OpenAI connector bound to an explicit account.
+
+```typescript
+createConnector(name: string, accountId: string, options: { requireSelected?: boolean } = {}): Connector
+```
+
+**Parameters:**
+- `name`: `string`
+- `accountId`: `string`
+- `options`: `{ requireSelected?: boolean | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `Connector`
+
+#### `getAccessToken()`
+
+Retrieve a current token in trusted host code for this account and the OpenAI plan route.
+
+```typescript
+async getAccessToken(accountId: string, options: { requireSelected?: boolean } = {}): Promise&lt;string&gt;
+```
+
+**Parameters:**
+- `accountId`: `string`
+- `options`: `{ requireSelected?: boolean | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;string&gt;`
+
+</details>
+
+---
+
 ### CheckpointManager `class`
 
 📍 [`src/capabilities/taskAgent/CheckpointManager.ts:36`](src/capabilities/taskAgent/CheckpointManager.ts#L36)
@@ -15996,6 +16129,126 @@ async cleanupRaw(): Promise&lt;{ deleted: number; keys: string[] }&gt;
 | Property | Type | Description |
 |----------|------|-------------|
 | `name` | `name: "working_memory"` | - |
+
+</details>
+
+---
+
+### ChatGPTPlanAccount `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:47`](src/connectors/oauth/ChatGPTPlanAuth.ts#L47)
+
+Public account details suitable for application UI.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `label` | `label: string;` | - |
+| `email?` | `email?: string;` | - |
+| `connected` | `connected: boolean;` | - |
+| `planEnabled` | `planEnabled: boolean;` | - |
+
+</details>
+
+---
+
+### ChatGPTPlanAuthOptions `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:65`](src/connectors/oauth/ChatGPTPlanAuth.ts#L65)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `openBrowser()`
+
+Opens the provided URL in the system browser. Authorization URLs are private.
+
+```typescript
+openBrowser(url: string): Promise&lt;void&gt; | void;
+```
+
+**Parameters:**
+- `url`: `string`
+
+**Returns:** `void | Promise&lt;void&gt;`
+
+#### `assertCanChange()?`
+
+Optional host check for whether an account change can start.
+
+```typescript
+assertCanChange?(): void;
+```
+
+**Returns:** `void`
+
+#### `onChanged()?`
+
+Observes committed state without receiving credential material.
+
+```typescript
+onChanged?(status: ChatGPTPlanAuthStatus): void;
+```
+
+**Parameters:**
+- `status`: `ChatGPTPlanAuthStatus`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `applicationName` | `applicationName: string;` | The actual name of the host app, used for first-time OpenAI registration. |
+| `storage` | `storage: OAuthSessionStorage;` | Host-owned credential storage. Use a single manager and process per store. |
+| `fetch?` | `fetch?: typeof fetch;` | Optional host transport for OAuth and OIDC requests. |
+| `now?` | `now?: () =&gt; number;` | Optional clock for calculating token expiry. Defaults to Date.now. |
+
+</details>
+
+---
+
+### ChatGPTPlanAuthStatus `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:56`](src/connectors/oauth/ChatGPTPlanAuth.ts#L56)
+
+Credential-free account and optional selection state.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `accounts` | `accounts: ChatGPTPlanAccount[];` | - |
+| `activeId` | `activeId: string | null;` | - |
+| `usePlan` | `usePlan: boolean;` | - |
+| `signingIn` | `signingIn: boolean;` | - |
+| `available` | `available: boolean;` | - |
+| `message?` | `message?: string;` | - |
+
+</details>
+
+---
+
+### ChatGPTPlanSignInOptions `interface`
+
+📍 [`src/connectors/oauth/ChatGPTPlanAuth.ts:82`](src/connectors/oauth/ChatGPTPlanAuth.ts#L82)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `accountId?` | `accountId?: string;` | Reuse this registration, or omit it to register a new account. |
+| `requestConsent?` | `requestConsent?: boolean;` | Request consent again after the user explicitly asks to enable plan usage. |
+| `select?` | `select?: boolean;` | Set this host's optional selection when authorization commits. Defaults to false. |
+| `signal?` | `signal?: AbortSignal;` | - |
 
 </details>
 
@@ -22855,6 +23108,52 @@ Unified agent storage interface
 | `memory` | `memory: IMemoryStorage;` | - |
 | `plan` | `plan: IPlanStorage;` | - |
 | `agent` | `agent: IAgentStateStorage;` | - |
+
+</details>
+
+---
+
+### OAuthSessionStorage `interface`
+
+📍 [`src/connectors/oauth/domain/OAuthSessionStorage.ts:2`](src/connectors/oauth/domain/OAuthSessionStorage.ts#L2)
+
+Storage for an OAuth integration's opaque installation and session snapshot.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `load()`
+
+Read the snapshot, or return null for a new installation.
+
+```typescript
+load(): Promise&lt;string | null&gt;;
+```
+
+**Returns:** `Promise&lt;string | null&gt;`
+
+#### `save()`
+
+Atomically replace the protected snapshot and resolve after it is committed.
+
+```typescript
+save(snapshot: string): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `snapshot`: `string`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `available()?`
+
+Optional synchronous check for an unlocked and usable credential store.
+
+```typescript
+available?(): boolean;
+```
+
+**Returns:** `boolean`
 
 </details>
 
