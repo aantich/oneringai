@@ -6,7 +6,7 @@ The maintainer is Anton Antic, `anton.antich@gmail.com`.
 
 ## Current availability
 
-Use `oneringai` or pin **`oneringai@2.1.0`**. Stable v2 includes
+Use `oneringai` or pin **`oneringai@2.0.2`**. Stable v2 includes
 [Sign in with ChatGPT](CHATGPT_PLAN_ACCESS.md) for eligible local Node.js apps,
 plus [oMLX](../USER_GUIDE.md#local-models-with-omlx) and Ollama for local model
 inference and image input in AMOS.
@@ -46,7 +46,7 @@ npm run build
 npm pack --ignore-scripts --pack-destination /tmp
 ```
 
-Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.1.0.tgz`).
+Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.2.tgz`).
 For a source example, install development dependencies in the checkout and run the
 [documented examples](../examples/README.md). A local tarball is not a registry
 release, and `--ignore-scripts` here is not a publish-gate bypass: build/check the

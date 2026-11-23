@@ -23,7 +23,7 @@ AMOS is the complete terminal application: configure connectors, run agents,
 switch harnesses, inspect activity, and recover saved sessions. Its
 [application guide](apps/amos/README.md) also covers native OneRingAI mode.
 
-**Stable v2:** **[`oneringai@2.1.0`](https://www.npmjs.com/package/oneringai/v/2.1.0)**.
+**Stable v2:** **[`oneringai@2.0.2`](https://www.npmjs.com/package/oneringai/v/2.0.2)**.
 Install the unscoped `oneringai` package or pin this version.
 The scoped `@everworker/oneringai` package is the legacy v1 maintenance line.
 See the [migration guide](docs/PACKAGE_MIGRATION.md) and [release readiness](docs/RELEASE_READINESS_V2.md).
@@ -34,7 +34,7 @@ See the [migration guide](docs/PACKAGE_MIGRATION.md) and [release readiness](doc
 models and runs the same OneRingAI agent loop on Apple silicon. Inkling 2 Mini
 supports image input and application tool calls in both the SDK and AMOS.
 [Setup and example](USER_GUIDE.md#local-models-with-omlx) ·
-[2.1.0 release notes](CHANGELOG.md#210--2026-11-23).
+[2.0.2 release notes](CHANGELOG.md#202--2026-11-23).
 
 **Local Inkling 2 Mini.** Run a tool-using, image-aware OneRingAI agent with
 Ollama 0.40.17+ on Apple silicon. Pull it with `ollama pull inkling-2-mini`, then
@@ -87,7 +87,7 @@ TypeScript declarations. Install the stable v2 package:
 npm install oneringai
 ```
 
-For a reproducible install, pin `oneringai@2.1.0`.
+For a reproducible install, pin `oneringai@2.0.2`.
 The [source checkout/local package workflow](docs/PACKAGE_MIGRATION.md#try-v2-before-publication)
 remains available for development.
 Load your own environment configuration before creating connectors; the library

@@ -18,11 +18,11 @@ same module with its existing encrypted state. See the [User Guide walkthrough](
 and [CLI example](../examples/chatgpt-plan-cli.ts). Validation uses offline OAuth,
 JWKS and Responses fixtures. Live OpenAI admission remains unverified.
 
-**2.1.0 — 2026-11-23:** `Vendor.OMLX` connects OneRingAI and AMOS to an existing
+**2.0.2 — 2026-11-23:** `Vendor.OMLX` connects OneRingAI and AMOS to an existing
 oMLX 0.8.3 server on Apple silicon. It discovers installed models and supports
 vision and application tools with Inkling 2 Mini.
 [Connector setup](../USER_GUIDE.md#local-models-with-omlx) ·
-[Release notes](../CHANGELOG.md#210--2026-11-23).
+[Release notes](../CHANGELOG.md#202--2026-11-23).
 
 **Stable 2.0.1 — 2026-11-23:** This release
 includes local Inkling 2 Mini with image input and tools in AMOS, plus registry
@@ -213,7 +213,7 @@ scope, dependencies, research, and acceptance criteria.
   12 — opt-in presets, resolved capability inspection and AMOS adoption;
   14A — optional managed model routing;
   16A — opt-in provider-native compaction composed with context plugins, including all review corrections.
-- **Version 2 release:** `2.0.0-beta.1` was the first prerelease on 2026-11-02. See [2.1.0](../CHANGELOG.md#210--2026-11-23) for the current release.
+- **Version 2 release:** `2.0.0-beta.1` was the first prerelease on 2026-11-02. See [2.0.2](../CHANGELOG.md#202--2026-11-23) for the current release.
 
 “Version 2” includes the prepared unscoped package and the recorded development
 initiative. Implemented capabilities at source revision `318c84b` are included in

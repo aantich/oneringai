@@ -1,9 +1,9 @@
 # OneRingAI v2 User Guide
 
-**Documented version:** `oneringai@2.1.0` · **Reviewed:** 2026-11-23
+**Documented version:** `oneringai@2.0.2` · **Reviewed:** 2026-11-23
 
 **Stable v2:** Install from [npm](https://www.npmjs.com/package/oneringai) with
-`npm install oneringai`, or pin `oneringai@2.1.0`.
+`npm install oneringai`, or pin `oneringai@2.0.2`.
 External harness and experimental-policy boundaries still apply.
 
 This guide describes the v2 APIs; use documentation matching your installed
@@ -164,7 +164,7 @@ Install the unscoped v2 package:
 npm install oneringai
 ```
 
-Pin `oneringai@2.1.0` for reproducible installs. For source development,
+Pin `oneringai@2.0.2` for reproducible installs. For source development,
 follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
 ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
 native desktop dependencies are needed only for their respective integrations.

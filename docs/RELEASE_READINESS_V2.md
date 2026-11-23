@@ -9,7 +9,7 @@ GitHub Pages deployment. Record the package version, source snapshot, website
 commit and deployment result; npm publication alone does not complete the
 release handoff. Earlier publication records below retain their historical scope.
 
-**2.1.0 — 2026-11-23:** The oMLX adapter was exercised against the local oMLX
+**2.0.2 — 2026-11-23:** The oMLX adapter was exercised against the local oMLX
 0.8.3 server on an M4 Max. A managed SDK run and a streamed AMOS terminal turn
 read an image, executed an application tool with the observed values, and
 reported its result. A direct SDK run returned a validated strict JSON Schema
