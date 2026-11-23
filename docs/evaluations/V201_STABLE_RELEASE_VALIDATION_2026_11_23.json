@@ -1,0 +1,69 @@
+{
+  "package": "oneringai@2.0.1",
+  "date": "2026-11-23",
+  "branch": "main",
+  "status": "published-registry-verified-and-website-deployed",
+  "validation": {
+    "releaseCheck": "pass",
+    "unitTests": 9553,
+    "unitTestFiles": 441,
+    "offlineExamples": 31,
+    "documentationTypeScriptBlocks": 512,
+    "browserAndWorkerChecks": "pass on Chromium, Firefox, and WebKit",
+    "amosTypecheckAndBuild": "pass",
+    "hoseaTypecheckDesignTestsAndBuild": "pass",
+    "localInklingUserGuideExample": {
+      "model": "inkling-2-mini:latest",
+      "ollamaVersion": "0.40.17",
+      "applicationToolCall": "pass",
+      "imageDescription": "pass",
+      "hostedProviderCalls": 0
+    }
+  },
+  "publication": {
+    "releaseTag": "v2.0.1",
+    "releaseCommit": "07b669012026f0ecaa46ce7863c99c378ca0eb30",
+    "registryPage": "https://www.npmjs.com/package/oneringai/v/2.0.1",
+    "method": "npm staged publishing",
+    "stageId": "b042ca53-36cb-48aa-b47a-69d3efbe30a1",
+    "publishedAt": "2026-11-23T15:50:14.948Z",
+    "distTags": {
+      "latest": "2.0.1",
+      "next": "2.0.1-beta.1"
+    },
+    "integrity": "sha512-qna6rsHUouAogFEe4v43jRfwevaORTSlI+epVaYMqiTT05Q+5Nsa0+npAKtmnGBwvwKo/9o+Nhirpc1eG867PQ==",
+    "shasum": "b0d648723695e881cbcffe22d72d0282a6d10651",
+    "archiveMatchesValidatedArtifact": true,
+    "freshRegistryInstall": {
+      "command": "npm install oneringai",
+      "resolvedVersion": "2.0.1",
+      "nodeVersions": ["22.13.1", "24.20.0"],
+      "entryPoints": 12,
+      "moduleFormats": ["esm", "cjs"],
+      "documentFormats": ["csv", "xlsx", "docx", "pptx", "odt", "odp", "ods", "rtf", "pdf"],
+      "inklingVisionAndToolsMetadata": true,
+      "documentationAndLicenses": true
+    }
+  },
+  "website": {
+    "url": "https://oneringai.io/",
+    "version": "2.0.1",
+    "librarySnapshot": "07b669012026f0ecaa46ce7863c99c378ca0eb30",
+    "commit": "de71f05d674ed160210993e6cbfe76578655e137",
+    "localChecksPassed": 18,
+    "deployment": {
+      "workflow": "Build and deploy website",
+      "url": "https://github.com/aantich/oneringaiio/actions/runs/45210501591",
+      "status": "success",
+      "completedAt": "2026-11-23T15:56:07Z"
+    },
+    "publicVerification": {
+      "browser": "Chrome",
+      "viewportWidthsPx": [1440, 390, 320],
+      "routes": ["/", "/docs/start/", "/docs/user-guide/", "/docs/examples/", "/docs/api-reference/", "/docs/amos-cookbook/", "/applications/"],
+      "inklingGuide": "https://oneringai.io/docs/user-guide/local-inkling-2-mini-with-ollama/",
+      "stableNpmLabelAndSnapshot": "pass",
+      "keyboardNavigationThemeClipboardAndSearch": "pass"
+    }
+  }
+}
