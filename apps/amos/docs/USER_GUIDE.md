@@ -59,7 +59,7 @@ npm run dev
 npm run start
 ```
 
-On first run, AMOS will prompt you to configure a connector (API key). Follow the interactive wizard to set up your preferred AI provider.
+On first run, AMOS prompts you to configure a connector. The wizard includes credential-free local Ollama setup.
 
 ---
 
@@ -308,11 +308,22 @@ Connectors let you switch between API keys and providers. AMOS stores connector 
 /connector add
 ```
 
-Follow the interactive wizard:
-1. Choose a vendor (OpenAI, Anthropic, etc.)
-2. Enter a name for the connector
-3. Enter your API key
-4. Optionally configure custom base URL
+Enter a connector name and select a vendor. Choose the appropriate
+authentication type, enter credentials where applicable, and set a custom base
+URL if needed.
+
+### Local Ollama with Inkling 2 Mini
+
+With Ollama running and `inkling-2-mini` installed, use `/connector add` and
+choose vendor `ollama` and authentication `none`. Accept the default
+`http://localhost:11434/v1` endpoint and `inkling-2-mini` model, or specify the
+installed tag you want to use. When you use that connector, AMOS selects its
+configured model for the agent.
+
+Use `/image "~/Pictures/my screenshot.png" What is in this image?` to attach
+a local image to the active agent. Image turns can call the tools enabled for
+the agent and follow the same permission rules as text turns. The attachment
+becomes part of the current conversation and can appear in saved sessions.
 
 ### Using Multiple Keys
 
@@ -869,7 +880,7 @@ interface ToolFunction {
 
 ### "No connector configured"
 
-Run `/connector add` to set up an API key.
+Run `/connector add` to configure a provider or connect to local Ollama.
 
 ### "Model not found"
 

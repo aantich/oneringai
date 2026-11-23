@@ -347,6 +347,8 @@ describe('Stage 10 opt-in managed-loop policies', () => {
     const directory = await mkdtemp(join(tmpdir(), 'loop-policy-session-'));
     const storage = new FileContextStorage({ agentId: 'loop', baseDirectory: directory });
     const context = { model: 'gpt-4o-mini', agentId: 'loop', userId: 'host', storage,
+      // This fixture checks checkpoints; background journal writes would race directory cleanup.
+      journalFilter: [],
       features: { workingMemory: false, inContextMemory: false, taskState: true },
       plugins: { taskState: { scope: { ownerId: 'host', namespace: 'loop' }, taskId: 'task' } } };
     try {

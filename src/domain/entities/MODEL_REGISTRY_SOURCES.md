@@ -1,6 +1,26 @@
 # Model Registry Sources
 
-Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`ImageModel.ts`), Video (`VideoModel.ts`), TTS (`TTSModel.ts`), STT (`STTModel.ts`), and embeddings (`EmbeddingModel.ts`). Catalog discovery/lifecycle audited 2026-11-17; individual records retain their own verification dates. See [the November 17 review](../../../docs/MODEL_REGISTRY_REVIEW_2026_11_17.md) for the latest changes and remaining endpoint boundaries; [the November 11 audit](../../../docs/MODEL_REGISTRY_REFRESH_2026_11_11.md) for additions, changed prices and adapter boundaries.
+Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`ImageModel.ts`), Video (`VideoModel.ts`), TTS (`TTSModel.ts`), STT (`STTModel.ts`), and embeddings (`EmbeddingModel.ts`). The last catalog-wide review was 2026-11-17. Individual records retain their own verification dates. See [the November 17 review](../../../docs/MODEL_REGISTRY_REVIEW_2026_11_17.md) and [the November 11 audit](../../../docs/MODEL_REGISTRY_REFRESH_2026_11_11.md) for earlier changes and endpoint boundaries.
+
+## November 23, 2026 vendor review
+
+| Vendor | Registry changes |
+| --- | --- |
+| OpenAI | GPT-6.2 Astra and Sol have 922,000 maximum input tokens and 128,000 maximum output tokens within a 1,050,000-token context. Function calling uses Responses. Standard rates per million input, cached input, and output tokens are $8/$0.40/$40 for Astra and $2/$0.10/$10 for Sol. The long-context rate starts at 272,001 input tokens. Cache-write estimates use 30-minute retention. Ultrafast estimates use the current 3× rate through February 28, 2027 Pacific time. [Astra](https://developers.openai.com/api/docs/models/gpt-6.2-astra), [Sol](https://developers.openai.com/api/docs/models/gpt-6.2-sol), [pricing](https://developers.openai.com/api/docs/pricing) |
+| OpenAI | Both GPT-Live versions use the dedicated Live sessions endpoint, with $0.05/minute for active inference and $0.02/minute for WebRTC standby. The registry duration field describes active inference. [GPT-Live-1.1](https://developers.openai.com/api/docs/models/gpt-live-1.1), [release notes](https://developers.openai.com/api/docs/changelog) |
+| Anthropic | Sonnet 4.5 and its undated alias are deprecated. The Claude API retirement is scheduled for November 30, with Sonnet 5.5 recommended. Fable 5.2, Mythos 5.2, and Opus 5.5 now have documented 2× Fast estimates in the registry. [Catalog](https://platform.claude.com/docs/en/models/overview), [lifecycle](https://platform.claude.com/docs/en/about-claude/model-deprecations), [pricing](https://platform.claude.com/docs/en/about-claude/pricing#fast-mode-pricing) |
+| Google | Gemini 4 Neon has a 1,048,576-token unified context, 65,536-token foreground output, implicit caching, and `high` default thinking with `xhigh` available. Standard rates are $3/$0.15/$15 per million input, cache-read, and output tokens. The first-party Cloud listing uses the same model ID. [Model](https://aistudio.google.com/docs/models/gemini-4-neon), [pricing](https://aistudio.google.com/docs/pricing#gemini-4-neon), [Cloud catalog](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/google-models) |
+| xAI | Grok Build 0.1 stopped serving on November 19. The registry keeps the retired ID for lookup and historical usage. [Release notes](https://docs.x.ai/developers/release-notes?release=2026-11-f16a2d1a), [current catalog](https://docs.x.ai/developers/models) |
+
+The existing GPT-5.6 Sol, Terra, and Luna records now include their published 50%
+Flex rates. OpenAI lists November 30 as the end of Sol's promotional pricing.
+[OpenAI pricing](https://developers.openai.com/api/docs/pricing).
+
+OpenAI's discounted background completion windows and Google's long decode use
+separate request workflows. Genie 4 uses an interactive world-generation stream.
+Gemini transcription voice editing uses additional task inputs on existing IDs.
+Those workflows require their own adapter support. [OpenAI changelog](https://developers.openai.com/api/docs/changelog),
+[Google release notes](https://aistudio.google.com/docs/changelog).
 
 ---
 
@@ -184,6 +204,17 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - Google Cloud deployment catalog: https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/google-models
 
 Together Responses/Messages only list GLM 5.2/5.3/5.3 Flash and DeepSeek V4.1 Flash 1017; the other curated Together models declare Chat Completions only. The November 17 review adds Together Inkling 2 Small and Glimpse 1.0, the billed Ollama Inkling cloud model, Perplexity-hosted Hydrogen and Groq GPT-OSS 20B. Metadata discovery is separate from implemented endpoint/adapter support.
+
+[Inkling 2 Mini](https://ollama.com/library/inkling-2-mini/tags) runs locally on
+Apple silicon from [Ollama 0.40.17](https://github.com/ollama/ollama/releases/tag/v0.40.17).
+Local verification on November 23 covered image input and function calls in
+`Agent.run()` and `Agent.stream()`, plus an image returned by a host tool. The
+installed model reports a 1,048,576-token context ceiling. Ollama's effective
+context depends on [server configuration and memory](https://docs.ollama.com/context-length).
+The separate output ceiling is unpublished. OneRingAI uses stateless Responses
+for managed agent runs. The registry's `structuredOutput` flag enables both
+native `json_schema` and `json_object` handling. Inkling 2 Mini uses OneRingAI's
+prompt-based path here because Ollama Responses handles `json_schema` alone.
 
 ---
 

@@ -1,13 +1,14 @@
 # v1 to the unscoped OneRingAI v2 package
 
-The v2 package name is **`oneringai`**. Install the current beta with
-`npm i oneringai@next`. The repository remains [aantich/oneringai](https://github.com/aantich/oneringai).
+The v2 package name is **`oneringai`**. Install the stable release with
+`npm install oneringai`. The repository remains [aantich/oneringai](https://github.com/aantich/oneringai).
 The maintainer is Anton Antic, `anton.antich@gmail.com`.
 
 ## Current availability
 
-Use `oneringai@next` or pin **`oneringai@2.0.1-beta.1`**. This release adds
-[Sign in with ChatGPT](CHATGPT_PLAN_ACCESS.md) for eligible local Node.js apps.
+Use `oneringai` or pin **`oneringai@2.0.1`**. Stable v2 includes
+[Sign in with ChatGPT](CHATGPT_PLAN_ACCESS.md) for eligible local Node.js apps,
+and adds local Ollama setup and image input in AMOS.
 Agents share the same API across Node.js, browser pages, and dedicated Workers.
 The scoped `@everworker/oneringai` package is the maintenance-only v1 line.
 See [browser setup](BROWSER_AGENTS.md) and [release readiness](RELEASE_READINESS_V2.md).
@@ -24,7 +25,7 @@ Earlier E404/name-availability observations are pre-publication history.
 
 V2 was committed and merged into `main` at `9c18dfa` on **2026-11-02** and pushed
 to GitHub. `main` is the canonical v2 development line. V1 maintenance stays on
-`version1`. Stable `2.0.0` and legacy deprecation remain separate steps.
+`version1` under the scoped package name.
 
 Published v1 remains `@everworker/oneringai@1.2.1`. It is not renamed, removed,
 silently redirected or deprecated before a verified replacement is installable.
@@ -33,8 +34,8 @@ identity. Current source, examples and public API documentation use `oneringai`.
 
 ## Try v2 before publication
 
-This original pre-publication workflow also supports source development after
-the beta publication. Registry users can use the install commands above.
+Use this workflow for source development. Registry users can use the install
+commands above.
 
 From this checkout, build and create a local tarball without publishing:
 
@@ -44,7 +45,7 @@ npm run build
 npm pack --ignore-scripts --pack-destination /tmp
 ```
 
-Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.1-beta.1.tgz`).
+Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.1.tgz`).
 For a source example, install development dependencies in the checkout and run the
 [documented examples](../examples/README.md). A local tarball is not a registry
 release, and `--ignore-scripts` here is not a publish-gate bypass: build/check the
@@ -52,14 +53,7 @@ source first and do not use it to skip `prepublishOnly` when actually publishing
 
 ## Consumer migration
 
-After a v2 prerelease is published, opt in explicitly:
-
-```bash
-npm uninstall @everworker/oneringai
-npm install oneringai@next
-```
-
-After stable v2 is published:
+Replace the v1 dependency with the stable v2 package:
 
 ```bash
 npm uninstall @everworker/oneringai

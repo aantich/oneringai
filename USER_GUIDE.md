@@ -1,9 +1,9 @@
 # OneRingAI v2 User Guide
 
-**Documented version:** `oneringai@2.0.1-beta.1` · **Reviewed:** 2026-11-22
+**Documented version:** `oneringai@2.0.1` · **Reviewed:** 2026-11-23
 
-**v2 beta:** Install from [npm](https://www.npmjs.com/package/oneringai) with
-`npm install oneringai@next`, or pin `oneringai@2.0.1-beta.1`.
+**Stable v2:** Install from [npm](https://www.npmjs.com/package/oneringai) with
+`npm install oneringai`, or pin `oneringai@2.0.1`.
 External harness and experimental-policy boundaries still apply.
 
 This guide describes the v2 APIs; use documentation matching your installed
@@ -15,6 +15,7 @@ local validation from publication and live-provider gates. For a running applica
 
 - **First integration:** [Getting started](#getting-started), [core concepts](#core-concepts),
   [tools](#tools--function-calling), then [persistence](#session-persistence).
+- **Running locally:** [Inkling 2 Mini with Ollama](#local-inkling-2-mini-with-ollama).
 - **Using a ChatGPT plan:** [Sign in with ChatGPT and create an account-bound agent](#chatgpt-plan-authentication).
 - **Coming from v1:** [Package migration](docs/PACKAGE_MIGRATION.md), then the
   [v2 capability map](#version-2-capability-map). Historical release-specific
@@ -157,13 +158,13 @@ TypeScript needs `customConditions: ["browser"]`. See [Browser Agents](docs/BROW
 for page/Worker setup, extensible context plugins, storage/credential injection,
 tool boundaries and measured scale.
 
-Install the published unscoped v2 beta:
+Install the unscoped v2 package:
 
 ```bash
-npm install oneringai@next
+npm install oneringai
 ```
 
-Pin `oneringai@2.0.1-beta.1` for reproducible installs. For source development,
+Pin `oneringai@2.0.1` for reproducible installs. For source development,
 follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
 ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
 native desktop dependencies are needed only for their respective integrations.
@@ -213,6 +214,83 @@ try {
   agent.destroy();
 }
 ```
+
+---
+
+## Local Inkling 2 Mini with Ollama
+
+Run [Inkling 2 Mini](https://ollama.com/library/inkling-2-mini) on Apple silicon
+with Ollama 0.40.17 or newer. Start Ollama, then install the model:
+
+```bash
+ollama pull inkling-2-mini
+```
+
+Create a `Vendor.Ollama` connector with `auth: { type: 'none' }` and use
+`inkling-2-mini` or a locally installed tag. The default Ollama server URL is
+`http://localhost:11434/v1`. `Agent.run()` and `Agent.stream()` use the ordinary
+OneRingAI agent loop, including registered application tools and image input.
+OneRingAI sends managed turns through Ollama's stateless Responses API and
+maintains conversation history on the agent side.
+
+This Node.js example registers an application tool and attaches a PNG in a
+separate turn. Supply your own `example.png` in the working directory.
+
+```typescript
+// Documentation check: complete example
+import { readFile } from 'node:fs/promises';
+import { Agent, Connector, Vendor, createMessageWithImages } from 'oneringai';
+import type { ToolFunction } from 'oneringai';
+
+Connector.create({
+  name: 'ollama-local',
+  vendor: Vendor.Ollama,
+  auth: { type: 'none' },
+  baseURL: 'http://localhost:11434/v1',
+});
+
+const getWorkshopHours: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'get_workshop_hours',
+      description: 'Look up the current opening hours for the demo workshop.',
+      parameters: { type: 'object', properties: {}, additionalProperties: false },
+    },
+  },
+  execute: async () => ({ opens: '09:00', closes: '17:00' }),
+};
+
+const agent = Agent.create({
+  connector: 'ollama-local',
+  model: 'inkling-2-mini',
+  tools: [getWorkshopHours],
+});
+
+try {
+  const hours = await agent.run('Use get_workshop_hours to tell me when the workshop closes.');
+  console.log(hours.output_text);
+
+  const png = await readFile('example.png');
+  const image = `data:image/png;base64,${png.toString('base64')}`;
+  const description = await agent.run([createMessageWithImages('What is in this image?', [image])]);
+  console.log(description.output_text);
+} finally {
+  agent.destroy();
+}
+```
+
+In [AMOS](apps/amos/README.md#local-inkling-2-mini), use `/connector add`, choose
+`ollama` and authentication `none`, then accept the endpoint and model defaults.
+Use `/model info` to check the active model and
+`/image "~/Pictures/example.png" What is in this image?` to attach an image to the
+next turn. AMOS accepts PNG, JPEG, and WebP up to 10 MiB. Image turns use the
+same tool permissions as text turns.
+
+The effective context length depends on Ollama's server configuration and memory.
+OneRingAI uses its prompt-based structured-output path for this model. Local
+validation covered text turns, image input, and function calls.
+[Ollama context length](https://docs.ollama.com/context-length).
 
 ---
 

@@ -1,6 +1,6 @@
 # oneringai - Internal API Reference
 
-**Generated:** 2026-11-22
+**Generated:** 2026-11-23
 **Mode:** full
 
 This document provides a complete reference for ALL APIs in `oneringai`, including internal implementations.
@@ -10463,7 +10463,7 @@ async destroy(): Promise&lt;void&gt;
 
 ### OneRingAIDriver `class`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:99`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L99)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:102`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L102)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -10530,7 +10530,7 @@ async restoreSession(request: DriverOpenSessionRequest & { checkpoint: import('.
 
 ### OneRingDriverSession `class`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:271`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L271)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:274`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L274)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -12231,7 +12231,7 @@ acquire(id: string, context: TrustedRuntimeContext): Promise&lt;RuntimeSessionLe
 
 ### LocalAgentFactoryContext `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:60`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L60)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:63`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L63)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -12298,7 +12298,7 @@ acquire(id: string, context: TrustedRuntimeContext): Promise&lt;RuntimeSessionLe
 
 ### NormalizedReasoningControls `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:573`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L573)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:576`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L576)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -12315,7 +12315,7 @@ acquire(id: string, context: TrustedRuntimeContext): Promise&lt;RuntimeSessionLe
 
 ### OneRingAgentBinding `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:67`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L67)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:70`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L70)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -12331,7 +12331,7 @@ acquire(id: string, context: TrustedRuntimeContext): Promise&lt;RuntimeSessionLe
 
 ### OneRingAIDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:81`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L81)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:84`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L84)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -12354,7 +12354,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### OneRingModelReasoningControls `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:72`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L72)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:75`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L75)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -13309,7 +13309,7 @@ type NativeTool = 'bash' | 'read' | 'write' | 'edit' | 'glob' | 'grep' | 'web_se
 
 ### OneRingAgentSource `type`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:55`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L55)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:58`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L58)
 
 ```typescript
 type OneRingAgentSource = | { type: 'stored-definition'; agentId: string }
@@ -13424,7 +13424,7 @@ export function artifactResponse(response: Response, bytes: number): Response
 
 ### assertBoundScope `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:437`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L437)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:440`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L440)
 
 ```typescript
 function assertBoundScope(agent: Agent, context?: TrustedRuntimeContext): void
@@ -13511,7 +13511,7 @@ function capability(
 
 ### capability `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:633`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L633)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:636`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L636)
 
 ```typescript
 function capability(
@@ -13708,7 +13708,7 @@ function failedResult(error: AgentNativeExecutionError, cancelled: boolean): Dri
 
 ### failedResult `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:732`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L732)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:735`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L735)
 
 ```typescript
 function failedResult(error: AgentNativeExecutionError): DriverRunResult
@@ -13854,7 +13854,7 @@ function mapCompletedItem(
 
 ### mapOneRingEvent `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:654`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L654)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:657`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L657)
 
 ```typescript
 function mapOneRingEvent(event: StreamEvent): DriverEvent | undefined
@@ -13888,7 +13888,7 @@ function mapUsage(usage: Usage): RuntimeUsage
 
 ### mapUsage `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:721`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L721)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:724`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L724)
 
 ```typescript
 function mapUsage(usage: TokenUsage): RuntimeUsage
@@ -13947,7 +13947,7 @@ function normalizeFileChange(kind: 'add' | 'delete' | 'update'): 'created' | 'de
 
 ### normalizeModelReasoningControls `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:591`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L591)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:594`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L594)
 
 ```typescript
 function normalizeModelReasoningControls(
@@ -13981,7 +13981,7 @@ function normalizeObservation(observation?: AgentObservationOptions): Required&l
 
 ### oneRingCapabilities `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:525`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L525)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:528`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L528)
 
 ```typescript
 function oneRingCapabilities(
@@ -14019,7 +14019,7 @@ function parseDriverConfig(spec: Readonly&lt;RuntimeAgentSpec&gt;): ParsedCodexC
 
 ### parseSource `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:414`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L414)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:417`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L417)
 
 ```typescript
 function parseSource(spec: Readonly&lt;RuntimeAgentSpec&gt;): OneRingAgentSource
@@ -14077,7 +14077,7 @@ export async function readFileResponse(response: Response, limits: { maxBytes: n
 
 ### reasoningControls `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:579`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L579)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:582`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L582)
 
 ```typescript
 function reasoningControls(
@@ -14103,7 +14103,7 @@ export function redactJson(value: unknown, redact: (text: string) =&gt; string):
 
 ### rejectCommonOverrides `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:429`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L429)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:432`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L432)
 
 ```typescript
 function rejectCommonOverrides(spec: Readonly&lt;RuntimeAgentSpec&gt;): void
@@ -14250,7 +14250,7 @@ export function toJsonValue(value: unknown): JsonValue
 
 ### toOneRingInput `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:647`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L647)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:650`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L650)
 
 ```typescript
 function toOneRingInput(input: DriverRunRequest['input']): string
@@ -14260,7 +14260,7 @@ function toOneRingInput(input: DriverRunRequest['input']): string
 
 ### toThinkingConfig `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:516`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L516)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:519`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L519)
 
 ```typescript
 function toThinkingConfig(reasoning?: RuntimeReasoningConfig): ThinkingConfig | undefined
@@ -14387,7 +14387,7 @@ function validateConnectorAndModel(context: Parameters&lt;AgentDriver['inspect']
 
 ### validateModel `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:445`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L445)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:448`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L448)
 
 ```typescript
 function validateModel(model: string, expectedVendor?: string): void
@@ -14437,7 +14437,7 @@ function validateReasoning(reasoning: NonNullable&lt;AgentRunOptions['reasoning'
 
 ### validateReasoning `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:458`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L458)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:461`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L461)
 
 ```typescript
 function validateReasoning(reasoning?: RuntimeReasoningConfig): void
@@ -14457,7 +14457,7 @@ function validateReasoningEffort(effort: unknown, label: string): void
 
 ### validateReasoningForModel `function`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:478`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L478)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:481`](../src/agent-runtime/drivers/OneRingAIDriver.ts#L481)
 
 ```typescript
 function validateReasoningForModel(
@@ -14528,6 +14528,8 @@ function workspaceRelativePath(file: string, workspaceRoot: string): string | un
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `'gpt-6.2-astra'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gpt-6.2-sol'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
 | `'gpt-6-astra'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
 | `'gpt-6.1-sol'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
 | `'gpt-6-sol'` | `reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max'])` | - |
@@ -14538,6 +14540,7 @@ function workspaceRelativePath(file: string, workspaceRoot: string): string | un
 | `'gpt-5.6-cyber'` | `reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max'])` | - |
 | `'claude-opus-5-5'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
 | `'claude-sonnet-5-5'` | `reasoningControls(['low', 'medium', 'high', 'xhigh', 'max'])` | - |
+| `'gemini-4-neon'` | `reasoningControls(['low', 'medium', 'high', 'xhigh'])` | - |
 | `'gemini-3.8-flash'` | `reasoningControls(['low', 'medium', 'high'])` | - |
 | `'grok-4.7'` | `reasoningControls(['low', 'medium', 'high', 'xhigh'])` | - |
 | `'gpt-5.3-codex'` | `reasoningControls(['low', 'medium', 'high', 'xhigh'])` | - |
@@ -43855,7 +43858,7 @@ type ProcessingMode = | 'interactive'
 
 ### assessModelParameters `function`
 
-📍 [`src/capabilities/metadata/parameters.ts:43`](../src/capabilities/metadata/parameters.ts#L43)
+📍 [`src/capabilities/metadata/parameters.ts:44`](../src/capabilities/metadata/parameters.ts#L44)
 
 Pure metadata. Unknown/custom endpoints are preserved rather than silently sanitized.
 
@@ -43867,7 +43870,7 @@ export function assessModelParameters(query: ModelParameterQuery): ModelParamete
 
 ### calculateCost `function`
 
-📍 [`src/domain/entities/Model.ts:5251`](../src/domain/entities/Model.ts#L5251)
+📍 [`src/domain/entities/Model.ts:5396`](../src/domain/entities/Model.ts#L5396)
 
 Calculate the cost for a given model and token usage
 
@@ -43941,7 +43944,7 @@ export async function generateModel(provider: ITextProvider, connector: Connecto
 
 ### getActiveModels `function`
 
-📍 [`src/domain/entities/Model.ts:5232`](../src/domain/entities/Model.ts#L5232)
+📍 [`src/domain/entities/Model.ts:5377`](../src/domain/entities/Model.ts#L5377)
 
 Get all currently active models
 
@@ -43953,7 +43956,7 @@ export function getActiveModels(): ILLMDescription[]
 
 ### getDeprecatedModels `function`
 
-📍 [`src/domain/entities/Model.ts:5237`](../src/domain/entities/Model.ts#L5237)
+📍 [`src/domain/entities/Model.ts:5382`](../src/domain/entities/Model.ts#L5382)
 
 Get callable models carrying an explicit vendor deprecation notice.
 
@@ -43979,7 +43982,7 @@ export function getEmbeddingModelsWithFeature(
 
 ### getModelInfo `function`
 
-📍 [`src/domain/entities/Model.ts:5209`](../src/domain/entities/Model.ts#L5209)
+📍 [`src/domain/entities/Model.ts:5354`](../src/domain/entities/Model.ts#L5354)
 
 Get model information by name
 
@@ -43991,7 +43994,7 @@ export function getModelInfo(modelName: string): ILLMDescription | undefined
 
 ### getModelsByVendor `function`
 
-📍 [`src/domain/entities/Model.ts:5224`](../src/domain/entities/Model.ts#L5224)
+📍 [`src/domain/entities/Model.ts:5369`](../src/domain/entities/Model.ts#L5369)
 
 Get all models for a specific vendor
 
@@ -44055,7 +44058,7 @@ export function resolveModelCapabilities(
 
 ### resolveModelName `function`
 
-📍 [`src/domain/entities/Model.ts:5215`](../src/domain/entities/Model.ts#L5215)
+📍 [`src/domain/entities/Model.ts:5360`](../src/domain/entities/Model.ts#L5360)
 
 Resolve a direct model ID or floating alias to the registry's canonical ID.
 
@@ -44594,10 +44597,10 @@ Last catalog audit: November 2026
 
 ### MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/Model.ts:437`](../src/domain/entities/Model.ts#L437)
+📍 [`src/domain/entities/Model.ts:447`](../src/domain/entities/Model.ts#L447)
 
 Complete model registry with all model metadata
-Registry schema v2. Last vendor model update: 2026-11-17.
+Registry schema v2. Last catalog-wide audit: 2026-11-17.
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -44633,7 +44636,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
 | `'gpt-6-astra'` | `{
     name: 'gpt-6-astra',
     provider: Vendor.OpenAI,
-    description: 'OpenAI\'s most capable model for complex reasoning, coding, computer use, research, and document creation',
+    description: 'GPT-6 Astra for complex reasoning, coding, computer use, research, and document creation',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
@@ -44658,6 +44661,66 @@ Registry schema v2. Last vendor model update: 2026-11-17.
           longContext: { thresholdTokens: 272000, input: 20, cachedInput: 2, cacheWrite: 25, output: 75 },
         },
         processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  }` | - |
+| `'gpt-6.2-astra'` | `{
+    name: 'gpt-6.2-astra',
+    provider: Vendor.OpenAI,
+    description: 'Flagship GPT-6.2 model with a 1.05M combined context and 922K maximum input. Function calling uses Responses. Ultrafast estimates use the promotional rate through February 28, 2027 Pacific time.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    releaseDate: '2026-11-17',
+    knowledgeCutoff: '2026-05-18',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6.2-astra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true, asyncToolCalling: true,
+      nativeTools: GPT_6_2_RESPONSES_TOOLS,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 922_000, text: true, image: true, cpm: 8, cpmCached: 0.4 },
+      output: { tokens: 128_000, text: true, cpm: 40 },
+      pricing: {
+        text: {
+          input: 8, cachedInput: 0.4, cacheWrite: 10, output: 40,
+          longContext: { thresholdTokens: 272_001, input: 16, cachedInput: 0.8, cacheWrite: 20, output: 60 },
+        },
+        processingMultipliers: { batch: 0.5, fast: 2, ultrafast: 3 },
+      },
+    },
+  }` | - |
+| `'gpt-6.2-sol'` | `{
+    name: 'gpt-6.2-sol',
+    provider: Vendor.OpenAI,
+    description: 'GPT-6.2 for everyday coding and agent workloads with a 1.05M combined context and 922K maximum input. Function calling uses Responses. Ultrafast estimates use the promotional rate through February 28, 2027 Pacific time.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    releaseDate: '2026-11-17',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6.2-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true, asyncToolCalling: true,
+      nativeTools: GPT_6_2_RESPONSES_TOOLS,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 922_000, text: true, image: true, cpm: 2, cpmCached: 0.1 },
+      output: { tokens: 128_000, text: true, cpm: 10 },
+      pricing: {
+        text: {
+          input: 2, cachedInput: 0.1, cacheWrite: 2.5, output: 10,
+          longContext: { thresholdTokens: 272_001, input: 4, cachedInput: 0.2, cacheWrite: 5, output: 15 },
+        },
+        processingMultipliers: { batch: 0.5, fast: 2, ultrafast: 3 },
       },
     },
   }` | - |
@@ -44781,7 +44844,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
 | `'gpt-5.6-sol'` | `{
     name: 'gpt-5.6-sol',
     provider: Vendor.OpenAI,
-    description: 'Highest-capability GPT-5.6 model for demanding professional work, coding, and long-horizon agents',
+    description: 'Highest-capability GPT-5.6 model for demanding professional work and long-horizon agents. Published promotional pricing is available through November 30, 2026.',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
@@ -44791,7 +44854,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
     endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-07-09',
     knowledgeCutoff: '2026-02-16',
-    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -44805,7 +44868,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
           input: 4, cachedInput: 0.4, cacheWrite: 5, output: 20,
           longContext: { thresholdTokens: 272000, input: 8, cachedInput: 0.8, cacheWrite: 10, output: 30 },
         },
-        processingMultipliers: { batch: 0.5, fast: 2 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
       },
     },
   }` | - |
@@ -44821,7 +44884,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
     endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-07-09',
     knowledgeCutoff: '2026-02-16',
-    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-terra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-terra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -44835,7 +44898,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
           input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 12,
           longContext: { thresholdTokens: 272000, input: 4, cachedInput: 0.4, cacheWrite: 5, output: 18 },
         },
-        processingMultipliers: { batch: 0.5, fast: 2 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
       },
     },
   }` | - |
@@ -44850,7 +44913,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
     endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-07-09',
     knowledgeCutoff: '2026-02-16',
-    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-luna', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-luna', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -44864,7 +44927,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
           input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 1.2,
           longContext: { thresholdTokens: 272000, input: 0.4, cachedInput: 0.04, cacheWrite: 0.5, output: 1.8 },
         },
-        processingMultipliers: { batch: 0.5, fast: 2 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
       },
     },
   }` | - |
@@ -46129,7 +46192,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
 | `'gpt-live-1'` | `{
     name: 'gpt-live-1',
     provider: Vendor.OpenAI,
-    description: 'Full-duplex voice model for natural conversations, smooth interruptions, and delegation to a backend Responses agent',
+    description: 'Full-duplex voice on the Live API with backend delegation. Active sessions cost $0.05/minute and WebRTC standby costs $0.02/minute.',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
@@ -46138,10 +46201,29 @@ Registry schema v2. Last vendor model update: 2026-11-17.
     releaseDate: '2026-09-22',
     knowledgeCutoff: '2025-07-31',
     voices: OPENAI_REALTIME_VOICES,
-    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-live-1', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-live-1', pricing: 'https://developers.openai.com/api/docs/pricing#live-session-duration', lastVerified: '2026-11-23' },
     features: {
       reasoning: false, streaming: true, structuredOutput: false, functionCalling: true,
-      fineTuning: false, predictedOutputs: false, realtime: true, vision: false,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: false,
+      audio: true, video: false, batchAPI: false, promptCaching: false,
+      pricing: { audioDurationPerMinute: 0.05 },
+      input: { tokens: 128_000, text: true, audio: true, cpm: 0 },
+      output: { tokens: null, text: true, audio: true, cpm: 0 },
+    },
+  }` | - |
+| `'gpt-live-1.1'` | `{
+    name: 'gpt-live-1.1',
+    provider: Vendor.OpenAI,
+    description: 'Full-duplex multilingual voice on the Live API with backend delegation. Active sessions cost $0.05/minute and WebRTC standby costs $0.02/minute.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['live'],
+    releaseDate: '2026-11-19',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-live-1.1', pricing: 'https://developers.openai.com/api/docs/pricing#live-session-duration', lastVerified: '2026-11-23' },
+    features: {
+      reasoning: false, streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: false,
       audio: true, video: false, batchAPI: false, promptCaching: false,
       pricing: { audioDurationPerMinute: 0.05 },
       input: { tokens: 128_000, text: true, audio: true, cpm: 0 },
@@ -46703,7 +46785,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
     endpoints: ['messages', 'batch'],
     releaseDate: '2026-11-09',
     knowledgeCutoff: '2026-06-01',
-    sources: { documentation: 'https://platform.claude.com/docs/en/models/fable-5-2/overview', pricing: 'https://platform.claude.com/docs/en/models/fable-5-2/overview', lastVerified: '2026-11-11' },
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/fable-5-2/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing#fast-mode-pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -46714,7 +46796,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
       output: { tokens: 128_000, text: true, cpm: 40 },
       pricing: {
         text: { input: 8, cachedInput: 0.2, cacheWrite: 10, output: 40 },
-        processingMultipliers: { batch: 0.5 },
+        processingMultipliers: { batch: 0.5, fast: 2 },
       },
     },
   }` | - |
@@ -46728,7 +46810,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
     endpoints: ['messages', 'batch'],
     releaseDate: '2026-11-09',
     knowledgeCutoff: '2026-06-01',
-    sources: { documentation: 'https://platform.claude.com/docs/en/models/mythos-5-2/overview', pricing: 'https://platform.claude.com/docs/en/models/mythos-5-2/overview', lastVerified: '2026-11-11' },
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/mythos-5-2/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing#fast-mode-pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -46739,7 +46821,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
       output: { tokens: 128_000, text: true, cpm: 40 },
       pricing: {
         text: { input: 8, cachedInput: 0.2, cacheWrite: 10, output: 40 },
-        processingMultipliers: { batch: 0.5 },
+        processingMultipliers: { batch: 0.5, fast: 2 },
       },
     },
   }` | - |
@@ -46783,7 +46865,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
     endpoints: ['messages', 'batch'],
     releaseDate: '2026-09-22',
     knowledgeCutoff: '2026-06-01',
-    sources: { documentation: 'https://platform.claude.com/docs/en/models/opus-5-5/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-10-07' },
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/opus-5-5/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing#fast-mode-pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -46794,7 +46876,7 @@ Registry schema v2. Last vendor model update: 2026-11-17.
       output: { tokens: 128_000, text: true, cpm: 20 },
       pricing: {
         text: { input: 4, cachedInput: 0.2, cacheWrite: 5, output: 20 },
-        processingMultipliers: { batch: 0.5 },
+        processingMultipliers: { batch: 0.5, fast: 2 },
       },
     },
   }` | - |
@@ -47209,8 +47291,14 @@ Registry schema v2. Last vendor model update: 2026-11-17.
 | `'claude-sonnet-4-5-20250929'` | `{
     name: 'claude-sonnet-4-5-20250929',
     provider: Vendor.Anthropic,
-    description: 'Legacy Sonnet 4.5. Smart model for complex agents and coding',
+    description: 'Claude Sonnet 4.5 retires on the Claude API on November 30, 2026. Anthropic recommends Claude Sonnet 5.5.',
     isActive: true,
+    lifecycle: 'deprecated',
+    aliases: ['claude-sonnet-4-5'],
+    deprecationDate: '2026-09-30',
+    retirementDate: '2026-11-30',
+    replacementModel: 'claude-sonnet-5-5',
+    sources: { documentation: 'https://platform.claude.com/docs/en/about-claude/model-deprecations', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-11-23' },
     releaseDate: '2025-09-29',
     knowledgeCutoff: '2025-01-01',
     features: {
@@ -48181,14 +48269,14 @@ Registry schema v2. Last vendor model update: 2026-11-17.
 | `'grok-build-0.1'` | `{
     name: 'grok-build-0.1',
     provider: Vendor.Grok,
-    description: 'Specialized xAI software-building model for repository-scale coding agents',
-    isActive: true,
-    lifecycle: 'active',
+    description: 'Retired xAI coding model. API serving ended on November 19, 2026.',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
-    endpoints: ['responses'],
+    retirementDate: '2026-11-19',
     releaseDate: '2026-05-01',
     knowledgeCutoff: '2026-02-01',
-    sources: { documentation: 'https://docs.x.ai/developers/models/grok-build-0.1', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://docs.x.ai/developers/release-notes?release=2026-11-f16a2d1a', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
@@ -49066,6 +49154,32 @@ Registry schema v2. Last vendor model update: 2026-11-17.
         longContext: { thresholdTokens: 272_001, input: 30, cachedInput: 3, output: 112.5, cacheWrite: 37.5 } } },
     },
   }` | - |
+| `'gemini-4-neon'` | `{
+    name: 'gemini-4-neon',
+    provider: Vendor.Google,
+    description: 'Paid-tier Gemini 4 model with text, image, audio, video and PDF input. Foreground output is capped at 65,536 tokens and longer decode uses a separate workflow. Thinking defaults to high and supports xhigh. Prompt caching is implicit.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['generate_content', 'interactions', 'batch'],
+    releaseDate: '2026-11-18',
+    sources: { documentation: 'https://aistudio.google.com/docs/models/gemini-4-neon', pricing: 'https://aistudio.google.com/docs/pricing#gemini-4-neon', lastVerified: '2026-11-23' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      nativeTools: ['web_search', 'web_fetch', 'code_execution', 'file_search', 'computer_use'],
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: true, video: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_048_576, text: true, image: true, audio: true, video: true, cpm: 3, cpmCached: 0.15 },
+      output: { tokens: 65_536, text: true, cpm: 15 },
+      pricing: {
+        text: { input: 3, cachedInput: 0.15, output: 15 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, priority: 1.8 },
+      },
+    },
+  }` | - |
 | `'gemini-4-hydrogen'` | `{
     name: 'gemini-4-hydrogen',
     provider: Vendor.Google,
@@ -49137,6 +49251,25 @@ Registry schema v2. Last vendor model update: 2026-11-17.
       input: { tokens: 262_144, text: true, cpm: 0.6, cpmCached: 0.06 },
       output: { tokens: null, text: true, cpm: 3 },
       pricing: { text: { input: 0.6, cachedInput: 0.06, output: 3 } },
+    },
+  }` | - |
+| `'inkling-2-mini'` | `{
+    name: 'inkling-2-mini',
+    provider: Vendor.Ollama,
+    description: 'Thinking Machines Inkling 2 Mini for local Ollama inference on Apple silicon, supported from Ollama 0.40.17. Responses are stateless. Zero API token fees exclude hardware and runtime costs.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    aliases: ['inkling-2-mini:latest', 'inkling-2-mini:26b-a5b', 'inkling-2-mini:26b-a5b-nvfp4'],
+    endpoints: ['responses', 'chat_completions'],
+    releaseDate: '2026-11-20',
+    sources: { documentation: 'https://ollama.com/library/inkling-2-mini', pricing: 'https://ollama.com/library/inkling-2-mini', lastVerified: '2026-11-23' },
+    features: {
+      streaming: true, reasoning: true, functionCalling: true, vision: true,
+      reasoningEfforts: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+      input: { tokens: 1_048_576, text: true, image: true, cpm: 0 },
+      output: { tokens: null, text: true, cpm: 0 },
+      pricing: { text: { input: 0, output: 0 } },
     },
   }` | - |
 | `'inkling-2-small'` | `{
@@ -102108,7 +102241,7 @@ export function editDistance(a: string, b: string): number
 
 ### effectiveOpenAIRequestEffort `function`
 
-📍 [`src/capabilities/metadata/parameters.ts:35`](../src/capabilities/metadata/parameters.ts#L35)
+📍 [`src/capabilities/metadata/parameters.ts:36`](../src/capabilities/metadata/parameters.ts#L36)
 
 ```typescript
 export function effectiveOpenAIRequestEffort(reasoning: unknown, input?: unknown): string | undefined
@@ -106071,7 +106204,7 @@ export function openAICompactedWindow(output: unknown): InputItem[]
 
 ### openAISamplingConstraint `function`
 
-📍 [`src/capabilities/metadata/parameters.ts:30`](../src/capabilities/metadata/parameters.ts#L30)
+📍 [`src/capabilities/metadata/parameters.ts:31`](../src/capabilities/metadata/parameters.ts#L31)
 
 ```typescript
 export function openAISamplingConstraint(model: string, effort?: string, legacyOnly = false)

@@ -231,11 +231,13 @@ export interface TokenPricing {
 
 /**
  * Model name constants organized by vendor
- * Updated: October 2026 - Includes current, preview, and migration-relevant models
+ * Includes current, preview, and migration-relevant models.
  */
 export const LLM_MODELS = {
   [Vendor.OpenAI]: {
     // GPT-6 Series (Current Flagship)
+    GPT_6_2_ASTRA: 'gpt-6.2-astra',
+    GPT_6_2_SOL: 'gpt-6.2-sol',
     GPT_6_ASTRA: 'gpt-6-astra',
     GPT_6_1_TERRA: 'gpt-6.1-terra',
     GPT_6_CYBER: 'gpt-6-cyber',
@@ -291,6 +293,7 @@ export const LLM_MODELS = {
     GPT_AUDIO_MINI: 'gpt-audio-mini',
     // Realtime Models
     GPT_LIVE_1: 'gpt-live-1',
+    GPT_LIVE_1_1: 'gpt-live-1.1',
     GPT_REALTIME_2_1: 'gpt-realtime-2.1',
     GPT_REALTIME_2_1_MINI: 'gpt-realtime-2.1-mini',
     GPT_REALTIME_2: 'gpt-realtime-2',
@@ -340,6 +343,7 @@ export const LLM_MODELS = {
   },
   [Vendor.Google]: {
     GEMINI_4_HYDROGEN: 'gemini-4-hydrogen',
+    GEMINI_4_NEON: 'gemini-4-neon',
     GEMINI_4_CARBON: 'gemini-4-carbon',
     GEMINI_4_ARGON: 'gemini-4-argon',
     // Current Gemini 3.x production models
@@ -410,6 +414,7 @@ export const LLM_MODELS = {
     SONAR: 'perplexity/sonar',
   },
   [Vendor.Ollama]: {
+    INKLING_2_MINI: 'inkling-2-mini',
     INKLING_2_SMALL: 'inkling-2-small',
     RIPPLE_PREVIEW: 'ripple-preview',
     LFM3_VL: 'lfm3-vl',
@@ -430,16 +435,21 @@ export const LLM_MODELS = {
   },
 } as const;
 
+const GPT_6_2_RESPONSES_TOOLS = [
+  'web_search', 'file_search', 'image_generation', 'code_execution',
+  'hosted_shell', 'apply_patch', 'computer_use', 'remote_mcp', 'tool_search',
+] as const satisfies readonly NativeToolCapability[];
+
 /**
  * Complete model registry with all model metadata
- * Registry schema v2. Last vendor model update: 2026-11-17.
+ * Registry schema v2. Last catalog-wide audit: 2026-11-17.
  */
 export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   // ============================================================================
   // OpenAI Models (Verified from developers.openai.com - October 2026)
   // ============================================================================
 
-  // GPT-6 Series (current flagship - September 2026)
+  // GPT-6 Series
   'gpt-6-cyber': {
     name: 'gpt-6-cyber',
     provider: Vendor.OpenAI,
@@ -470,7 +480,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   'gpt-6-astra': {
     name: 'gpt-6-astra',
     provider: Vendor.OpenAI,
-    description: 'OpenAI\'s most capable model for complex reasoning, coding, computer use, research, and document creation',
+    description: 'GPT-6 Astra for complex reasoning, coding, computer use, research, and document creation',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
@@ -495,6 +505,68 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
           longContext: { thresholdTokens: 272000, input: 20, cachedInput: 2, cacheWrite: 25, output: 75 },
         },
         processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  },
+
+  'gpt-6.2-astra': {
+    name: 'gpt-6.2-astra',
+    provider: Vendor.OpenAI,
+    description: 'Flagship GPT-6.2 model with a 1.05M combined context and 922K maximum input. Function calling uses Responses. Ultrafast estimates use the promotional rate through February 28, 2027 Pacific time.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    releaseDate: '2026-11-17',
+    knowledgeCutoff: '2026-05-18',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6.2-astra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true, asyncToolCalling: true,
+      nativeTools: GPT_6_2_RESPONSES_TOOLS,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 922_000, text: true, image: true, cpm: 8, cpmCached: 0.4 },
+      output: { tokens: 128_000, text: true, cpm: 40 },
+      pricing: {
+        text: {
+          input: 8, cachedInput: 0.4, cacheWrite: 10, output: 40,
+          longContext: { thresholdTokens: 272_001, input: 16, cachedInput: 0.8, cacheWrite: 20, output: 60 },
+        },
+        processingMultipliers: { batch: 0.5, fast: 2, ultrafast: 3 },
+      },
+    },
+  },
+
+  'gpt-6.2-sol': {
+    name: 'gpt-6.2-sol',
+    provider: Vendor.OpenAI,
+    description: 'GPT-6.2 for everyday coding and agent workloads with a 1.05M combined context and 922K maximum input. Function calling uses Responses. Ultrafast estimates use the promotional rate through February 28, 2027 Pacific time.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    releaseDate: '2026-11-17',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6.2-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true, asyncToolCalling: true,
+      nativeTools: GPT_6_2_RESPONSES_TOOLS,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 922_000, text: true, image: true, cpm: 2, cpmCached: 0.1 },
+      output: { tokens: 128_000, text: true, cpm: 10 },
+      pricing: {
+        text: {
+          input: 2, cachedInput: 0.1, cacheWrite: 2.5, output: 10,
+          longContext: { thresholdTokens: 272_001, input: 4, cachedInput: 0.2, cacheWrite: 5, output: 15 },
+        },
+        processingMultipliers: { batch: 0.5, fast: 2, ultrafast: 3 },
       },
     },
   },
@@ -624,7 +696,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   'gpt-5.6-sol': {
     name: 'gpt-5.6-sol',
     provider: Vendor.OpenAI,
-    description: 'Highest-capability GPT-5.6 model for demanding professional work, coding, and long-horizon agents',
+    description: 'Highest-capability GPT-5.6 model for demanding professional work and long-horizon agents. Published promotional pricing is available through November 30, 2026.',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
@@ -634,7 +706,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-07-09',
     knowledgeCutoff: '2026-02-16',
-    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -648,7 +720,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
           input: 4, cachedInput: 0.4, cacheWrite: 5, output: 20,
           longContext: { thresholdTokens: 272000, input: 8, cachedInput: 0.8, cacheWrite: 10, output: 30 },
         },
-        processingMultipliers: { batch: 0.5, fast: 2 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
       },
     },
   },
@@ -665,7 +737,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-07-09',
     knowledgeCutoff: '2026-02-16',
-    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-terra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-terra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -679,7 +751,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
           input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 12,
           longContext: { thresholdTokens: 272000, input: 4, cachedInput: 0.4, cacheWrite: 5, output: 18 },
         },
-        processingMultipliers: { batch: 0.5, fast: 2 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
       },
     },
   },
@@ -695,7 +767,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-07-09',
     knowledgeCutoff: '2026-02-16',
-    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-luna', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-luna', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -709,7 +781,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
           input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 1.2,
           longContext: { thresholdTokens: 272000, input: 0.4, cachedInput: 0.04, cacheWrite: 0.5, output: 1.8 },
         },
-        processingMultipliers: { batch: 0.5, fast: 2 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
       },
     },
   },
@@ -2017,7 +2089,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   'gpt-live-1': {
     name: 'gpt-live-1',
     provider: Vendor.OpenAI,
-    description: 'Full-duplex voice model for natural conversations, smooth interruptions, and delegation to a backend Responses agent',
+    description: 'Full-duplex voice on the Live API with backend delegation. Active sessions cost $0.05/minute and WebRTC standby costs $0.02/minute.',
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
@@ -2026,10 +2098,30 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     releaseDate: '2026-09-22',
     knowledgeCutoff: '2025-07-31',
     voices: OPENAI_REALTIME_VOICES,
-    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-live-1', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-live-1', pricing: 'https://developers.openai.com/api/docs/pricing#live-session-duration', lastVerified: '2026-11-23' },
     features: {
       reasoning: false, streaming: true, structuredOutput: false, functionCalling: true,
-      fineTuning: false, predictedOutputs: false, realtime: true, vision: false,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: false,
+      audio: true, video: false, batchAPI: false, promptCaching: false,
+      pricing: { audioDurationPerMinute: 0.05 },
+      input: { tokens: 128_000, text: true, audio: true, cpm: 0 },
+      output: { tokens: null, text: true, audio: true, cpm: 0 },
+    },
+  },
+
+  'gpt-live-1.1': {
+    name: 'gpt-live-1.1',
+    provider: Vendor.OpenAI,
+    description: 'Full-duplex multilingual voice on the Live API with backend delegation. Active sessions cost $0.05/minute and WebRTC standby costs $0.02/minute.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['live'],
+    releaseDate: '2026-11-19',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-live-1.1', pricing: 'https://developers.openai.com/api/docs/pricing#live-session-duration', lastVerified: '2026-11-23' },
+    features: {
+      reasoning: false, streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: false,
       audio: true, video: false, batchAPI: false, promptCaching: false,
       pricing: { audioDurationPerMinute: 0.05 },
       input: { tokens: 128_000, text: true, audio: true, cpm: 0 },
@@ -2615,7 +2707,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     endpoints: ['messages', 'batch'],
     releaseDate: '2026-11-09',
     knowledgeCutoff: '2026-06-01',
-    sources: { documentation: 'https://platform.claude.com/docs/en/models/fable-5-2/overview', pricing: 'https://platform.claude.com/docs/en/models/fable-5-2/overview', lastVerified: '2026-11-11' },
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/fable-5-2/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing#fast-mode-pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -2626,7 +2718,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
       output: { tokens: 128_000, text: true, cpm: 40 },
       pricing: {
         text: { input: 8, cachedInput: 0.2, cacheWrite: 10, output: 40 },
-        processingMultipliers: { batch: 0.5 },
+        processingMultipliers: { batch: 0.5, fast: 2 },
       },
     },
   },
@@ -2641,7 +2733,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     endpoints: ['messages', 'batch'],
     releaseDate: '2026-11-09',
     knowledgeCutoff: '2026-06-01',
-    sources: { documentation: 'https://platform.claude.com/docs/en/models/mythos-5-2/overview', pricing: 'https://platform.claude.com/docs/en/models/mythos-5-2/overview', lastVerified: '2026-11-11' },
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/mythos-5-2/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing#fast-mode-pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -2652,7 +2744,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
       output: { tokens: 128_000, text: true, cpm: 40 },
       pricing: {
         text: { input: 8, cachedInput: 0.2, cacheWrite: 10, output: 40 },
-        processingMultipliers: { batch: 0.5 },
+        processingMultipliers: { batch: 0.5, fast: 2 },
       },
     },
   },
@@ -2698,7 +2790,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     endpoints: ['messages', 'batch'],
     releaseDate: '2026-09-22',
     knowledgeCutoff: '2026-06-01',
-    sources: { documentation: 'https://platform.claude.com/docs/en/models/opus-5-5/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-10-07' },
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/opus-5-5/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing#fast-mode-pricing', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -2709,7 +2801,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
       output: { tokens: 128_000, text: true, cpm: 20 },
       pricing: {
         text: { input: 4, cachedInput: 0.2, cacheWrite: 5, output: 20 },
-        processingMultipliers: { batch: 0.5 },
+        processingMultipliers: { batch: 0.5, fast: 2 },
       },
     },
   },
@@ -3143,8 +3235,14 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   'claude-sonnet-4-5-20250929': {
     name: 'claude-sonnet-4-5-20250929',
     provider: Vendor.Anthropic,
-    description: 'Legacy Sonnet 4.5. Smart model for complex agents and coding',
+    description: 'Claude Sonnet 4.5 retires on the Claude API on November 30, 2026. Anthropic recommends Claude Sonnet 5.5.',
     isActive: true,
+    lifecycle: 'deprecated',
+    aliases: ['claude-sonnet-4-5'],
+    deprecationDate: '2026-09-30',
+    retirementDate: '2026-11-30',
+    replacementModel: 'claude-sonnet-5-5',
+    sources: { documentation: 'https://platform.claude.com/docs/en/about-claude/model-deprecations', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-11-23' },
     releaseDate: '2025-09-29',
     knowledgeCutoff: '2025-01-01',
     features: {
@@ -4158,14 +4256,14 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   'grok-build-0.1': {
     name: 'grok-build-0.1',
     provider: Vendor.Grok,
-    description: 'Specialized xAI software-building model for repository-scale coding agents',
-    isActive: true,
-    lifecycle: 'active',
+    description: 'Retired xAI coding model. API serving ended on November 19, 2026.',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
-    endpoints: ['responses'],
+    retirementDate: '2026-11-19',
     releaseDate: '2026-05-01',
     knowledgeCutoff: '2026-02-01',
-    sources: { documentation: 'https://docs.x.ai/developers/models/grok-build-0.1', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-08-30' },
+    sources: { documentation: 'https://docs.x.ai/developers/release-notes?release=2026-11-f16a2d1a', lastVerified: '2026-11-23' },
     features: {
       reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
@@ -5085,6 +5183,33 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     },
   },
 
+  'gemini-4-neon': {
+    name: 'gemini-4-neon',
+    provider: Vendor.Google,
+    description: 'Paid-tier Gemini 4 model with text, image, audio, video and PDF input. Foreground output is capped at 65,536 tokens and longer decode uses a separate workflow. Thinking defaults to high and supports xhigh. Prompt caching is implicit.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['generate_content', 'interactions', 'batch'],
+    releaseDate: '2026-11-18',
+    sources: { documentation: 'https://aistudio.google.com/docs/models/gemini-4-neon', pricing: 'https://aistudio.google.com/docs/pricing#gemini-4-neon', lastVerified: '2026-11-23' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      nativeTools: ['web_search', 'web_fetch', 'code_execution', 'file_search', 'computer_use'],
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: true, video: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_048_576, text: true, image: true, audio: true, video: true, cpm: 3, cpmCached: 0.15 },
+      output: { tokens: 65_536, text: true, cpm: 15 },
+      pricing: {
+        text: { input: 3, cachedInput: 0.15, output: 15 },
+        processingMultipliers: { batch: 0.5, flex: 0.5, priority: 1.8 },
+      },
+    },
+  },
+
   'gemini-4-hydrogen': {
     name: 'gemini-4-hydrogen',
     provider: Vendor.Google,
@@ -5159,6 +5284,26 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
       input: { tokens: 262_144, text: true, cpm: 0.6, cpmCached: 0.06 },
       output: { tokens: null, text: true, cpm: 3 },
       pricing: { text: { input: 0.6, cachedInput: 0.06, output: 3 } },
+    },
+  },
+
+  'inkling-2-mini': {
+    name: 'inkling-2-mini',
+    provider: Vendor.Ollama,
+    description: 'Thinking Machines Inkling 2 Mini for local Ollama inference on Apple silicon, supported from Ollama 0.40.17. Responses are stateless. Zero API token fees exclude hardware and runtime costs.',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    aliases: ['inkling-2-mini:latest', 'inkling-2-mini:26b-a5b', 'inkling-2-mini:26b-a5b-nvfp4'],
+    endpoints: ['responses', 'chat_completions'],
+    releaseDate: '2026-11-20',
+    sources: { documentation: 'https://ollama.com/library/inkling-2-mini', pricing: 'https://ollama.com/library/inkling-2-mini', lastVerified: '2026-11-23' },
+    features: {
+      streaming: true, reasoning: true, functionCalling: true, vision: true,
+      reasoningEfforts: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+      input: { tokens: 1_048_576, text: true, image: true, cpm: 0 },
+      output: { tokens: null, text: true, cpm: 0 },
+      pricing: { text: { input: 0, output: 0 } },
     },
   },
 

@@ -5,7 +5,7 @@
  */
 
 import { join } from 'node:path';
-import type { ToolFunction, ApprovalDecision } from 'oneringai';
+import type { ToolFunction, ApprovalDecision, InputItem } from 'oneringai';
 import { ProviderMisalignmentError, defaultDescribeCall } from 'oneringai';
 import { ConfigManager } from './config/ConfigManager.js';
 import type { AmosConfig, IAmosApp, IConnectorManager, IToolLoader, IAgentRunner, IPromptManager, ICommand, ToolApprovalContext } from './config/types.js';
@@ -20,6 +20,7 @@ import { Terminal } from './ui/Terminal.js';
 import {
   CommandProcessor,
   HelpCommand,
+  ImageCommand,
   AstraCommand,
   ModelCommand,
   VendorCommand,
@@ -201,6 +202,10 @@ export class AmosApp implements IAmosApp {
         this.running = false;
       }
 
+      if (result.success && result.agentInput) {
+        await this.runAgent(result.agentInput);
+      }
+
       return;
     }
 
@@ -211,7 +216,7 @@ export class AmosApp implements IAmosApp {
   /**
    * Run the agent with input
    */
-  private async runAgent(input: string): Promise<void> {
+  private async runAgent(input: string | InputItem[]): Promise<void> {
     if (!this.agentRunner || !this.agentRunner.isReady()) {
       this.terminal.printError(
         'No agent configured. Use /connector add to set up a connector first.'
@@ -411,6 +416,7 @@ export class AmosApp implements IAmosApp {
   private registerCommands(): void {
     this.commandProcessor.registerAll([
       new HelpCommand(),
+      new ImageCommand(),
       this.astraCommand,
       new ModelCommand(),
       new VendorCommand(),

@@ -6,7 +6,7 @@
 
 import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult, StoredConnectorConfig, ConnectorAuth } from '../../config/types.js';
-import { Vendor } from 'oneringai';
+import { LLM_MODELS, Vendor } from 'oneringai';
 
 export class ConnectorCommand extends BaseCommand {
   readonly name = 'connector';
@@ -18,7 +18,7 @@ export class ConnectorCommand extends BaseCommand {
     return `
 /connector - Manage API Connectors
 
-Connectors store authentication credentials for AI vendors.
+Connectors configure access to AI vendors, including local Ollama without credentials.
 Multiple connectors per vendor are supported (e.g., openai-main, openai-backup).
 
 USAGE:
@@ -162,11 +162,16 @@ ALIASES:
     }
 
     // Get auth type
-    const authType = await app.select<'api_key' | 'oauth'>('Authentication type:', ['api_key', 'oauth']);
+    const authOptions: ConnectorAuth['type'][] = vendor === Vendor.Ollama
+      ? ['none', 'api_key', 'oauth']
+      : ['api_key', 'oauth'];
+    const authType = await app.select('Authentication type:', authOptions);
 
     let auth: ConnectorAuth;
 
-    if (authType === 'api_key') {
+    if (authType === 'none') {
+      auth = { type: 'none' };
+    } else if (authType === 'api_key') {
       const apiKey = await app.prompt('API Key: ');
       if (!apiKey.trim()) {
         return this.error('API key is required.');
@@ -191,7 +196,14 @@ ALIASES:
     }
 
     // Optional base URL
-    const baseURL = await app.prompt('Custom Base URL (optional, press Enter to skip): ');
+    const localOllama = vendor === Vendor.Ollama && auth.type === 'none';
+    const baseURL = await app.prompt(localOllama
+      ? 'Ollama Base URL [http://localhost:11434/v1]: '
+      : 'Custom Base URL (optional, press Enter to skip): ');
+    const inkling = LLM_MODELS[Vendor.Ollama].INKLING_2_MINI;
+    const localModel = localOllama
+      ? (await app.prompt(`Installed Ollama model [${inkling}]: `)).trim() || inkling
+      : undefined;
 
     // Create connector config
     const connectorConfig: StoredConnectorConfig = {
@@ -199,6 +211,7 @@ ALIASES:
       vendor,
       auth,
       baseURL: baseURL.trim() || undefined,
+      ...(localModel ? { models: [localModel] } : {}),
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -209,11 +222,10 @@ ALIASES:
     // Offer to use immediately
     const useNow = await app.confirm('Use this connector now?');
     if (useNow) {
-      connectorManager.registerConnector(connectorName);
-      app.updateConfig({ activeConnector: connectorName, activeVendor: vendor });
-      await app.createAgent();
-      await app.saveConfig();
-      return this.success(`Connector "${connectorName}" created and activated.`);
+      const result = await this.useConnector(context, connectorName);
+      return result.success
+        ? this.success(`Connector "${connectorName}" created and activated.${localModel ? ` Model: ${localModel}` : ''}`)
+        : result;
     }
 
     return this.success(`Connector "${connectorName}" created. Use /connector use ${connectorName} to activate.`);
@@ -426,17 +438,25 @@ Respond with ONLY the JSON object, no explanation.
       connectorManager.registerConnector(name);
     }
 
-    // Update config
+    const previous = app.getConfig();
+    const localModel = connector.vendor.toLowerCase() === Vendor.Ollama && connector.auth.type === 'none'
+      ? (previous.activeConnector === name && previous.activeModel) || connector.models?.[0] || LLM_MODELS[Vendor.Ollama].INKLING_2_MINI
+      : undefined;
     app.updateConfig({
       activeConnector: name,
       activeVendor: connector.vendor,
+      ...(localModel ? { activeModel: localModel } : {}),
     });
 
-    // Recreate agent
-    await app.createAgent();
+    try {
+      await app.createAgent();
+    } catch (error) {
+      app.updateConfig({ activeConnector: previous.activeConnector, activeVendor: previous.activeVendor, activeModel: previous.activeModel });
+      throw error;
+    }
     await app.saveConfig();
 
-    return this.success(`Now using connector: ${name} (${connector.vendor})`);
+    return this.success(`Now using connector: ${name} (${connector.vendor})${localModel ? ` with ${localModel}` : ''}`);
   }
 
   private async showConnectorInfo(context: CommandContext, name?: string): Promise<CommandResult> {

@@ -346,7 +346,7 @@ export class AgentRunner implements IAgentRunner {
     return this.agent?.isPaused() ?? false;
   }
 
-  async run(input: string): Promise<AgentResponse> {
+  async run(input: string | InputItem[]): Promise<AgentResponse> {
     if (this.isRunning()) throw new Error('An operation is already running');
     const agent = this.requireAgent();
     this._isRunning = true;
@@ -380,7 +380,7 @@ export class AgentRunner implements IAgentRunner {
     }
   }
 
-  async *stream(input: string): AsyncGenerator<StreamEvent> {
+  async *stream(input: string | InputItem[]): AsyncGenerator<StreamEvent> {
     if (this.isRunning()) throw new Error('An operation is already running');
     const agent = this.requireAgent();
     this._isRunning = true;

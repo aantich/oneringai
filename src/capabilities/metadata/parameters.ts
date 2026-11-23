@@ -21,6 +21,7 @@ export interface ModelParameterPolicy {
 // One fact source for the legacy validator, provider filtering and opt-in assessment.
 const samplingFamilies = [
   { pattern: /^gpt-6-astra(?:-|$)/, legacy: true, none: false },
+  { pattern: /^gpt-6\.2-(?:astra|sol)(?:-|$)/, legacy: true, none: false },
   { pattern: /^gpt-6\.1-sol(?:-|$)/, legacy: true, none: false },
   { pattern: /^gpt-6-sol(?:-|$)/, legacy: true, none: true },
   { pattern: /^gpt-6-luna(?:-|$)/, legacy: true, none: true },

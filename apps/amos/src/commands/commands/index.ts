@@ -3,6 +3,7 @@
  */
 
 export { HelpCommand } from './HelpCommand.js';
+export { ImageCommand } from './ImageCommand.js';
 export { ModelCommand } from './ModelCommand.js';
 export { AstraCommand } from './AstraCommand.js';
 export { VendorCommand } from './VendorCommand.js';

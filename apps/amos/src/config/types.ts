@@ -149,7 +149,7 @@ export interface StoredConnectorConfig {
 }
 
 export interface ConnectorAuth {
-  type: 'api_key' | 'oauth';
+  type: 'api_key' | 'oauth' | 'none';
   apiKey?: string;
   // Custom header configuration for API key auth
   headerName?: string;   // e.g., 'X-API-KEY', 'X-Subscription-Token'
@@ -177,6 +177,7 @@ export interface CommandResult {
   success: boolean;
   message?: string;
   data?: unknown;
+  agentInput?: InputItem[];
   shouldExit?: boolean;
   clearScreen?: boolean;
 }
@@ -349,8 +350,8 @@ export interface IAgentRunner {
   isPaused(): boolean;
 
   // Execution
-  run(input: string): Promise<AgentResponse>;
-  stream(input: string): AsyncGenerator<StreamEvent>;
+  run(input: string | InputItem[]): Promise<AgentResponse>;
+  stream(input: string | InputItem[]): AsyncGenerator<StreamEvent>;
 
   // Control
   pause(): void;

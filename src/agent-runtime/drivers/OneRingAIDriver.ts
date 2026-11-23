@@ -37,6 +37,8 @@ const ONERING_REASONING_EFFORTS = new Set<RuntimeReasoningEffort>([
   'max',
 ]);
 const DEFAULT_MODEL_REASONING_CONTROLS: Readonly<Record<string, NormalizedReasoningControls>> = {
+  'gpt-6.2-astra': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
+  'gpt-6.2-sol': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
   'gpt-6-astra': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
   'gpt-6.1-sol': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
   'gpt-6-sol': reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max']),
@@ -47,6 +49,7 @@ const DEFAULT_MODEL_REASONING_CONTROLS: Readonly<Record<string, NormalizedReason
   'gpt-5.6-cyber': reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max']),
   'claude-opus-5-5': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
   'claude-sonnet-5-5': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
+  'gemini-4-neon': reasoningControls(['low', 'medium', 'high', 'xhigh']),
   'gemini-3.8-flash': reasoningControls(['low', 'medium', 'high']),
   'grok-4.7': reasoningControls(['low', 'medium', 'high', 'xhigh']),
   'gpt-5.3-codex': reasoningControls(['low', 'medium', 'high', 'xhigh']),

@@ -399,10 +399,11 @@ export class GoogleInteractionsConverter {
     const explicit = options.vendorOptions?.thinkingLevel as ReasoningEffort | undefined;
     const effort = explicit ?? options.thinking?.effort;
     if (!options.thinking?.enabled && !explicit) return undefined;
-    const minimum = /^gemini-4-(?:carbon|argon|hydrogen)(?:-|$)/.test(options.model) ? 'low' : 'minimal';
+    const minimum = /^gemini-4-(?:carbon|argon|hydrogen|neon)(?:-|$)/.test(options.model) ? 'low' : 'minimal';
+    const supportsXHigh = /^gemini-4-(?:hydrogen|neon)(?:-|$)/.test(options.model);
     if (effort === 'none' || effort === 'minimal') return minimum;
     if (effort === 'xhigh' || effort === 'max') {
-      return /^gemini-4-hydrogen(?:-|$)/.test(options.model) ? 'xhigh' : 'high';
+      return supportsXHigh ? 'xhigh' : 'high';
     }
     if (effort) return effort;
     const budget = options.thinking?.budgetTokens;
@@ -412,7 +413,7 @@ export class GoogleInteractionsConverter {
       if (budget < 24576) return 'medium';
       return 'high';
     }
-    return /^gemini-4-hydrogen(?:-|$)/.test(options.model) ? 'high' : 'medium';
+    return supportsXHigh ? 'high' : 'medium';
   }
 
   private convertTools(options: TextGenerateOptions): Array<Record<string, unknown>> {

@@ -75,7 +75,7 @@ EXAMPLES:
 
     for (const cmd of commands) {
       // Categorize commands
-      if (['help', 'model', 'vendor', 'connector', 'astra'].includes(cmd.name)) {
+      if (['help', 'image', 'model', 'vendor', 'connector', 'astra'].includes(cmd.name)) {
         categories['Core'].push(cmd);
       } else if (['tool', 'external', 'prompt'].includes(cmd.name)) {
         categories['Tools'].push(cmd);

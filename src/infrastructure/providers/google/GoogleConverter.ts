@@ -119,7 +119,7 @@ export class GoogleConverter {
     if (serviceTier !== undefined) request.generationConfig.serviceTier = serviceTier;
 
     // Gemini 3/4 use thinking levels; Gemini 2.x retains token budgets.
-    if (/^gemini-(?:3(?:\.|-|$)|4-(?:carbon|argon|hydrogen)(?:-|$))/.test(options.model) && options.thinking?.enabled) {
+    if (/^gemini-(?:3(?:\.|-|$)|4-(?:carbon|argon|hydrogen|neon)(?:-|$))/.test(options.model) && options.thinking?.enabled) {
       validateThinkingConfig(options.thinking);
       request.generationConfig.thinkingConfig = {
         thinkingLevel: this.resolveThinkingLevel(
@@ -147,7 +147,7 @@ export class GoogleConverter {
       request.generationConfig.thinkingConfig = { thinkingBudget: 0 };
     }
 
-    if (/^gemini-4-(?:carbon|argon|hydrogen)(?:-|$)/.test(options.model)
+    if (/^gemini-4-(?:carbon|argon|hydrogen|neon)(?:-|$)/.test(options.model)
       && request.generationConfig.thinkingConfig?.thinkingLevel === 'MINIMAL') {
       request.generationConfig.thinkingConfig.thinkingLevel = 'LOW';
     }
@@ -183,7 +183,7 @@ export class GoogleConverter {
     budgetTokens?: number,
     model?: string,
   ): 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH' | 'XHIGH' {
-    if (/^gemini-4-hydrogen(?:-|$)/.test(model ?? '')) {
+    if (/^gemini-4-(?:hydrogen|neon)(?:-|$)/.test(model ?? '')) {
       if (effort === 'xhigh' || effort === 'max') return 'XHIGH';
       if (effort === undefined && budgetTokens === undefined) return 'HIGH';
     }

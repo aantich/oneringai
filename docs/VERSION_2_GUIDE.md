@@ -18,6 +18,12 @@ same module with its existing encrypted state. See the [User Guide walkthrough](
 and [CLI example](../examples/chatgpt-plan-cli.ts). Validation uses offline OAuth,
 JWKS and Responses fixtures. Live OpenAI admission remains unverified.
 
+**Stable 2.0.1 — 2026-11-23:** Install with `npm install oneringai`. This release
+includes local Inkling 2 Mini with image input and tools in AMOS, plus registry
+entries for GPT-6.2 Astra and Sol, GPT-Live-1.1, and Gemini 4 Neon. It records
+Claude Sonnet 4.5's scheduled retirement and Grok Build 0.1's end of service.
+[Release notes](../CHANGELOG.md#201--2026-11-23) · [API Reference](../API_REFERENCE.md).
+
 **Beta.5 — 2026-11-17:** `oneringai@2.0.0-beta.5` adds Gemini 4 Hydrogen,
 trusted-access GPT-6 Rosalind, hosted Inkling/Glimpse/Hydrogen models, Groq
 GPT-OSS 20B and Grok Video 1.5 Lite. It preserves Hydrogen thinking controls,
@@ -201,13 +207,13 @@ scope, dependencies, research, and acceptance criteria.
   12 — opt-in presets, resolved capability inspection and AMOS adoption;
   14A — optional managed model routing;
   16A — opt-in provider-native compaction composed with context plugins, including all review corrections.
-- **Version 2 release:** `2.0.0-beta.1` published and registry-install verified on 2026-11-02; stable `2.0.0` remains pending.
+- **Version 2 release:** `2.0.0-beta.1` was the first prerelease on 2026-11-02. See [stable 2.0.1](../CHANGELOG.md#201--2026-11-23) for the current release.
 
 “Version 2” includes the prepared unscoped package and the recorded development
 initiative. Implemented capabilities at source revision `318c84b` are included in
 the verified npm beta. Historical stage labels below describe their availability
 at delivery time; inclusion in a beta does not complete pending live/provider gates.
-Additional breaking changes and stable publication require separate decisions.
+Additional breaking changes require separate decisions.
 
 ## Reading this guide
 

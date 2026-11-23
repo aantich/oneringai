@@ -6,6 +6,10 @@ import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult } from '../../config/types.js';
 import { getModelsByVendor, getModelInfo } from 'oneringai';
 
+function formatTokenLimit(tokens: number | null): string {
+  return tokens === null ? 'unknown' : `${(tokens / 1000).toFixed(0)}K tokens`;
+}
+
 export class ModelCommand extends BaseCommand {
   readonly name = 'model';
   readonly aliases = ['m'];
@@ -58,6 +62,7 @@ ALIASES:
     const config = app.getConfig();
     const currentVendor = config.activeVendor || config.defaults.vendor;
     const currentModel = config.activeModel || config.defaults.model;
+    const registryModel = getModelInfo(currentModel)?.name ?? currentModel;
 
     // Get models for current vendor
     const vendorModels = getModelsByVendor(currentVendor as any);
@@ -90,7 +95,7 @@ ALIASES:
     ];
 
     for (const model of vendorModels) {
-      const marker = model.name === currentModel ? '→ ' : '  ';
+      const marker = model.name === registryModel ? '→ ' : '  ';
       const features: string[] = [];
       if (model.features.vision) features.push('vision');
       if (model.features.reasoning) features.push('reasoning');
@@ -100,7 +105,7 @@ ALIASES:
       const featureStr = features.length > 0 ? ` [${features.join(', ')}]` : '';
 
       lines.push(`${marker}${model.name}${featureStr}`);
-      lines.push(`    Context: ${((model.features.input.tokens ?? 0) / 1000).toFixed(0)}K in / ${((model.features.output.tokens ?? 0) / 1000).toFixed(0)}K out`);
+      lines.push(`    Context: ${formatTokenLimit(model.features.input.tokens)} in / ${formatTokenLimit(model.features.output.tokens)} out`);
     }
 
     lines.push('');
@@ -138,8 +143,8 @@ Model: ${modelInfo.name}
 Vendor: ${modelInfo.provider}
 
 Context Window:
-  Input:  ${((features.input.tokens ?? 0) / 1000).toFixed(0)}K tokens
-  Output: ${((features.output.tokens ?? 0) / 1000).toFixed(0)}K tokens
+  Input:  ${formatTokenLimit(features.input.tokens)}
+  Output: ${formatTokenLimit(features.output.tokens)}
 
 Pricing (per million tokens):
   Input:  $${features.input.cpm.toFixed(2)}

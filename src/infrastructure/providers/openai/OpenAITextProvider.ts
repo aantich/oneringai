@@ -308,7 +308,9 @@ export class OpenAITextProvider extends BaseTextProvider {
     const supportsBatch = info?.features.batchAPI === true;
     const supportsStructuredOutput = info?.features.structuredOutput === true;
     const supportsExtendedPromptCaching = OPENAI_EXTENDED_PROMPT_CACHE_MODELS.test(model);
-    const nativeTools = info ? getOpenAINativeTools(model) : [];
+    const nativeTools = info?.features.nativeTools
+      ? [...info.features.nativeTools]
+      : info ? getOpenAINativeTools(model) : [];
     const capabilities: AdvancedTextCapabilities = {
       nativeCompaction: { onDemand: this.nativeToolVendor === 'openai' ? (this.verifiedCompactionModels.has(model) ? 'supported' : 'unverified') : 'unsupported',
         inputTokenCounting: this.nativeToolVendor === 'openai' ? 'provider' : 'unavailable' },

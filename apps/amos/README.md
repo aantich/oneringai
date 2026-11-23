@@ -16,7 +16,7 @@ tools; its build, types and regression tests validate that consumer path. See
 Closed stdin ends setup prompts and shuts down the REPL cleanly, including when
 EOF arrives before the next prompt. Normal `/help` and `/exit` commands are unchanged.
 
-> The historical name says “Multimodal,” but the current CLI implements text agents and tools only. Image, audio, and video commands are not implemented yet.
+The CLI accepts text and local image inputs for compatible models. Use `/image` to attach an image to a normal agent turn.
 
 ## Features
 
@@ -46,12 +46,29 @@ npm run dev
 npm run start
 ```
 
-On first run, you'll be prompted to configure an API key.
+On first run, AMOS prompts you to configure a connector.
 
 From the repository root, `npm run example:chatgpt-plan -- --live` runs a
 standalone terminal example against an eligible ChatGPT plan. It opens the
 system browser, runs a single prompt through a plan-backed OneRingAI Agent, and
 signs out on exit. See [ChatGPT plan access](../../docs/CHATGPT_PLAN_ACCESS.md#library-integration).
+
+### Local Inkling 2 Mini
+
+Start Ollama 0.40.17 or newer on Apple silicon and install the model with
+`ollama pull inkling-2-mini`. In AMOS, use `/connector add`, name the connector
+`ollama-local`, choose vendor `ollama` and authentication `none`, then accept
+the default base URL and `inkling-2-mini` model. Choose to activate it now or
+use `/connector use ollama-local` later.
+
+```text
+/model info
+/image "~/Pictures/example.jpg" Describe the image and count the objects.
+```
+
+Image turns and prompts use the same AMOS tool set and permissions. The image
+command accepts PNG, JPEG, and WebP files up to 10 MiB and detects the format
+from the file contents. Model requests go to the configured Ollama server.
 
 ## Commands
 
@@ -62,9 +79,10 @@ signs out on exit. See [ChatGPT plan access](../../docs/CHATGPT_PLAN_ACCESS.md#l
 | `/routing [sub]` | `/route` | Configure named models, explicit host rules/hints and inspect actual decisions |
 | `/helpers [sub]` | `/helper` | Configure explicit helper models, invoke them and inspect purpose usage |
 | `/model [name]` | `/m` | List or switch models |
+| `/image <path> [question]` | | Send a local image with a question |
 | `/astra <sub>` | `/gpt6` | Use Astra and demonstrate its Responses APIs |
 | `/vendor [name]` | | List or switch vendors |
-| `/connector <sub>` | | Manage API keys (add, edit, delete) |
+| `/connector <sub>` | | Manage provider connectors |
 | `/prompt <sub>` | | Manage system prompts |
 | `/tool <sub>` | | Manage tools (list, enable, disable) |
 | `/external [sub]` | `/ext` | Manage external tools (search, scrape, fetch) |

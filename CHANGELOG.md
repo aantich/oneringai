@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] — 2026-11-23
+
+First stable release of the unscoped OneRingAI v2 package. Install it with
+`npm install oneringai`. See the [v2 guide](docs/VERSION_2_GUIDE.md) for the API and
+its support boundaries, or the [migration guide](docs/PACKAGE_MIGRATION.md) when
+upgrading from the scoped v1 package.
+
+- **Run Inkling 2 Mini locally.** With Ollama 0.40.17+ on Apple silicon, use
+  `inkling-2-mini` for text, image input, and application tool calls in
+  `Agent.run()` and `Agent.stream()`. The registry recognizes published tags and
+  managed routes. [OneRingAI example](USER_GUIDE.md#local-inkling-2-mini-with-ollama).
+- **Use local Inkling in AMOS.** Configure Ollama without credentials using
+  `/connector add` and attach an image with `/image`. Text and image turns use
+  the same agent tool permissions. [AMOS setup](apps/amos/README.md#local-inkling-2-mini).
+- Add GPT-6.2 Astra, GPT-6.2 Sol, GPT-Live-1.1, and Gemini 4 Neon to the model
+  registry. Record Claude Sonnet 4.5's scheduled retirement and Grok Build 0.1's
+  end of service. Add current Claude Fast and GPT-5.6 Flex rates. Preserve Neon's
+  `xhigh` thinking level on both Google endpoints.
+
 ## [2.0.1-beta.1] — 2026-11-22
 
 - Add `oneringai/auth/openai` for eligible local Node apps to integrate Sign in
@@ -130,8 +149,8 @@ The registry assigns both `latest` and `next` to this first version, so
 `npm install oneringai` installs the **beta**. Its integrity matches the validated
 artifact, and a fresh registry install passes all 11 public entries in ESM/CJS
 and nine document formats. V2 development continues on `main`; legacy maintenance
-stays on `version1`. External harnesses retain their preview boundaries, and
-stable `2.0.0` and signed desktop installers remain separate releases.
+stays on `version1`. External harnesses retain their preview boundaries. This
+prerelease preceded the [first stable v2 package](#201--2026-11-23).
 
 Start with the [v2 README](README.md), [User Guide](USER_GUIDE.md),
 [adoption guide](docs/VERSION_2_GUIDE.md), and
@@ -3875,7 +3894,8 @@ StorageRegistry.setContext({ userId: currentUser.id });
 [0.1.2]: https://github.com/aantich/oneringai/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/aantich/oneringai/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/aantich/oneringai/releases/tag/v0.1.0
-[Unreleased]: https://github.com/aantich/oneringai/compare/v2.0.0-beta.1...HEAD
+[Unreleased]: https://github.com/aantich/oneringai/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/aantich/oneringai/compare/v2.0.1-beta.1...v2.0.1
 [2.0.0-beta.1]: https://github.com/aantich/oneringai/compare/v1.2.1...v2.0.0-beta.1
 [1.2.0]: https://github.com/aantich/oneringai/compare/v1.1.8...v1.2.0
 [1.1.8]: https://github.com/aantich/oneringai/compare/v1.1.7...v1.1.8

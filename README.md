@@ -23,12 +23,20 @@ AMOS is the complete terminal application: configure connectors, run agents,
 switch harnesses, inspect activity, and recover saved sessions. Its
 [application guide](apps/amos/README.md) also covers native OneRingAI mode.
 
-**v2 beta:** **[`oneringai@2.0.1-beta.1`](https://www.npmjs.com/package/oneringai/v/2.0.1-beta.1)**.
-Install the unscoped `oneringai` package with `@next` or pin this version.
+**Stable v2:** **[`oneringai@2.0.1`](https://www.npmjs.com/package/oneringai/v/2.0.1)**.
+Install the unscoped `oneringai` package or pin this version.
 The scoped `@everworker/oneringai` package is the legacy v1 maintenance line.
 See the [migration guide](docs/PACKAGE_MIGRATION.md) and [release readiness](docs/RELEASE_READINESS_V2.md).
 
 ## What's new in this version
+
+**Local Inkling 2 Mini.** Run a tool-using, image-aware OneRingAI agent with
+Ollama 0.40.17+ on Apple silicon. Pull it with `ollama pull inkling-2-mini`, then
+use the credential-free `Vendor.Ollama` connector in your app or add it with
+`/connector add` in AMOS. Send an image with `/image` in AMOS.
+[OneRingAI example](USER_GUIDE.md#local-inkling-2-mini-with-ollama) ·
+[AMOS setup](apps/amos/README.md#local-inkling-2-mini) ·
+[2.0.1 release notes](CHANGELOG.md#201--2026-11-23)
 
 **Sign in with ChatGPT.** Eligible users of local Node.js apps can run OpenAI
 agents using their ChatGPT plan. Import `ChatGPTPlanAuth` from
@@ -36,7 +44,7 @@ agents using their ChatGPT plan. Import `ChatGPTPlanAuth` from
 the signed-in account to a named connector. OneRingAI handles registration,
 identity verification, token refresh, and sign-out. Hosea uses the same flow.
 [User Guide and code example](USER_GUIDE.md#chatgpt-plan-authentication) ·
-[Release notes](CHANGELOG.md#201-beta1--2026-11-22)
+[Authentication release notes](CHANGELOG.md#201-beta1--2026-11-22)
 
 ## What changes in v2
 
@@ -67,13 +75,13 @@ availability, limitations, validation, and deferred work.
 ## Quick start
 
 Node.js **22.13+ or 24+** is required. The package provides ESM, CommonJS, and
-TypeScript declarations. Install the current v2 beta:
+TypeScript declarations. Install the stable v2 package:
 
 ```bash
-npm install oneringai@next
+npm install oneringai
 ```
 
-For a reproducible install, pin `oneringai@2.0.1-beta.1`.
+For a reproducible install, pin `oneringai@2.0.1`.
 The [source checkout/local package workflow](docs/PACKAGE_MIGRATION.md#try-v2-before-publication)
 remains available for development.
 Load your own environment configuration before creating connectors; the library

@@ -7,7 +7,7 @@
 import { readFile, writeFile, readdir, unlink, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { Connector, ConnectorTools, Vendor } from 'oneringai';
+import { Connector, ConnectorTools, Vendor, type ConnectorConfig } from 'oneringai';
 import type { StoredConnectorConfig, IConnectorManager } from '../config/types.js';
 
 export class ConnectorManager implements IConnectorManager {
@@ -201,17 +201,11 @@ export class ConnectorManager implements IConnectorManager {
     };
 
     // Build auth config based on type
-    let auth: { type: 'api_key'; apiKey: string; headerName?: string; headerPrefix?: string } | {
-      type: 'oauth';
-      flow: 'authorization_code' | 'client_credentials' | 'jwt_bearer';
-      clientId: string;
-      clientSecret?: string;
-      tokenUrl: string;
-      authorizationUrl?: string;
-      scope?: string;
-    };
+    let auth: ConnectorConfig['auth'];
 
-    if (config.auth.type === 'api_key' && config.auth.apiKey) {
+    if (config.auth.type === 'none') {
+      auth = { type: 'none' };
+    } else if (config.auth.type === 'api_key' && config.auth.apiKey) {
       // Get header config from stored config, or use provider defaults
       const headerConfig = serviceType ? providerHeaders[serviceType] : undefined;
       auth = {
@@ -304,7 +298,7 @@ export class ConnectorManager implements IConnectorManager {
     if (!config.vendor || typeof config.vendor !== 'string') {
       throw new Error(`Connector '${config.name}' must declare a vendor or service type`);
     }
-    if (!config.auth || !['api_key', 'oauth'].includes(config.auth.type)) {
+    if (!config.auth || !['api_key', 'oauth', 'none'].includes(config.auth.type)) {
       throw new Error(`Connector '${config.name}' has an unsupported auth type`);
     }
     if (config.auth.type === 'api_key' && !config.auth.apiKey?.trim()) {

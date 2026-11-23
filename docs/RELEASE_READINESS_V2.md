@@ -9,6 +9,12 @@ GitHub Pages deployment. Record the package version, source snapshot, website
 commit and deployment result; npm publication alone does not complete the
 release handoff. Earlier publication records below retain their historical scope.
 
+**Stable 2.0.1 — 2026-11-23:** the first stable v2 release includes the local
+Ollama and AMOS changes and the November 23 vendor registry update. See the
+[changelog](../CHANGELOG.md#201--2026-11-23) and
+[migration guide](PACKAGE_MIGRATION.md) for adoption. External harness and
+production OAuth support retain their documented boundaries.
+
 **2.0.1-beta.1 — 2026-11-22:** the unscoped v2 patch beta adds the Node.js
 Sign in with ChatGPT manager, migrates Hosea to the shared flow, and ships a
 standalone Node example. See [the changelog](../CHANGELOG.md#201-beta1--2026-11-22)

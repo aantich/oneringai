@@ -29,6 +29,8 @@ vi.mock('openai', () => ({
 }));
 
 // Import after mocking
+import { Vendor } from '@/core/Vendor.js';
+import { calculateCost, getModelInfo, LLM_MODELS } from '@/domain/entities/Model.js';
 import { GenericOpenAIProvider } from '@/infrastructure/providers/generic/GenericOpenAIProvider.js';
 
 describe('GenericOpenAIProvider', () => {
@@ -157,6 +159,26 @@ describe('GenericOpenAIProvider', () => {
       const caps = provider.getModelCapabilities('grok-4-1-fast-reasoning');
       expect(caps.supportsTools).toBe(true);
       expect(caps.maxTokens).toBe(2000000);
+    });
+
+    it.each([
+      LLM_MODELS[Vendor.Ollama].INKLING_2_MINI,
+      'inkling-2-mini:latest',
+      'inkling-2-mini:26b-a5b',
+      'inkling-2-mini:26b-a5b-nvfp4',
+    ])('resolves local Inkling capabilities for %s', (model) => {
+      expect(getModelInfo(model)).toMatchObject({
+        name: 'inkling-2-mini',
+        provider: Vendor.Ollama,
+        endpoints: ['responses', 'chat_completions'],
+        features: { output: { tokens: null } },
+      });
+      expect(provider.getModelCapabilities(model)).toMatchObject({
+        supportsTools: true,
+        supportsVision: true,
+        maxInputTokens: 1_048_576,
+      });
+      expect(calculateCost(model, 1000, 1000)).toBe(0);
     });
 
     it('should return vendor defaults for unregistered models', () => {
