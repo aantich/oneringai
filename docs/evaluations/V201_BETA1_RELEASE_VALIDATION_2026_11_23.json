@@ -79,9 +79,25 @@
       "reason": "npm required two-factor authentication or a granular publish token with bypass 2FA enabled"
     },
     "publishedAt": "2026-11-23T08:00:15.050Z",
-    "distTags": {
+    "distTagsAtPublication": {
       "next": "2.0.1-beta.1",
       "latest": "2.0.0-beta.5"
+    },
+    "distTags": {
+      "latest": "2.0.1-beta.1",
+      "next": "2.0.1-beta.1"
+    },
+    "defaultTagVerification": {
+      "verifiedAt": "2026-11-23T08:13:41Z",
+      "packagePage": "https://www.npmjs.com/package/oneringai",
+      "displayedVersion": "2.0.1-beta.1",
+      "freshInstall": {
+        "command": "npm install oneringai --ignore-scripts",
+        "node": "v24.20.0",
+        "version": "2.0.1-beta.1",
+        "archiveMatchesValidatedArtifact": true,
+        "chatGPTPlanAuthExport": true
+      }
     },
     "integrity": "sha512-J1vQZSonfA+TcmB8+M48lZxXBD1DIFQ+jeeKSsEdrEVjAnJ7tpRahRz6k6B/n+GhQslMm74btBvMivJufZj8jg==",
     "shasum": "216aabee228901677e51bded1d0f35cc1e025b9a",
