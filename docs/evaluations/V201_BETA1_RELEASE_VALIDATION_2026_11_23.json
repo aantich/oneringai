@@ -1,0 +1,125 @@
+{
+  "package": "oneringai@2.0.1-beta.1",
+  "date": "2026-11-23",
+  "branch": "main",
+  "status": "published-registry-verified-and-website-deployed",
+  "checks": {
+    "prepublishGate": "pass",
+    "unitTests": 9536,
+    "freshRegistryInstall": {
+      "command": "npm install oneringai@next",
+      "consumers": [
+        {
+          "node": "v22.13.1",
+          "sdkModules": [],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 12,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        },
+        {
+          "node": "v24.20.0",
+          "sdkModules": [],
+          "documents": [
+            "csv",
+            "xlsx",
+            "docx",
+            "pptx",
+            "odt",
+            "odp",
+            "ods",
+            "rtf",
+            "pdf"
+          ],
+          "status": "pass",
+          "entries": 12,
+          "formats": [
+            "esm",
+            "cjs"
+          ],
+          "documentsBothFormats": true,
+          "publicSymbols": true,
+          "connectorIdentity": true,
+          "documentation": true,
+          "MITLicenses": true,
+          "legacyPackageAbsent": true,
+          "providerCalls": 0
+        }
+      ]
+    }
+  },
+  "publication": {
+    "releaseTag": "v2.0.1-beta.1",
+    "releaseCommit": "9d77e37c137b8e9f0d4265d6569a043c0f102a19",
+    "method": "npm staged publishing",
+    "stageId": "bb498598-258b-477d-b8c8-339bf626931e",
+    "directPublishAttempt": {
+      "status": "rejected",
+      "httpStatus": 403,
+      "reason": "npm required two-factor authentication or a granular publish token with bypass 2FA enabled"
+    },
+    "publishedAt": "2026-11-23T08:00:15.050Z",
+    "distTags": {
+      "next": "2.0.1-beta.1",
+      "latest": "2.0.0-beta.5"
+    },
+    "integrity": "sha512-J1vQZSonfA+TcmB8+M48lZxXBD1DIFQ+jeeKSsEdrEVjAnJ7tpRahRz6k6B/n+GhQslMm74btBvMivJufZj8jg==",
+    "shasum": "216aabee228901677e51bded1d0f35cc1e025b9a",
+    "archiveMatchesValidatedArtifact": true
+  },
+  "website": {
+    "version": "2.0.1-beta.1",
+    "url": "https://oneringai.io/",
+    "librarySnapshot": "9d77e37c137b8e9f0d4265d6569a043c0f102a19",
+    "commit": "c65a0317af21886feb1fef033959cde9cd0a1e0b",
+    "localChecks": "16 passed",
+    "deployment": {
+      "workflow": "Build and deploy website",
+      "url": "https://github.com/aantich/oneringaiio/actions/runs/45135364515",
+      "status": "success",
+      "completedAt": "2026-11-23T08:03:14Z"
+    },
+    "publicVerification": {
+      "desktop": "pass",
+      "mobile": "pass",
+      "routes": [
+        "/",
+        "/docs/start/",
+        "/docs/",
+        "/docs/user-guide/",
+        "/docs/examples/",
+        "/docs/api-reference/",
+        "/docs/amos-cookbook/",
+        "/applications/"
+      ],
+      "interactions": [
+        "release links",
+        "clipboard",
+        "theme toggle",
+        "search",
+        "navigation"
+      ]
+    }
+  },
+  "completedAt": "2026-11-23T08:05:59.301853+00:00"
+}
