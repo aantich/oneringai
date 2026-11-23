@@ -20,14 +20,14 @@ This document provides a complete reference for ALL APIs in `oneringai`, includi
 - [Session Management](#session-management) (140 items)
 - [Tools & Function Calling](#tools--function-calling) (388 items)
 - [Streaming](#streaming) (51 items)
-- [Model Registry](#model-registry) (58 items)
+- [Model Registry](#model-registry) (60 items)
 - [OAuth & External APIs](#oauth--external-apis) (132 items)
 - [Resilience & Observability](#resilience--observability) (40 items)
 - [Errors](#errors) (64 items)
 - [Utilities](#utilities) (30 items)
 - [Interfaces](#interfaces) (90 items)
 - [Base Classes](#base-classes) (7 items)
-- [Other](#other) (2069 items)
+- [Other](#other) (2071 items)
 
 ## Core
 
@@ -2506,7 +2506,7 @@ type AgentStatus = 'idle' | 'running' | 'paused' | 'cancelled' | 'destroyed'
 
 ### Vendor `type`
 
-📍 [`src/core/Vendor.ts:22`](../src/core/Vendor.ts#L22)
+📍 [`src/core/Vendor.ts:23`](../src/core/Vendor.ts#L23)
 
 ```typescript
 type Vendor = (typeof Vendor)[keyof typeof Vendor]
@@ -2516,7 +2516,7 @@ type Vendor = (typeof Vendor)[keyof typeof Vendor]
 
 ### capturedProviderEndpoint `function`
 
-📍 [`src/core/createProvider.ts:66`](../src/core/createProvider.ts#L66)
+📍 [`src/core/createProvider.ts:68`](../src/core/createProvider.ts#L68)
 
 ```typescript
 export function capturedProviderEndpoint(provider: ITextProvider): string | undefined
@@ -2536,7 +2536,7 @@ function cloneRuntimeConfigValue&lt;T&gt;(value: T, seen = new WeakMap&lt;object
 
 ### configuredNativeEndpoint `function`
 
-📍 [`src/core/createProvider.ts:67`](../src/core/createProvider.ts#L67)
+📍 [`src/core/createProvider.ts:69`](../src/core/createProvider.ts#L69)
 
 ```typescript
 function configuredNativeEndpoint(connector: Connector): string
@@ -2546,7 +2546,7 @@ function configuredNativeEndpoint(connector: Connector): string
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:92`](../src/core/createProvider.ts#L92)
+📍 [`src/core/createProvider.ts:94`](../src/core/createProvider.ts#L94)
 
 Create a text provider from a connector
 
@@ -2558,7 +2558,7 @@ export function createProvider(connector: Connector): ITextProvider
 
 ### createProviderAsync `function`
 
-📍 [`src/core/createProvider.ts:238`](../src/core/createProvider.ts#L238)
+📍 [`src/core/createProvider.ts:246`](../src/core/createProvider.ts#L246)
 
 Create a text provider from a Connector with async token support
 Use this for OAuth connectors
@@ -2574,7 +2574,7 @@ export async function createProviderAsync(
 
 ### createProviderInstance `function`
 
-📍 [`src/core/createProvider.ts:101`](../src/core/createProvider.ts#L101)
+📍 [`src/core/createProvider.ts:103`](../src/core/createProvider.ts#L103)
 
 ```typescript
 function createProviderInstance(connector: Connector): ITextProvider
@@ -2584,7 +2584,7 @@ function createProviderInstance(connector: Connector): ITextProvider
 
 ### extractProviderConfig `function`
 
-📍 [`src/core/createProvider.ts:194`](../src/core/createProvider.ts#L194)
+📍 [`src/core/createProvider.ts:202`](../src/core/createProvider.ts#L202)
 
 Extract ProviderConfig from a Connector
 
@@ -2606,7 +2606,7 @@ function formatRolloverSource(input: ContextRolloverSummaryInput): string
 
 ### getVendorDefaultBaseURL `function`
 
-📍 [`src/core/createProvider.ts:58`](../src/core/createProvider.ts#L58)
+📍 [`src/core/createProvider.ts:60`](../src/core/createProvider.ts#L60)
 
 Get the default API base URL for a vendor.
 For OpenAI/Anthropic reads from the installed SDK at runtime.
@@ -2620,7 +2620,7 @@ export function getVendorDefaultBaseURL(vendor: string): string | undefined
 
 ### isVendor `function`
 
-📍 [`src/core/Vendor.ts:32`](../src/core/Vendor.ts#L32)
+📍 [`src/core/Vendor.ts:33`](../src/core/Vendor.ts#L33)
 
 Check if a string is a valid vendor
 
@@ -2653,7 +2653,7 @@ function nativePrincipal(context: AgentContextNextGen): string
 
 ### nativeProviderEndpoint `function`
 
-📍 [`src/core/createProvider.ts:82`](../src/core/createProvider.ts#L82)
+📍 [`src/core/createProvider.ts:84`](../src/core/createProvider.ts#L84)
 
 ```typescript
 export function nativeProviderEndpoint(provider: ITextProvider, connector: Connector): string
@@ -43750,6 +43750,16 @@ emitted only when the primitive actually called a connector.
 
 ---
 
+### CatalogModel `type`
+
+📍 [`src/infrastructure/providers/omlx/OMLXTextProvider.ts:10`](../src/infrastructure/providers/omlx/OMLXTextProvider.ts#L10)
+
+```typescript
+type CatalogModel = { id: string; model_type?: string; max_model_len?: number }
+```
+
+---
+
 ### ModelAvailability `type`
 
 📍 [`src/domain/types/SharedTypes.ts:20`](../src/domain/types/SharedTypes.ts#L20)
@@ -43816,6 +43826,16 @@ type ModelLifecycleStatus = | 'preview'
 
 ```typescript
 type ModelParameterEndpoint = 'responses' | 'chat-completions' | 'custom'
+```
+
+---
+
+### ModelProfiles `type`
+
+📍 [`src/infrastructure/providers/omlx/OMLXTextProvider.ts:9`](../src/infrastructure/providers/omlx/OMLXTextProvider.ts#L9)
+
+```typescript
+type ModelProfiles = NonNullable&lt;NonNullable&lt;ConnectorConfig['options']&gt;['omlxModels']&gt;
 ```
 
 ---
@@ -60626,7 +60646,7 @@ translate?(options: STTOptions): Promise&lt;STTResponse&gt;;
 
 ### ITextCompactionProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:129`](../src/domain/interfaces/ITextProvider.ts#L129)
+📍 [`src/domain/interfaces/ITextProvider.ts:131`](../src/domain/interfaces/ITextProvider.ts#L131)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -60663,6 +60683,20 @@ countInput(options: TextGenerateOptions): Promise&lt;number | null&gt;;
 
 <details>
 <summary><strong>Methods</strong></summary>
+
+#### `prepareModel()?`
+
+Resolve asynchronously discovered model metadata before request preparation.
+
+```typescript
+prepareModel?(model: string, signal?: AbortSignal): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `model`: `string`
+- `signal`: `AbortSignal | undefined` *(optional)*
+
+**Returns:** `Promise&lt;void&gt;`
 
 #### `generate()`
 
@@ -61328,7 +61362,7 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
 
 ### TextCompactionResponse `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:134`](../src/domain/interfaces/ITextProvider.ts#L134)
+📍 [`src/domain/interfaces/ITextProvider.ts:136`](../src/domain/interfaces/ITextProvider.ts#L136)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -69527,6 +69561,147 @@ async handle(
 
 ---
 
+### OMLXResponsesTransport `class`
+
+📍 [`src/infrastructure/providers/omlx/OMLXTextProvider.ts:12`](../src/infrastructure/providers/omlx/OMLXTextProvider.ts#L12)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `discover()`
+
+```typescript
+async discover(signal?: AbortSignal): Promise&lt;CatalogModel[]&gt;
+```
+
+**Parameters:**
+- `signal`: `AbortSignal | undefined` *(optional)*
+
+**Returns:** `Promise&lt;CatalogModel[]&gt;`
+
+</details>
+
+---
+
+### OMLXTextProvider `class`
+
+📍 [`src/infrastructure/providers/omlx/OMLXTextProvider.ts:22`](../src/infrastructure/providers/omlx/OMLXTextProvider.ts#L22)
+
+Local inference over Responses. The application retains conversation and tool execution ownership.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(readonly name: string, config: GenericOpenAIConfig, profiles: ModelProfiles = {})
+```
+
+**Parameters:**
+- `name`: `string`
+- `config`: `GenericOpenAIConfig`
+- `profiles`: `Readonly&lt;Record&lt;string, { tools?: boolean | undefined; jsonSchema?: boolean | undefined; }&gt;&gt;` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `validateConfig()`
+
+```typescript
+validateConfig(): Promise&lt;boolean&gt;
+```
+
+**Returns:** `Promise&lt;boolean&gt;`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+#### `listModels()`
+
+```typescript
+async listModels(): Promise&lt;string[]&gt;
+```
+
+**Returns:** `Promise&lt;string[]&gt;`
+
+#### `prepareModel()`
+
+```typescript
+async prepareModel(model: string, signal?: AbortSignal): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `model`: `string`
+- `signal`: `AbortSignal | undefined` *(optional)*
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `getModelCapabilities()`
+
+```typescript
+getModelCapabilities(model: string): ModelCapabilities
+```
+
+**Parameters:**
+- `model`: `string`
+
+**Returns:** `ModelCapabilities`
+
+#### `getAdvancedCapabilities()`
+
+```typescript
+getAdvancedCapabilities(model: string): AdvancedTextCapabilities
+```
+
+**Parameters:**
+- `model`: `string`
+
+**Returns:** `AdvancedTextCapabilities`
+
+#### `generate()`
+
+```typescript
+async generate(options: TextGenerateOptions)
+```
+
+**Parameters:**
+- `options`: `TextGenerateOptions`
+
+**Returns:** `Promise&lt;LLMResponse&gt;`
+
+#### `streamGenerate()`
+
+```typescript
+async *streamGenerate(options: TextGenerateOptions)
+```
+
+**Parameters:**
+- `options`: `TextGenerateOptions`
+
+**Returns:** `AsyncGenerator&lt;StreamEvent, void, any&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `vendor` | `vendor: "omlx"` | - |
+| `capabilities` | `capabilities: { text: boolean; images: boolean; videos: boolean; audio: boolean; }` | - |
+
+</details>
+
+---
+
 ### OpenAIDecisions `class`
 
 📍 [`src/capabilities/openai/OpenAIDecisions.ts:11`](../src/capabilities/openai/OpenAIDecisions.ts#L11)
@@ -70431,6 +70606,17 @@ async listModels(): Promise&lt;string[]&gt;
 ```
 
 **Returns:** `Promise&lt;string[]&gt;`
+
+#### `listResponseModels()`
+
+```typescript
+protected async listResponseModels&lt;T&gt;(signal?: AbortSignal): Promise&lt;T&gt;
+```
+
+**Parameters:**
+- `signal`: `AbortSignal | undefined` *(optional)*
+
+**Returns:** `Promise&lt;T&gt;`
 
 </details>
 
@@ -77253,6 +77439,8 @@ Used for BOTH AI providers AND external APIs
     deepseekHost?: 'official' | 'openrouter' | 'together' | 'fireworks' | 'deepinfra' | 'nvidia-nim' | 'azure-foundry' | 'custom';
     /** DeepSeek API transport; auto routes first-party Flash to Responses and Pro to Chat. */
     deepseekTransport?: 'auto' | 'responses' | 'chat_completions';
+    /** Host-verified capabilities for installed oMLX models, keyed by their API-visible IDs. */
+    omlxModels?: Readonly&lt;Record&lt;string, { tools?: boolean; jsonSchema?: boolean }&gt;&gt;;
     [key: string]: unknown;
   };` | - |
 | `timeout?` | `timeout?: number;` | Request timeout in milliseconds |
@@ -77291,7 +77479,7 @@ Used for BOTH AI providers AND external APIs
 
 ### ConnectorConfigResult `interface`
 
-📍 [`src/domain/entities/Connector.ts:257`](../src/domain/entities/Connector.ts#L257)
+📍 [`src/domain/entities/Connector.ts:259`](../src/domain/entities/Connector.ts#L259)
 
 Result from ProviderConfigAgent
 Includes setup instructions and environment variables
@@ -104374,7 +104562,7 @@ function getValueType(value: unknown): UserInfoEntry['valueType']
 
 ### getVendorPresentation `function`
 
-📍 [`src/capabilities/metadata/vendorPresentation.ts:20`](../src/capabilities/metadata/vendorPresentation.ts#L20)
+📍 [`src/capabilities/metadata/vendorPresentation.ts:21`](../src/capabilities/metadata/vendorPresentation.ts#L21)
 
 Pure bounded lookup. Unknown IDs have no implicit vendor/auth fallback.
 

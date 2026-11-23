@@ -6,7 +6,7 @@
 
 import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult, StoredConnectorConfig, ConnectorAuth } from '../../config/types.js';
-import { LLM_MODELS, Vendor } from 'oneringai';
+import { Connector, createProvider, LLM_MODELS, Vendor } from 'oneringai';
 
 export class ConnectorCommand extends BaseCommand {
   readonly name = 'connector';
@@ -18,7 +18,7 @@ export class ConnectorCommand extends BaseCommand {
     return `
 /connector - Manage API Connectors
 
-Connectors configure access to AI vendors, including local Ollama without credentials.
+Connectors configure access to AI vendors, including local Ollama and oMLX.
 Multiple connectors per vendor are supported (e.g., openai-main, openai-backup).
 
 USAGE:
@@ -164,7 +164,7 @@ ALIASES:
     // Get auth type
     const authOptions: ConnectorAuth['type'][] = vendor === Vendor.Ollama
       ? ['none', 'api_key', 'oauth']
-      : ['api_key', 'oauth'];
+      : vendor === Vendor.OMLX ? ['api_key', 'none'] : ['api_key', 'oauth'];
     const authType = await app.select('Authentication type:', authOptions);
 
     let auth: ConnectorAuth;
@@ -199,7 +199,8 @@ ALIASES:
     const localOllama = vendor === Vendor.Ollama && auth.type === 'none';
     const baseURL = await app.prompt(localOllama
       ? 'Ollama Base URL [http://localhost:11434/v1]: '
-      : 'Custom Base URL (optional, press Enter to skip): ');
+      : vendor === Vendor.OMLX ? 'oMLX Base URL [http://127.0.0.1:8000/v1]: '
+        : 'Custom Base URL (optional, press Enter to skip): ');
     const inkling = LLM_MODELS[Vendor.Ollama].INKLING_2_MINI;
     const localModel = localOllama
       ? (await app.prompt(`Installed Ollama model [${inkling}]: `)).trim() || inkling
@@ -439,9 +440,16 @@ Respond with ONLY the JSON object, no explanation.
     }
 
     const previous = app.getConfig();
-    const localModel = connector.vendor.toLowerCase() === Vendor.Ollama && connector.auth.type === 'none'
+    let localModel = connector.vendor.toLowerCase() === Vendor.Ollama && connector.auth.type === 'none'
       ? (previous.activeConnector === name && previous.activeModel) || connector.models?.[0] || LLM_MODELS[Vendor.Ollama].INKLING_2_MINI
       : undefined;
+    if (connector.vendor === Vendor.OMLX) {
+      const models = await createProvider(Connector.get(name)).listModels();
+      if (!models.length) return this.error('Download a text or vision model in oMLX before activating this connector.');
+      const current = previous.activeModel;
+      localModel = current && models.includes(current) ? current
+        : models.length === 1 ? models[0] : await app.select('Installed oMLX model:', models);
+    }
     app.updateConfig({
       activeConnector: name,
       activeVendor: connector.vendor,

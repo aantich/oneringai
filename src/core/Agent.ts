@@ -522,6 +522,11 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private get executionConnector(): Connector { return this._managedModelBinding?.connector ?? this.connector; }
   private get executionProvider(): ITextProvider { return this._managedModelBinding?.provider ?? this._provider; }
 
+  private getExecutionToolDefinitions(): import('../domain/entities/Tool.js').FunctionToolDefinition[] {
+    const provider = this.executionProvider;
+    if (provider?.vendor === 'omlx' && !provider.getModelCapabilities(this.executionModel).supportsTools) return [];
+    return this.getEnabledToolDefinitions();
+  }
 
   // Message injection queue (for orchestrator send_message)
   // M4: Use Message[] instead of InputItem[] for type safety (inject() only creates Messages)
@@ -1018,7 +1023,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       signal.throwIfAborted();
       await withAbort(this.ensureSessionLoaded(), signal);
       const report = await this._agentContext._compactContext(options.target ?? 'all', {
-        signal, nativeCompaction: this.bindNativeCompaction(), getTools: () => this.getEnabledToolDefinitions(),
+        signal, nativeCompaction: this.bindNativeCompaction(), getTools: () => this.getExecutionToolDefinitions(),
         modelMaxContextTokens: this.resolveManagedModelCapacity(this.model),
         getRequestOptions: tools => this.nativeContinuationOptions(tools),
       });
@@ -1205,7 +1210,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     this._routingOrigin = { binding, diagnostics: decision, task: this._activeModelTask!, options: effectiveOptions };
     this.context._bindManagedModel(model);
     try {
-      binding.assertCurrent({ model, input: items, tools: this.getEnabledToolDefinitions(), thinking: effectiveOptions.thinking ?? this._config.thinking,
+      binding.assertCurrent({ model, input: items, tools: this.getExecutionToolDefinitions(), thinking: effectiveOptions.thinking ?? this._config.thinking,
         native_tools: options?.nativeTools ?? this._config.nativeTools, prompt_cache: options?.promptCache ?? this._config.promptCache,
         data_handling: effectiveOptions.dataHandling });
       this.bindNativeCompaction();
@@ -1874,6 +1879,10 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         this._suspendedRoutingOrigin = this._routingOrigin;
       } else await this.prepareRouting(input, runOptions, modelTask, executionId);
 
+      if (this.executionProvider.prepareModel) {
+        await this.executionProvider.prepareModel(this.executionModel, this._modelExecutionSignal);
+      }
+
       // Add user message to AgentContext
       // NOTE: setCurrentInput() also calls addUserMessage() internally, so we use it
       // for string input to handle both task-type detection and journaling in one call.
@@ -1974,7 +1983,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         model: this.executionModel,
         input: prepared.input,
         instructions: this._config.instructions,
-        tools: this.getEnabledToolDefinitions(),
+        tools: this.getExecutionToolDefinitions(),
         temperature: this._runOptions?.temperature ?? this._config.temperature,
       ...this.managedParameterPolicy(),
       };
@@ -2644,7 +2653,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     toolCallsMap: Map<string, { name: string; args: string; thoughtSignature?: string; async?: boolean }>
   ): ToolCall[] {
     const toolCalls: ToolCall[] = [];
-    const toolDefinitions = this.getEnabledToolDefinitions();
+    const toolDefinitions = this.getExecutionToolDefinitions();
     const toolDefMap = new Map<string, Tool>();
     for (const tool of toolDefinitions) {
       if (tool.type === 'function') {
@@ -2683,7 +2692,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const historyPolicy =
       this.executionProvider.getAdvancedCapabilities?.(this.executionModel).reasoningHistory ?? 'discard';
     const persistReasoning = historyPolicy === 'always' ||
-      (historyPolicy === 'when_tools_configured' && this.getEnabledToolDefinitions().length > 0);
+      (historyPolicy === 'when_tools_configured' && this.getExecutionToolDefinitions().length > 0);
 
     const flushAssistantContent = (): void => {
       if (assistantContent.length === 0) return;
@@ -2890,7 +2899,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     if (options?.responseFormat) {
       const caps = this.executionProvider.getModelCapabilities(this.executionModel);
       const hasTools =
-        this.getEnabledToolDefinitions().length +
+        this.getExecutionToolDefinitions().length +
           ((options.nativeTools ?? this._config.nativeTools)?.length ?? 0) >
         0;
       if (
@@ -3441,7 +3450,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const replace = !stoppedToolTurn ? this._replaceStructuredAssistant : undefined;
     let transformed = false;
     const hasTools =
-      this.getEnabledToolDefinitions().length +
+      this.getExecutionToolDefinitions().length +
         ((this._runOptions?.nativeTools ?? this._config.nativeTools)?.length ?? 0) >
       0;
     const strategy = resolveStructuredStrategy(
@@ -3655,7 +3664,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           });
         return { summary: generated.value, helperInvocationId: generated.invocationId, helperModel: generated.response.model, taskId: generated.taskId };
       },
-      getTools: () => toolFree ? [] : this.getEnabledToolDefinitions(),
+      getTools: () => toolFree ? [] : this.getExecutionToolDefinitions(),
       modelMaxContextTokens: this.resolveManagedModelCapacity(this.executionModel),
       getRequestOptions: tools => this.nativeContinuationOptions(tools, toolFree),
     });
@@ -3746,7 +3755,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       model: this.executionModel,
       input,
       instructions: this._config.instructions,
-      tools: preparedTools ?? this.getEnabledToolDefinitions(),
+      tools: preparedTools ?? this.getExecutionToolDefinitions(),
       tool_choice: 'auto',
       temperature: ro?.temperature ?? this._config.temperature,
       ...this.managedParameterPolicy(),
@@ -3861,7 +3870,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       model: this.executionModel,
       input,
       instructions: this._config.instructions,
-      tools: preparedTools ?? this.getEnabledToolDefinitions(),
+      tools: preparedTools ?? this.getExecutionToolDefinitions(),
       tool_choice: 'auto',
       temperature: sro?.temperature ?? this._config.temperature,
       ...this.managedParameterPolicy(),
@@ -4062,7 +4071,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   private extractToolCalls(output: OutputItem[]): ToolCall[] {
     const toolCalls: ToolCall[] = [];
-    const toolDefinitions = this.getEnabledToolDefinitions();
+    const toolDefinitions = this.getExecutionToolDefinitions();
 
     // Create tool map for quick lookup
     const toolMap = new Map<string, Tool>();

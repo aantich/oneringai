@@ -1113,6 +1113,9 @@ export abstract class BaseAgent<
     const releaseDirect = beginCompositionDirect(this);
     try {
       // Keep preflight inside the owned task's cleanup boundary.
+      if (provider.prepareModel) {
+        await provider.prepareModel(this.model, task?.signal ?? options.signal);
+      }
       this.applyDirectResponseFormat(generateOptions, options.responseFormat);
       this._logger.debug({ inputType: typeof input }, 'runDirect called');
       const response = await this.generateTracked(generateOptions, options.purpose ?? 'main', 'generation', { task, signal: options.signal });
@@ -1207,6 +1210,10 @@ export abstract class BaseAgent<
 
     try {
       // Streamed JSON is parsed by the caller; preflight still owns cleanup.
+      const provider = this.getProvider();
+      if (provider.prepareModel) {
+        await provider.prepareModel(this.model, task?.signal ?? options.signal);
+      }
       this.applyDirectResponseFormat(generateOptions, options.responseFormat);
       this._logger.debug({ inputType: typeof input }, 'streamDirect called');
       yield* this.streamTracked(generateOptions, options.purpose ?? 'main', 'generation', { task, signal: options.signal });

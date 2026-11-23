@@ -603,6 +603,10 @@ export class OpenAITextProvider extends BaseTextProvider {
     return models.sort();
   }
 
+  protected async listResponseModels<T>(signal?: AbortSignal): Promise<T> {
+    return this.client.get<T>('/models', { signal });
+  }
+
   /** Shared generation/count normalization; legacy/raw precedence is unchanged. */
   private buildGenerationRequest(options: TextGenerateOptions, stream = false): Record<string, unknown> {
     // Convert to Responses API format

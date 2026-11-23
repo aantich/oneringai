@@ -14,6 +14,7 @@ export const VENDOR_PRESENTATIONS: Readonly<Record<Vendor, VendorPresentation>> 
   [Vendor.DeepSeek]: row(Vendor.DeepSeek, 'DeepSeek', '#0066ff'),
   [Vendor.Mistral]: row(Vendor.Mistral, 'Mistral', '#ff7000'),
   [Vendor.Ollama]: row(Vendor.Ollama, 'Ollama', '#ffffff'),
+  [Vendor.OMLX]: row(Vendor.OMLX, 'oMLX', '#ffffff'),
   [Vendor.Custom]: row(Vendor.Custom, 'Custom', '#6c757d'),
 });
 /** Pure bounded lookup. Unknown IDs have no implicit vendor/auth fallback. */

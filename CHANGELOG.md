@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-11-23
+
+- Add `Vendor.OMLX` and discover installed text and vision models from oMLX.
+  The Responses adapter supports local Inkling 2 Mini vision, application tools,
+  reasoning, and native JSON Schema on tool-free requests.
+- AMOS can add an oMLX connector, select installed models, and send local images
+  with `/image`. [Setup and example](USER_GUIDE.md#local-models-with-omlx).
+
 ## [2.0.1] — 2026-11-23
 
 First stable release of the unscoped OneRingAI v2 package. Install it with
@@ -3894,7 +3902,8 @@ StorageRegistry.setContext({ userId: currentUser.id });
 [0.1.2]: https://github.com/aantich/oneringai/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/aantich/oneringai/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/aantich/oneringai/releases/tag/v0.1.0
-[Unreleased]: https://github.com/aantich/oneringai/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/aantich/oneringai/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/aantich/oneringai/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/aantich/oneringai/compare/v2.0.1-beta.1...v2.0.1
 [2.0.0-beta.1]: https://github.com/aantich/oneringai/compare/v1.2.1...v2.0.0-beta.1
 [1.2.0]: https://github.com/aantich/oneringai/compare/v1.1.8...v1.2.0

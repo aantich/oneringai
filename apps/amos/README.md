@@ -53,6 +53,22 @@ standalone terminal example against an eligible ChatGPT plan. It opens the
 system browser, runs a single prompt through a plan-backed OneRingAI Agent, and
 signs out on exit. See [ChatGPT plan access](../../docs/CHATGPT_PLAN_ACCESS.md#library-integration).
 
+### Local oMLX
+
+Start oMLX 0.8.3 and download a text or vision model. In AMOS, run
+`/connector add`, select `omlx`, and accept `http://127.0.0.1:8000/v1`.
+For `api_key` authentication, copy the key from **oMLX → Settings → Security**.
+Choose an installed model when activating the connector.
+
+```text
+/model list
+/model info
+/image "~/Pictures/example.jpg" Describe the image and count the objects.
+```
+
+Inkling 2 Mini supports both image input and application tools in the same turn.
+See the [oMLX connector guide](../../USER_GUIDE.md#local-models-with-omlx).
+
 ### Local Inkling 2 Mini
 
 Start Ollama 0.40.17 or newer on Apple silicon and install the model with

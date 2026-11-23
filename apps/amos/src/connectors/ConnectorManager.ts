@@ -168,6 +168,7 @@ export class ConnectorManager implements IConnectorManager {
       mistral: Vendor.Mistral,
       perplexity: Vendor.Perplexity,
       ollama: Vendor.Ollama,
+      omlx: Vendor.OMLX,
       custom: Vendor.Custom,
     };
 

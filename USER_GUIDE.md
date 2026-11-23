@@ -1,9 +1,9 @@
 # OneRingAI v2 User Guide
 
-**Documented version:** `oneringai@2.0.1` · **Reviewed:** 2026-11-23
+**Documented version:** `oneringai@2.1.0` · **Reviewed:** 2026-11-23
 
 **Stable v2:** Install from [npm](https://www.npmjs.com/package/oneringai) with
-`npm install oneringai`, or pin `oneringai@2.0.1`.
+`npm install oneringai`, or pin `oneringai@2.1.0`.
 External harness and experimental-policy boundaries still apply.
 
 This guide describes the v2 APIs; use documentation matching your installed
@@ -15,7 +15,7 @@ local validation from publication and live-provider gates. For a running applica
 
 - **First integration:** [Getting started](#getting-started), [core concepts](#core-concepts),
   [tools](#tools--function-calling), then [persistence](#session-persistence).
-- **Running locally:** [Inkling 2 Mini with Ollama](#local-inkling-2-mini-with-ollama).
+- **Running locally:** [oMLX on Apple silicon](#local-models-with-omlx) and [Inkling 2 Mini with Ollama](#local-inkling-2-mini-with-ollama).
 - **Using a ChatGPT plan:** [Sign in with ChatGPT and create an account-bound agent](#chatgpt-plan-authentication).
 - **Coming from v1:** [Package migration](docs/PACKAGE_MIGRATION.md), then the
   [v2 capability map](#version-2-capability-map). Historical release-specific
@@ -164,7 +164,7 @@ Install the unscoped v2 package:
 npm install oneringai
 ```
 
-Pin `oneringai@2.0.1` for reproducible installs. For source development,
+Pin `oneringai@2.1.0` for reproducible installs. For source development,
 follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
 ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
 native desktop dependencies are needed only for their respective integrations.
@@ -216,6 +216,56 @@ try {
 ```
 
 ---
+
+## Local models with oMLX
+
+Start [oMLX](https://github.com/jundot/omlx) 0.8.3 on Apple silicon and download
+a compatible MLX checkpoint in its model downloader. Use the exact model ID
+shown in oMLX or returned by `/v1/models`. A connector discovers the installed
+text and vision models and reads their context limits from the server.
+
+```typescript
+// Documentation check: complete example
+import { Agent, Connector, Vendor, createProvider } from 'oneringai';
+
+const apiKey = process.env.OMLX_API_KEY;
+const connector = Connector.create({
+  name: 'omlx-local',
+  vendor: Vendor.OMLX,
+  auth: apiKey ? { type: 'api_key', apiKey } : { type: 'none' },
+  baseURL: 'http://127.0.0.1:8000/v1',
+});
+
+const models = await createProvider(connector).listModels();
+const model = process.env.OMLX_MODEL ?? models[0];
+if (!model) throw new Error('Download a text or vision model in oMLX first.');
+
+const agent = Agent.create({ connector: 'omlx-local', model });
+try {
+  const response = await agent.run('Explain why the sky looks blue.');
+  console.log(response.output_text);
+} finally {
+  agent.destroy();
+}
+```
+
+Copy your key from **oMLX → Settings → Security**. Use `none` only when the
+server allows unauthenticated inference. Use the [vision input recipe](#local-inkling-2-mini-with-ollama)
+with a model the oMLX catalog identifies as vision-capable. Inkling 2 Mini
+(`Inkling-2-Mini-oQ4e-mtp` or alias `inkling-2-mini`) has a built-in profile
+for function tools and native JSON Schema without tools. For a checkpoint
+you've verified or a custom alias, set connector options
+`omlxModels: { 'model-id': { tools: true, jsonSchema: true } }`.
+
+For a small checkpoint whose context window is below the default 4,096-token
+response reserve, set a smaller reserve in your Agent configuration, for
+example `context: { model, responseReserve: 256 }`.
+
+OneRingAI owns the tool loop and sends `store: false` to the Responses API.
+oMLX manages its own prompt cache. For a structured result with tools, use
+`Agent.run()`, which can perform a final tool-free repair. Provider-hosted tools,
+forced tool choice, parallel-call controls, and provider-managed continuation
+are outside this adapter's supported contract.
 
 ## Local Inkling 2 Mini with Ollama
 

@@ -19,6 +19,7 @@ import { AnthropicTextProvider } from '../infrastructure/providers/anthropic/Ant
 import { GoogleTextProvider } from '../infrastructure/providers/google/GoogleTextProvider.js';
 import { createVertexProvider } from '../infrastructure/runtime/hostProvider.js';
 import { GenericOpenAIProvider } from '../infrastructure/providers/generic/GenericOpenAIProvider.js';
+import { OMLXTextProvider } from '../infrastructure/providers/omlx/OMLXTextProvider.js';
 import { GrokTextProvider } from '../infrastructure/providers/grok/GrokTextProvider.js';
 import { DeepSeekTextProvider } from '../infrastructure/providers/deepseek/DeepSeekTextProvider.js';
 import type {
@@ -48,6 +49,7 @@ const VENDOR_DEFAULT_URLS: ReadonlyMap<string, string> = new Map([
   [Vendor.DeepSeek, 'https://api.deepseek.com/v1'],
   [Vendor.Mistral, 'https://api.mistral.ai/v1'],
   [Vendor.Ollama, 'http://localhost:11434/v1'],
+  [Vendor.OMLX, 'http://127.0.0.1:8000/v1'],
 ]);
 
 /**
@@ -171,6 +173,12 @@ function createProviderInstance(connector: Connector): ITextProvider {
         ...config,
         baseURL: config.baseURL || getVendorDefaultBaseURL(vendor)!,
       });
+
+    case Vendor.OMLX:
+      return new OMLXTextProvider(connector.name, {
+        ...config,
+        baseURL: config.baseURL || getVendorDefaultBaseURL(vendor)!,
+      }, connector.config.options?.omlxModels);
 
     case Vendor.Custom:
       if (!config.baseURL) {

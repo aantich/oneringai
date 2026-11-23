@@ -58,10 +58,6 @@ describe('Vendor', () => {
   });
 
   describe('VENDORS array', () => {
-    it('contains all 12 vendor values', () => {
-      expect(VENDORS).toHaveLength(12);
-    });
-
     it('contains openai', () => {
       expect(VENDORS).toContain('openai');
     });
@@ -91,11 +87,13 @@ describe('Vendor', () => {
         'deepseek',
         'mistral',
         'ollama',
+        'omlx',
         'custom',
       ];
       for (const vendor of expectedVendors) {
         expect(VENDORS).toContain(vendor);
       }
+      expect(VENDORS).toHaveLength(expectedVendors.length);
     });
   });
 

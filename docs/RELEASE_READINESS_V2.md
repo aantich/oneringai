@@ -9,6 +9,15 @@ GitHub Pages deployment. Record the package version, source snapshot, website
 commit and deployment result; npm publication alone does not complete the
 release handoff. Earlier publication records below retain their historical scope.
 
+**2.1.0 — 2026-11-23:** The oMLX adapter was exercised against the local oMLX
+0.8.3 server on an M4 Max. A managed SDK run and a streamed AMOS terminal turn
+read an image, executed an application tool with the observed values, and
+reported its result. A direct SDK run returned a validated strict JSON Schema
+result. A temporary headless server also verified keyless text inference with
+Qwen2.5 0.5B after cancelling an active stream. The
+[oMLX setup](../USER_GUIDE.md#local-models-with-omlx) describes
+model-dependent capabilities and request boundaries.
+
 **Stable 2.0.1 — 2026-11-23:** the first stable v2 release includes the local
 Ollama and AMOS changes and the November 23 vendor registry update. See the
 [changelog](../CHANGELOG.md#201--2026-11-23) and

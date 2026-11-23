@@ -25,7 +25,7 @@ snapshot, website commit and successful deployment in the release handoff.
 Do not call a v2 release handoff complete while the matching website is stale.
 This standing requirement does not itself authorize another npm publication.
 
-The current API baseline is **`oneringai@2.0.1`**. v2 uses the unscoped
+The current API baseline is **`oneringai@2.1.0`**. v2 uses the unscoped
 package `oneringai`; `@everworker/oneringai` is the legacy v1 maintenance line.
 Read [package migration](docs/PACKAGE_MIGRATION.md) before upgrading a consumer.
 Historical plans, local agent memories, old branch names and dated test counts

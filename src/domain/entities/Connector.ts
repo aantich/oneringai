@@ -198,6 +198,8 @@ export interface ConnectorConfig {
     deepseekHost?: 'official' | 'openrouter' | 'together' | 'fireworks' | 'deepinfra' | 'nvidia-nim' | 'azure-foundry' | 'custom';
     /** DeepSeek API transport; auto routes first-party Flash to Responses and Pro to Chat. */
     deepseekTransport?: 'auto' | 'responses' | 'chat_completions';
+    /** Host-verified capabilities for installed oMLX models, keyed by their API-visible IDs. */
+    omlxModels?: Readonly<Record<string, { tools?: boolean; jsonSchema?: boolean }>>;
     [key: string]: unknown;
   };
 

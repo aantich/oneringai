@@ -5,6 +5,7 @@
 import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult } from '../../config/types.js';
 import { Vendor, getModelsByVendor, getVendorPresentation, type ILLMDescription } from 'oneringai';
+import { ConnectorCommand } from './ConnectorCommand.js';
 
 export class VendorCommand extends BaseCommand {
   readonly name = 'vendor';
@@ -27,7 +28,7 @@ USAGE:
 
 SUPPORTED VENDORS:
   openai, anthropic, google, google-vertex, groq,
-  together, grok, deepseek, mistral, perplexity, ollama
+  together, grok, deepseek, mistral, perplexity, ollama, omlx
 
 EXAMPLES:
   /vendor                 List vendors with connector status
@@ -235,6 +236,10 @@ Tip: Use /model list to see all available models for this vendor
         `No connectors configured for ${vendorName}.\n` +
         `Use /connector add or /connector generate to create one.`
       );
+    }
+
+    if (vendorName === Vendor.OMLX) {
+      return new ConnectorCommand().execute({ ...context, args: ['use', connectors[0]!.name] });
     }
 
     // Get default model for vendor from MODEL_REGISTRY

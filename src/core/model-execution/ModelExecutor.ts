@@ -174,6 +174,9 @@ export async function invokeConfiguredHelper<T>(args: {
 }): Promise<HelperResult<T>> {
   const { connector, provider, task, options } = args;
   const profile = structuredClone(args.profile);
+  if (provider.prepareModel) {
+    await provider.prepareModel(profile.model, options.signal ? AbortSignal.any([task.signal, options.signal]) : task.signal);
+  }
   const info = getModelInfo(profile.model);
   if (info && (!info.isActive || info.provider !== connector.vendor)) throw new InvalidConfigError('Helper model is inactive or belongs to another connector vendor');
   const caps = provider.getModelCapabilities(profile.model);

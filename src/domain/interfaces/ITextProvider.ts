@@ -96,6 +96,8 @@ export interface ModelCapabilities {
 }
 
 export interface ITextProvider extends IProvider {
+  /** Resolve asynchronously discovered model metadata before request preparation. */
+  prepareModel?(model: string, signal?: AbortSignal): Promise<void>;
   /** Optional standalone native context operations; existing providers need no changes. */
   readonly compaction?: ITextCompactionProvider;
   /**

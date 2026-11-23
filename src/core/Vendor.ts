@@ -16,6 +16,7 @@ export const Vendor = {
   DeepSeek: 'deepseek',
   Mistral: 'mistral',
   Ollama: 'ollama',
+  OMLX: 'omlx',
   Custom: 'custom', // OpenAI-compatible endpoint
 } as const;
 

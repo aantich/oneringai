@@ -312,6 +312,15 @@ Enter a connector name and select a vendor. Choose the appropriate
 authentication type, enter credentials where applicable, and set a custom base
 URL if needed.
 
+### Local oMLX
+
+Use `/connector add` with vendor `omlx` and the default
+`http://127.0.0.1:8000/v1` endpoint. Copy the API key from the oMLX Security
+settings, or choose `none` if the server allows unauthenticated inference.
+On activation, AMOS lists installed text and vision models. Use `/model list`
+to refresh the list and `/model <id>` to switch. Inkling 2 Mini supports the
+`/image` command and the normal AMOS tool permissions.
+
 ### Local Ollama with Inkling 2 Mini
 
 With Ollama running and `inkling-2-mini` installed, use `/connector add` and

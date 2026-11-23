@@ -4,7 +4,7 @@
 
 import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult } from '../../config/types.js';
-import { getModelsByVendor, getModelInfo } from 'oneringai';
+import { Connector, createProvider, getModelsByVendor, getModelInfo, Vendor } from 'oneringai';
 
 function formatTokenLimit(tokens: number | null): string {
   return tokens === null ? 'unknown' : `${(tokens / 1000).toFixed(0)}K tokens`;
@@ -62,6 +62,16 @@ ALIASES:
     const config = app.getConfig();
     const currentVendor = config.activeVendor || config.defaults.vendor;
     const currentModel = config.activeModel || config.defaults.model;
+    if (currentVendor === Vendor.OMLX && config.activeConnector) {
+      const provider = createProvider(Connector.get(config.activeConnector));
+      const models = await provider.listModels();
+      const labels = models.map(model => {
+        const caps = provider.getModelCapabilities(model);
+        const features = [caps.supportsVision ? 'vision' : '', caps.supportsTools ? 'tools' : ''].filter(Boolean);
+        return `${model === currentModel ? '→ ' : '  '}${model}${features.length ? ` [${features.join(', ')}]` : ''}`;
+      });
+      return this.success(labels.length ? ['Installed oMLX models', ...labels].join('\n') : 'No text or vision models are installed in oMLX.');
+    }
     const registryModel = getModelInfo(currentModel)?.name ?? currentModel;
 
     // Get models for current vendor
@@ -119,6 +129,20 @@ ALIASES:
     const config = app.getConfig();
     const currentModel = config.activeModel || config.defaults.model;
 
+    if (config.activeVendor === Vendor.OMLX && config.activeConnector) {
+      const provider = createProvider(Connector.get(config.activeConnector));
+      await provider.prepareModel?.(currentModel);
+      const caps = provider.getModelCapabilities(currentModel);
+      return this.success([
+        `Model: ${currentModel}`,
+        'Vendor: oMLX',
+        `Context: ${formatTokenLimit(caps.maxTokens)}`,
+        `Vision: ${caps.supportsVision ? 'supported' : 'unavailable'}`,
+        `Function calling: ${caps.supportsTools ? 'supported' : 'unverified for this checkpoint'}`,
+        `Native JSON schema: ${caps.supportsJSONSchema ? 'supported without tools' : 'unverified for this checkpoint'}`,
+      ].join('\n'));
+    }
+
     const modelInfo = getModelInfo(currentModel);
 
     if (!modelInfo) {
@@ -165,6 +189,9 @@ Release: ${modelInfo.releaseDate || 'Unknown'}
 
   private async switchModel(context: CommandContext, modelName: string): Promise<CommandResult> {
     const { app } = context;
+    const config = app.getConfig();
+    const omlx = config.activeVendor === Vendor.OMLX && config.activeConnector;
+    if (omlx) await createProvider(Connector.get(omlx)).prepareModel?.(modelName);
 
     // Validate model exists (either in registry or accept any)
     const modelInfo = getModelInfo(modelName);
@@ -177,10 +204,11 @@ Release: ${modelInfo.releaseDate || 'Unknown'}
       await app.createAgent();
       await app.saveConfig();
     } catch (error) {
+      if (omlx) app.updateConfig({ activeModel: config.activeModel });
       return this.error(`Failed to switch model: ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    const infoStr = modelInfo
+    const infoStr = omlx ? ' (oMLX)' : modelInfo
       ? ` (${modelInfo.provider})`
       : ' (custom model)';
 

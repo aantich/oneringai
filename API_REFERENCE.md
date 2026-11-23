@@ -2187,7 +2187,7 @@ type AgentStatus = 'idle' | 'running' | 'paused' | 'cancelled' | 'destroyed'
 
 ### Vendor `type`
 
-📍 [`src/core/Vendor.ts:22`](src/core/Vendor.ts#L22)
+📍 [`src/core/Vendor.ts:23`](src/core/Vendor.ts#L23)
 
 ```typescript
 type Vendor = (typeof Vendor)[keyof typeof Vendor]
@@ -2197,7 +2197,7 @@ type Vendor = (typeof Vendor)[keyof typeof Vendor]
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:92`](src/core/createProvider.ts#L92)
+📍 [`src/core/createProvider.ts:94`](src/core/createProvider.ts#L94)
 
 Create a text provider from a connector
 
@@ -2209,7 +2209,7 @@ export function createProvider(connector: Connector): ITextProvider
 
 ### getVendorDefaultBaseURL `function`
 
-📍 [`src/core/createProvider.ts:58`](src/core/createProvider.ts#L58)
+📍 [`src/core/createProvider.ts:60`](src/core/createProvider.ts#L60)
 
 Get the default API base URL for a vendor.
 For OpenAI/Anthropic reads from the installed SDK at runtime.
@@ -2223,7 +2223,7 @@ export function getVendorDefaultBaseURL(vendor: string): string | undefined
 
 ### isVendor `function`
 
-📍 [`src/core/Vendor.ts:32`](src/core/Vendor.ts#L32)
+📍 [`src/core/Vendor.ts:33`](src/core/Vendor.ts#L33)
 
 Check if a string is a valid vendor
 
@@ -45276,7 +45276,7 @@ translate?(options: STTOptions): Promise&lt;STTResponse&gt;;
 
 ### ITextCompactionProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:129`](src/domain/interfaces/ITextProvider.ts#L129)
+📍 [`src/domain/interfaces/ITextProvider.ts:131`](src/domain/interfaces/ITextProvider.ts#L131)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -45313,6 +45313,20 @@ countInput(options: TextGenerateOptions): Promise&lt;number | null&gt;;
 
 <details>
 <summary><strong>Methods</strong></summary>
+
+#### `prepareModel()?`
+
+Resolve asynchronously discovered model metadata before request preparation.
+
+```typescript
+prepareModel?(model: string, signal?: AbortSignal): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `model`: `string`
+- `signal`: `AbortSignal | undefined` *(optional)*
+
+**Returns:** `Promise&lt;void&gt;`
 
 #### `generate()`
 
@@ -45978,7 +45992,7 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
 
 ### TextCompactionResponse `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:134`](src/domain/interfaces/ITextProvider.ts#L134)
+📍 [`src/domain/interfaces/ITextProvider.ts:136`](src/domain/interfaces/ITextProvider.ts#L136)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55893,6 +55907,8 @@ Used for BOTH AI providers AND external APIs
     deepseekHost?: 'official' | 'openrouter' | 'together' | 'fireworks' | 'deepinfra' | 'nvidia-nim' | 'azure-foundry' | 'custom';
     /** DeepSeek API transport; auto routes first-party Flash to Responses and Pro to Chat. */
     deepseekTransport?: 'auto' | 'responses' | 'chat_completions';
+    /** Host-verified capabilities for installed oMLX models, keyed by their API-visible IDs. */
+    omlxModels?: Readonly&lt;Record&lt;string, { tools?: boolean; jsonSchema?: boolean }&gt;&gt;;
     [key: string]: unknown;
   };` | - |
 | `timeout?` | `timeout?: number;` | Request timeout in milliseconds |
@@ -55931,7 +55947,7 @@ Used for BOTH AI providers AND external APIs
 
 ### ConnectorConfigResult `interface`
 
-📍 [`src/domain/entities/Connector.ts:257`](src/domain/entities/Connector.ts#L257)
+📍 [`src/domain/entities/Connector.ts:259`](src/domain/entities/Connector.ts#L259)
 
 Result from ProviderConfigAgent
 Includes setup instructions and environment variables
@@ -71168,7 +71184,7 @@ export function getUserPathPrefix(
 
 ### getVendorPresentation `function`
 
-📍 [`src/capabilities/metadata/vendorPresentation.ts:20`](src/capabilities/metadata/vendorPresentation.ts#L20)
+📍 [`src/capabilities/metadata/vendorPresentation.ts:21`](src/capabilities/metadata/vendorPresentation.ts#L21)
 
 Pure bounded lookup. Unknown IDs have no implicit vendor/auth fallback.
 
